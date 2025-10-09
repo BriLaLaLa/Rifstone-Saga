@@ -1,0 +1,103 @@
+[
+  {
+	"id": "taglia_pino",
+	"name": "Taglia Pino",
+	"time": 4,
+	"skill_id": "woodcutting",
+	"req": { "level": 1 },
+	"rewards": { "xp": 10, "items": { "log": 1 } }
+  },
+  {
+	"id": "taglia_quercia",
+	"name": "Taglia Quercia",
+	"time": 6,
+	"skill_id": "woodcutting",
+	"req": { "level": 5 },
+	"rewards": { "xp": 16, "items": { "log": 2 } }
+  },
+
+  {
+	"id": "fish_shallow",
+	"name": "Pesca nel ruscello",
+	"time": 4,
+	"skill_id": "fishing",
+	"req": { "level": 1 },
+	"rewards": { "xp": 10, "items": { "fish": 1 } }
+  },
+  {
+	"id": "fish_river",
+	"name": "Pesca nel fiume",
+	"time": 6,
+	"skill_id": "fishing",
+	"req": { "level": 5 },
+	"rewards": { "xp": 16, "items": { "fish": 2 } }
+  },
+
+  {
+	"id": "mine_rock",
+	"name": "Estrai minerale grezzo",
+	"time": 5,
+	"skill_id": "mining",
+	"req": { "level": 1 },
+	"rewards": { "xp": 10, "items": { "ore": 1 } }
+  },
+  {
+	"id": "mine_vein",
+	"name": "Scava vena ricca",
+	"time": 7,
+	"skill_id": "mining",
+	"req": { "level": 5 },
+	"rewards": { "xp": 16, "items": { "ore": 2 } }
+  },
+
+  {
+	"id": "smelt_bar",
+	"name": "Fondi barra",
+	"time": 6,
+	"skill_id": "smithing",
+	"req": { "level": 1 },
+	"rewards": { "xp": 12, "items": { "bar": 1 } }
+  },
+  {
+	"id": "smelt_better_bar",
+	"name": "Fusione avanzata",
+	"time": 8,
+	"skill_id": "smithing",
+	"req": { "level": 5 },
+	"rewards": { "xp": 18, "items": { "bar": 2 } }
+  },
+
+  {
+	"id": "brew_minor",
+	"name": "Prepara pozione minore",
+	"time": 6,
+	"skill_id": "alchemy",
+	"req": { "level": 1 },
+	"rewards": { "xp": 12, "items": { "potion": 1 } }
+  },
+  {
+	"id": "brew_lesser",
+	"name": "Prepara pozione inferiore",
+	"time": 8,
+	"skill_id": "alchemy",
+	"req": { "level": 5 },
+	"rewards": { "xp": 18, "items": { "potion": 2 } }
+  },
+
+  {
+	"id": "practice_slashes",
+	"name": "Allenamento di tagli",
+	"time": 3,
+	"skill_id": "swordsmanship",
+	"req": { "level": 1 },
+	"rewards": { "xp": 8 }
+  },
+  {
+	"id": "kata_advanced",
+	"name": "Kata avanzato",
+	"time": 5,
+	"skill_id": "swordsmanship",
+	"req": { "level": 5 },
+	"rewards": { "xp": 14 }
+  }
+]

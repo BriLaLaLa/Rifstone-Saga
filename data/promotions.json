@@ -1,0 +1,55 @@
+[
+  { "skill_id": "woodcutting", "from": "N", "to": "A",
+	"req": { "level": 5,  "items": { "manual_wood": 1 } },
+	"chance": 1.0,
+   "on_success": { "bonuses": [] },
+   "on_fail": { "consume": true }
+  },
+  { "skill_id": "woodcutting", "from": "A", "to": "M",
+	"req": { "level": 15, "items": { "log": 50 } },
+	"chance": 0.50,
+	"on_success": { "bonuses": [] },
+	"on_fail": { "consume": true }
+  },
+  { "skill_id": "woodcutting", "from": "M", "to": "G",
+	"req": { "level": 30, "items": { "log": 200 } },
+	"chance": 0.35,
+	"on_success": { "bonuses": [] },
+	"on_fail": { "consume": true }
+  },
+
+  { "skill_id": "swordsmanship", "from": "N", "to": "A",
+	"req": { "level": 10, "items": { "book_sword": 1 } },
+	"chance": 0.35,
+	"on_success": { "bonuses": [ { "type": "dps_mult", "value": 0.05 } ] },
+	"on_fail": { "consume": true }
+  },
+  { "skill_id": "swordsmanship", "from": "A", "to": "M",
+	"req": { "level": 20, "items": { "book_sword": 2 } },
+	"chance": 0.25,
+	"on_success": { "bonuses": [ { "type": "dps_mult", "value": 0.07 } ] },
+	"on_fail": { "consume": true }
+  },
+  { "skill_id": "swordsmanship", "from": "M", "to": "G",
+	"req": { "level": 35, "items": { "book_sword": 3 } },
+	"chance": 0.15,
+	"on_success": { "bonuses": [ { "type": "dps_mult", "value": 0.10 } ] },
+	"on_fail": { "consume": true }
+  },
+
+  { "skill_id": "fishing",  "from": "N", "to": "A", "req": { "level": 5 },  "chance": 1.0, "on_success": { "bonuses": [] } },
+  { "skill_id": "fishing",  "from": "A", "to": "M", "req": { "level": 15 }, "chance": 1.0, "on_success": { "bonuses": [] } },
+  { "skill_id": "fishing",  "from": "M", "to": "G", "req": { "level": 30 }, "chance": 1.0, "on_success": { "bonuses": [] } },
+
+  { "skill_id": "mining",   "from": "N", "to": "A", "req": { "level": 5 },  "chance": 1.0, "on_success": { "bonuses": [] } },
+  { "skill_id": "mining",   "from": "A", "to": "M", "req": { "level": 15 }, "chance": 1.0, "on_success": { "bonuses": [] } },
+  { "skill_id": "mining",   "from": "M", "to": "G", "req": { "level": 30 }, "chance": 1.0, "on_success": { "bonuses": [] } },
+
+  { "skill_id": "smithing", "from": "N", "to": "A", "req": { "level": 5 },  "chance": 1.0, "on_success": { "bonuses": [] } },
+  { "skill_id": "smithing", "from": "A", "to": "M", "req": { "level": 15 }, "chance": 1.0, "on_success": { "bonuses": [] } },
+  { "skill_id": "smithing", "from": "M", "to": "G", "req": { "level": 30 }, "chance": 1.0, "on_success": { "bonuses": [] } },
+
+  { "skill_id": "alchemy",  "from": "N", "to": "A", "req": { "level": 5 },  "chance": 1.0, "on_success": { "bonuses": [] } },
+  { "skill_id": "alchemy",  "from": "A", "to": "M", "req": { "level": 15 }, "chance": 1.0, "on_success": { "bonuses": [] } },
+  { "skill_id": "alchemy",  "from": "M", "to": "G", "req": { "level": 30 }, "chance": 1.0, "on_success": { "bonuses": [] } }
+]

@@ -1,0 +1,4 @@
+[
+  {"id":"meadow","name":"Quiet Meadow","mobs":["slime"]},
+  {"id":"camp","name":"Goblin Camp","mobs":["goblin"]}
+]

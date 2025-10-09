@@ -1,0 +1,4 @@
+[
+  {"id":"goblin","name":"Goblin","hp":30,"dps":1.0,"armor":0,"loot_table_id":"goblin_loot"},
+  {"id":"slime","name":"Green Slime","hp":20,"dps":0.5,"armor":0,"loot_table_id":"slime_loot"}
+]

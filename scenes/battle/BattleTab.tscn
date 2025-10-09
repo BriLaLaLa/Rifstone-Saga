@@ -1,0 +1,186 @@
+[gd_scene load_steps=4 format=3 uid="uid://ff3lstbvirq6"]
+
+[ext_resource type="Script" uid="uid://b1g1wh4xanohj" path="res://scripts/battle/BattleTab.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://hqnxf26wkwpv" path="res://scenes/battle/CharacterDisplay.tscn" id="2"]
+[ext_resource type="Script" uid="uid://cidmfpqx0eyif" path="res://scripts/battle/BattleArea.gd" id="3"]
+
+[node name="BattleTab" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="HSplit" type="HSplitContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+dragger_visibility = 1
+
+[node name="LeftPanel" type="VBoxContainer" parent="HSplit"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="CharacterDisplay" parent="HSplit/LeftPanel" instance=ExtResource("2")]
+layout_mode = 2
+
+[node name="InventoryButton" type="Button" parent="HSplit/LeftPanel"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "📦 Open Inventory"
+
+[node name="RightPanel" type="VBoxContainer" parent="HSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="BattleArea" type="Control" parent="HSplit/RightPanel"]
+custom_minimum_size = Vector2(0, 500)
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3")
+
+[node name="BattleAreaBG" type="ColorRect" parent="HSplit/RightPanel/BattleArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.15, 0.15, 0.2, 1)
+
+[node name="SpawnPoints" type="Control" parent="HSplit/RightPanel/BattleArea"]
+layout_mode = 1
+anchors_preset = 0
+mouse_filter = 2
+
+[node name="SpawnPoint1" type="Control" parent="HSplit/RightPanel/BattleArea/SpawnPoints"]
+anchors_preset = 0
+offset_left = 89.0
+offset_top = 228.0
+offset_right = 89.0
+offset_bottom = 228.0
+
+[node name="SpawnPoint2" type="Control" parent="HSplit/RightPanel/BattleArea/SpawnPoints"]
+anchors_preset = 0
+offset_left = 144.0
+offset_top = 438.0
+offset_right = 144.0
+offset_bottom = 438.0
+
+[node name="SpawnPoint3" type="Control" parent="HSplit/RightPanel/BattleArea/SpawnPoints"]
+anchors_preset = 0
+offset_left = 260.0
+offset_top = 590.0
+offset_right = 260.0
+offset_bottom = 590.0
+
+[node name="SpawnPoint4" type="Control" parent="HSplit/RightPanel/BattleArea/SpawnPoints"]
+anchors_preset = 0
+offset_left = 424.0
+offset_top = 585.0
+offset_right = 424.0
+offset_bottom = 585.0
+
+[node name="SpawnPoint5" type="Control" parent="HSplit/RightPanel/BattleArea/SpawnPoints"]
+anchors_preset = 0
+offset_left = 537.0
+offset_top = 426.0
+offset_right = 537.0
+offset_bottom = 426.0
+
+[node name="SpawnPoint6" type="Control" parent="HSplit/RightPanel/BattleArea/SpawnPoints"]
+anchors_preset = 0
+offset_left = 630.0
+offset_top = 227.0
+offset_right = 630.0
+offset_bottom = 227.0
+
+[node name="SpawnPoint7" type="Control" parent="HSplit/RightPanel/BattleArea/SpawnPoints"]
+anchors_preset = 0
+offset_left = 334.0
+offset_top = 333.0
+offset_right = 334.0
+offset_bottom = 333.0
+
+[node name="StartBattleButton" type="Button" parent="HSplit/RightPanel/BattleArea"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -25.0
+offset_right = 100.0
+offset_bottom = 25.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 24
+text = "⚔️ Start Battle"
+
+[node name="ActionBar" type="Control" parent="HSplit/RightPanel"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="ActionBarBG" type="Panel" parent="HSplit/RightPanel/ActionBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SkillsContainer" type="HBoxContainer" parent="HSplit/RightPanel/ActionBar"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -35.0
+offset_right = 200.0
+offset_bottom = 35.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Skill1Button" type="Button" parent="HSplit/RightPanel/ActionBar/SkillsContainer"]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+text = "🗡️
+ATK"
+
+[node name="Skill2Button" type="Button" parent="HSplit/RightPanel/ActionBar/SkillsContainer"]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+text = "🛡️
+DEF"
+
+[node name="Skill3Button" type="Button" parent="HSplit/RightPanel/ActionBar/SkillsContainer"]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+text = "⚡
+SKILL"
+
+[node name="Skill4Button" type="Button" parent="HSplit/RightPanel/ActionBar/SkillsContainer"]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+text = "💊
+HEAL"
+
+[node name="Skill5Button" type="Button" parent="HSplit/RightPanel/ActionBar/SkillsContainer"]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+text = "🔥
+ULTI"

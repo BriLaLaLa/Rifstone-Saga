@@ -1,0 +1,151 @@
+[gd_scene load_steps=8 format=3 uid="uid://ws76uxi0un62"]
+
+[ext_resource type="Script" uid="uid://dgjlui52rxfti" path="res://scripts/ui/InventoryTab.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://dkaue3cv30vgn" path="res://scripts/ui/Item.tscn" id="2_rjnd6"]
+[ext_resource type="Script" uid="uid://cw68mtn3vj5iq" path="res://scripts/ui/DACANCELLAREbottone.gd" id="3_i2wco"]
+[ext_resource type="PackedScene" uid="uid://ci6nt0nevsu6h" path="res://scripts/ui/InventorySlot.tscn" id="3_s3c4d"]
+[ext_resource type="Script" uid="uid://c4exoc0ywhuiu" path="res://scripts/ui/HighlightLayer.gd" id="5_highlight"]
+[ext_resource type="Texture2D" uid="uid://dfq1oqkgjdkny" path="res://scripts/ui/inventoryPg.png" id="6_equipment"]
+[ext_resource type="Script" uid="uid://bbsbwwvbke84g" path="res://scripts/ui/EquipDrop.gd" id="6_nlt8l"]
+
+[node name="InventoryTab" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1")
+item_scene = ExtResource("2_rjnd6")
+slot_scene = ExtResource("3_s3c4d")
+
+[node name="InvSplit" type="HSplitContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 1.0
+offset_right = 1153.0
+offset_bottom = 768.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Left" type="Control" parent="InvSplit"]
+custom_minimum_size = Vector2(512, 768)
+layout_mode = 2
+
+[node name="Holder" type="GridContainer" parent="InvSplit/Left"]
+layout_mode = 0
+offset_right = 512.0
+offset_bottom = 320.0
+columns = 8
+
+[node name="ItemsLayer" type="Control" parent="InvSplit/Left"]
+anchors_preset = 0
+offset_right = 512.0
+offset_bottom = 320.0
+mouse_filter = 2
+
+[node name="HighlightLayer" type="Control" parent="InvSplit/Left"]
+anchors_preset = 0
+offset_right = 512.0
+offset_bottom = 320.0
+mouse_filter = 2
+script = ExtResource("5_highlight")
+
+[node name="Bottone" type="Button" parent="InvSplit/Left"]
+layout_mode = 0
+offset_left = 9.0
+offset_top = 395.0
+offset_right = 548.0
+offset_bottom = 576.0
+text = "Droppa Random Item"
+script = ExtResource("3_i2wco")
+
+[node name="Right" type="Control" parent="InvSplit"]
+custom_minimum_size = Vector2(400, 768)
+layout_mode = 2
+
+[node name="EquipmentPanel" type="Panel" parent="InvSplit/Right"]
+layout_mode = 0
+offset_left = 121.0
+offset_top = -50.0
+offset_right = 521.0
+offset_bottom = 718.0
+script = ExtResource("6_nlt8l")
+
+[node name="CharacterBackground" type="TextureRect" parent="InvSplit/Right/EquipmentPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -128.0
+offset_top = -256.0
+offset_right = 128.0
+offset_bottom = 256.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("6_equipment")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="EquipmentSlots" type="Control" parent="InvSplit/Right/EquipmentPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="HelmetSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 0
+offset_left = 137.0
+offset_top = 218.0
+offset_right = 201.0
+offset_bottom = 282.0
+mouse_filter = 2
+
+[node name="WeaponSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
+custom_minimum_size = Vector2(64, 128)
+layout_mode = 0
+offset_left = 80.0
+offset_top = 230.0
+offset_right = 144.0
+offset_bottom = 358.0
+mouse_filter = 2
+
+[node name="ChestSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
+custom_minimum_size = Vector2(64, 128)
+layout_mode = 0
+offset_left = 137.0
+offset_top = 267.0
+offset_right = 201.0
+offset_bottom = 395.0
+mouse_filter = 2
+
+[node name="ShieldSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
+custom_minimum_size = Vector2(64, 128)
+layout_mode = 0
+offset_left = 203.0
+offset_top = 263.0
+offset_right = 267.0
+offset_bottom = 391.0
+mouse_filter = 2
+
+[node name="BeltSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
+custom_minimum_size = Vector2(128, 64)
+layout_mode = 0
+offset_left = 108.0
+offset_top = 378.0
+offset_right = 236.0
+offset_bottom = 442.0
+mouse_filter = 2
+
+[node name="BootsSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 0
+offset_left = 134.0
+offset_top = 440.0
+offset_right = 198.0
+offset_bottom = 504.0
+mouse_filter = 2

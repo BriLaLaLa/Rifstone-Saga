@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3 uid="uid://cf0io03nov6ww"]
+
+[ext_resource type="Script" uid="uid://dgjlui52rxfti" path="res://scripts/ui/InventoryTab.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://ci6nt0nevsu6h" path="res://scripts/ui/InventorySlot.tscn" id="2_i2wco"]
+[ext_resource type="PackedScene" uid="uid://dkaue3cv30vgn" path="res://scripts/ui/Item.tscn" id="3_4fpev"]
+[ext_resource type="Script" uid="uid://cw68mtn3vj5iq" path="res://scripts/ui/DACANCELLAREbottone.gd" id="3_i2wco"]
+
+[node name="InventoryTab" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1")
+item_scene = ExtResource("3_4fpev")
+slot_scene = ExtResource("2_i2wco")
+
+[node name="InvSplit" type="HSplitContainer" parent="."]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 1024.0
+offset_bottom = 768.0
+
+[node name="Left" type="VBoxContainer" parent="InvSplit"]
+custom_minimum_size = Vector2(512, 768)
+layout_mode = 2
+
+[node name="Holder" type="GridContainer" parent="InvSplit/Left"]
+layout_mode = 2
+columns = 8
+
+[node name="Bottone" type="Button" parent="InvSplit"]
+layout_mode = 2
+text = "bottone"
+script = ExtResource("3_i2wco")

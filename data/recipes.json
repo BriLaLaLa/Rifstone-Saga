@@ -1,0 +1,30 @@
+[
+  {
+	"id": "smelt_bar",
+	"name": "Fondi barra",
+	"time": 5.0,
+	"inputs":  { "ore": 3 },
+	"outputs": { "bar": 1 }
+  },
+  {
+	"id": "smelt_better_bar",
+	"name": "Fusione avanzata",
+	"time": 8.0,
+	"inputs":  { "ore": 5 },
+	"outputs": { "bar": 2 }
+  },
+  {
+	"id": "brew_minor",
+	"name": "Prepara pozione minore",
+	"time": 6.0,
+	"inputs":  { "fish": 2 },
+	"outputs": { "potion": 1 }
+  },
+  {
+	"id": "brew_lesser",
+	"name": "Prepara pozione inferiore",
+	"time": 8.0,
+	"inputs":  { "fish": 3 },
+	"outputs": { "potion": 2 }
+  }
+]

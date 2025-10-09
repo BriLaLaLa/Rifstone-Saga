@@ -1,0 +1,62 @@
+[
+  { "id": "alchemist", "name": "Alchemist",
+	"pos": { "x": 0.17, "y": 0.12 },
+	"portrait": "", "actions": [ {"id":"shop","label":"Shop"}, {"id":"quest1","label":"Quest 1"}, {"id":"quest2","label":"Quest 2"} ]
+  },
+  { "id": "warehouse", "name": "Warehouse Manager",
+	"pos": { "x": 0.36, "y": 0.30 },
+	"portrait": "", "actions": [ {"id":"shop","label":"Deposito"}, {"id":"quest1","label":"Quest 1"} ]
+  },
+  { "id": "biologist", "name": "Biologist Chaegitab",
+	"pos": { "x": 0.50, "y": 0.17 },
+	"portrait": "", "actions": [ {"id":"quest1","label":"Consegna campioni"} ]
+  },
+  { "id": "uriel", "name": "Uriel",
+	"pos": { "x": 0.86, "y": 0.14 },
+	"portrait": "", "actions": [ {"id":"quest1","label":"Benedizione"} ]
+  },
+  { "id": "doctrine1", "name": "Doctrine Teacher",
+	"pos": { "x": 0.73, "y": 0.36 },
+	"portrait": "", "actions": [ {"id":"quest1","label":"Lezioni"} ]
+  },
+  { "id": "strable", "name": "Strable (Stall Keeper)",
+	"pos": { "x": 0.68, "y": 0.55 },
+	"portrait": "", "actions": [ {"id":"shop","label":"Stallo"} ]
+  },
+  { "id": "bounty", "name": "Bounty Hunter",
+	"pos": { "x": 0.86, "y": 0.63 },
+	"portrait": "", "actions": [ {"id":"quest1","label":"Taglie"} ]
+  },
+  { "id": "fisherman", "name": "Fisherman",
+	"pos": { "x": 0.49, "y": 0.83 },
+	"portrait": "", "actions": [ {"id":"quest1","label":"Gare di pesca"} ]
+  },
+  { "id": "forge", "name": "Forge Zone",
+	"pos": { "x": 0.50, "y": 0.52 },
+	"portrait": "", "actions": [ {"id":"shop","label":"Forgia"} ]
+  },
+  { "id": "commercial", "name": "Commercial Zone",
+	"pos": { "x": 0.20, "y": 0.45 },
+	"portrait": "", "actions": [ {"id":"shop","label":"Bancarelle"} ]
+  },
+  { "id": "grocer", "name": "Grocer",
+	"pos": { "x": 0.21, "y": 0.56 },
+	"portrait": "", "actions": [ {"id":"shop","label":"Emporio"} ]
+  },
+  { "id": "aimor", "name": "Aimor Merchant",
+	"pos": { "x": 0.30, "y": 0.57 },
+	"portrait": "", "actions": [ {"id":"shop","label":"Mercante"} ]
+  },
+  { "id": "woodcutter", "name": "Dookbae (Woodcutter)",
+	"pos": { "x": 0.12, "y": 0.74 },
+	"portrait": "", "actions": [ {"id":"quest1","label":"Legna di qualità"} ]
+  },
+  { "id": "gaya", "name": "Gaya Merchants",
+	"pos": { "x": 0.20, "y": 0.78 },
+	"portrait": "", "actions": [ {"id":"shop","label":"Gaya"} ]
+  },
+  { "id": "doctrine2", "name": "Doctrine Teacher",
+	"pos": { "x": 0.62, "y": 0.78 },
+	"portrait": "", "actions": [ {"id":"quest1","label":"Lezioni"} ]
+  }
+]

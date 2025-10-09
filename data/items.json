@@ -1,0 +1,28 @@
+[
+  {
+	"id": "sword_iron",
+	"name": "Spada di Ferro",
+	"category": "weapon",
+	"size": [1, 2],
+	"attack": 15,
+	"defense": 0,
+	"icon": "res://Item_Texture/ferroRosso2.png"
+  },
+  {
+	"id": "belt_leather", 
+	"name": "Cintura di Cuoio",
+	"category": "armor",
+	"size": [2, 1],
+	"attack": 0,
+	"defense": 5,
+	"icon": "res://Item_Texture/BeltdelDrago.png"
+  },
+  {
+	"id": "potion_health",
+	"name": "Pozione di Vita", 
+	"category": "consumable",
+	"size": [1, 1],
+	"heal": 50,
+	"icon": "res://Item_Texture/lunaPiena.png"
+  }
+]

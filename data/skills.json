@@ -1,0 +1,74 @@
+[
+  {
+	"id": "woodcutting",
+	"name": "Taglialegna",
+	"category": "gathering",
+	"level": 1,
+	"xp": 0,
+	"grade": "N",
+	"xp_curve": "linear_easy",
+	"icon": "res://Icons/deokbae.png",
+	"actions": ["taglia_pino", "taglia_quercia"],
+	"bonuses": []
+  },
+  {
+	"id": "fishing",
+	"name": "Pescatore",
+	"category": "gathering",
+	"level": 1,
+	"xp": 0,
+	"grade": "N",
+	"xp_curve": "linear_easy",
+	"icon": "",
+	"actions": ["fish_shallow", "fish_river"],
+	"bonuses": []
+  },
+  {
+	"id": "mining",
+	"name": "Minatore",
+	"category": "gathering",
+	"level": 1,
+	"xp": 0,
+	"grade": "N",
+	"xp_curve": "linear_easy",
+	"icon": "",
+	"actions": ["mine_rock", "mine_vein"],
+	"bonuses": []
+  },
+  {
+	"id": "smithing",
+	"name": "Fucina",
+	"category": "production",
+	"level": 1,
+	"xp": 0,
+	"grade": "N",
+	"xp_curve": "craft_slow",
+	"icon": "",
+	"actions": ["smelt_bar", "smelt_better_bar"],
+	"bonuses": []
+  },
+  {
+	"id": "alchemy",
+	"name": "Alchimia",
+	"category": "production",
+	"level": 1,
+	"xp": 0,
+	"grade": "N",
+	"xp_curve": "craft_slow",
+	"icon": "",
+	"actions": ["brew_minor", "brew_lesser"],
+	"bonuses": []
+  },
+  {
+	"id": "swordsmanship",
+	"name": "Scherma",
+	"category": "combat",
+	"level": 1,
+	"xp": 0,
+	"grade": "N",
+	"xp_curve": "combat_std",
+	"icon": "",
+	"actions": ["practice_slashes", "kata_advanced"],
+	"bonuses": []
+  }
+]

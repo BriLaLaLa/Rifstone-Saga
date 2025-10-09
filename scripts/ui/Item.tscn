@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://dkaue3cv30vgn"]
+
+[ext_resource type="Script" uid="uid://bctr1igkp7430" path="res://scripts/ui/Item.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://djwidmobdw56r" path="res://icon.svg" id="1_4v4b3"]
+
+[node name="Item" type="TextureRect"]
+custom_minimum_size = Vector2(64, 64)
+texture = ExtResource("1_4v4b3")
+expand_mode = 1
+script = ExtResource("1")
