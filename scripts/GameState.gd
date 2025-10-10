@@ -12,6 +12,30 @@ signal on_action_progress(action_id: String, t_left: float, t_total: float)
 signal on_action_finished(action_id: String)
 signal on_promotion_result(skill_id: String, success: bool, msg: String)
 
+# ============================================
+# NUOVO: CHARACTER STATS SYSTEM
+# ============================================
+var character_stats: CharacterStats = null
+
+# Equipment slots
+var equipped_items := {
+	"helmet": null,
+	"weapon": null,
+	"chest": null,
+	"shield": null,
+	"belt": null,
+	"boots": null,
+}
+
+# Nuovi segnali per stats
+signal on_stats_changed()
+signal on_item_equipped(slot: String, item_data: Dictionary)
+signal on_item_unequipped(slot: String, item_data: Dictionary)
+
+# ============================================
+# VARIABILI ESISTENTI
+# ============================================
+
 var skills := {}         # skill_id -> Skill (Resource)
 var resources := {"gold": 0}
 var inventory := {}      # item_id -> count
@@ -59,6 +83,14 @@ var rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	rng.randomize()
 	_load_default_data()
+	
+	# NUOVO: Inizializza character stats
+	character_stats = CharacterStats.new()
+	character_stats.stats_changed.connect(_on_character_stat_changed)
+	character_stats.hp_changed.connect(_on_hp_changed)
+	character_stats.mana_changed.connect(_on_mana_changed)
+	print("[GameState] Character stats initialized")
+	
 	load_game()
 	set_process(true)
 
@@ -67,6 +99,10 @@ func _process(delta: float) -> void:
 	if _tick_accum >= _tick_rate:
 		_tick_accum = 0.0
 		_tick()
+	
+	# NUOVO: Aggiorna stats temporanee
+	if character_stats:
+		character_stats.update_temporary_modifiers(delta)
 
 func _tick() -> void:
 	_tick_skills_legacy()   # mantiene vecchio training se lo usi
@@ -240,6 +276,7 @@ func _tick_crafting() -> void:
 			_add_item(k, int(r.outputs[k]))
 		craft_queue.pop_front()
 		on_craft_updated.emit()
+
 func start_craft(recipe_id: String) -> bool:
 	if not data.recipes.has(recipe_id):
 		return false
@@ -257,8 +294,6 @@ func start_craft(recipe_id: String) -> bool:
 	craft_queue.append({ "recipe_id": recipe_id, "time_left": float(r.time) })
 	on_craft_updated.emit()
 	return true
-
-
 
 func _tick_combat() -> void:
 	if not combat_active or current_mob == "": return
@@ -313,6 +348,95 @@ func _remove_item(item_id: String, amount: int) -> void:
 		inventory[item_id] = left
 	on_inventory_changed.emit()
 
+# ============================================
+# NUOVO: EQUIPMENT MANAGEMENT
+# ============================================
+
+func equip_item_to_slot(item_id: String, slot: String) -> bool:
+	"""Equipaggia un item da inventory a equipment slot"""
+	if not data.items.has(item_id):
+		print("[GameState] Item non trovato: ", item_id)
+		return false
+	
+	var item_data = data.items[item_id]
+	
+	# Verifica che l'item possa essere equipaggiato in questo slot
+	var item_slot = item_data.get("slot", "none")
+	if item_slot != slot and item_slot != "any":
+		print("[GameState] Item non compatibile con slot: ", item_id, " -> ", slot)
+		return false
+	
+	# Se c'è già qualcosa equipaggiato, unequip prima
+	if equipped_items[slot] != null:
+		unequip_item_from_slot(slot)
+	
+	# Equipaggia
+	equipped_items[slot] = item_data
+	
+	# Applica stats
+	if item_data.has("stats"):
+		character_stats.apply_equipment_stats(item_data.stats)
+	
+	# Rimuovi dall'inventario
+	_remove_item(item_id, 1)
+	
+	on_item_equipped.emit(slot, item_data)
+	on_stats_changed.emit()
+	
+	print("[GameState] Equipped: ", item_data.get("name", item_id), " in ", slot)
+	return true
+
+func unequip_item_from_slot(slot: String) -> bool:
+	"""Rimuove un item da un equipment slot"""
+	if not equipped_items.has(slot) or equipped_items[slot] == null:
+		return false
+	
+	var item_data = equipped_items[slot]
+	var item_id = item_data.get("id", "unknown")
+	
+	# Rimuovi stats
+	if item_data.has("stats"):
+		character_stats.remove_equipment_stats(item_data.stats)
+	
+	# Rimetti in inventory
+	_add_item(item_id, 1)
+	
+	# Clear slot
+	equipped_items[slot] = null
+	
+	on_item_unequipped.emit(slot, item_data)
+	on_stats_changed.emit()
+	
+	print("[GameState] Unequipped: ", item_data.get("name", item_id), " from ", slot)
+	return true
+
+func get_equipped_item(slot: String) -> Dictionary:
+	"""Ottiene l'item equipaggiato in uno slot"""
+	return equipped_items.get(slot, {}) if equipped_items.get(slot) != null else {}
+
+func get_total_attack() -> float:
+	"""Calcola attacco totale (per compatibilità col combat esistente)"""
+	return character_stats.get_stat("physical_damage") + character_stats.get_stat("strength") * 0.5
+
+func get_total_defense() -> float:
+	"""Calcola difesa totale (per compatibilità)"""
+	return character_stats.get_stat("physical_defense") + character_stats.get_stat("vitality") * 0.3
+
+# -------- CALLBACKS STATS --------
+
+func _on_character_stat_changed(stat_name: String, old_value, new_value):
+	on_stats_changed.emit()
+
+func _on_hp_changed(current: float, maximum: float):
+	if current <= 0:
+		_on_character_death()
+
+func _on_mana_changed(current: float, maximum: float):
+	pass
+
+func _on_character_death():
+	print("[GameState] Character died!")
+	combat_active = false
 
 # -------- Data loading --------
 func _read_json_array(path: String) -> Array:
@@ -365,16 +489,28 @@ func save_game() -> void:
 			"left": action_time_left,
 			"total": action_time_total
 		},
-		"bonuses": {"dps_add": bonus_dps_add, "dps_mult": bonus_dps_mult}
+		"bonuses": {"dps_add": bonus_dps_add, "dps_mult": bonus_dps_mult},
+		
+		# NUOVO: Salva character stats
+		"character_stats": character_stats.to_dict() if character_stats else {},
+		"equipped_items": {}
 	}
+	
+	# NUOVO: Salva equipped items
+	for slot in equipped_items.keys():
+		if equipped_items[slot] != null:
+			data_save.equipped_items[slot] = equipped_items[slot].get("id", "")
+	
 	for k in skills.keys():
 		var s: Skill = skills[k]
 		data_save.skills[k] = {
 			"level": s.level, "xp": s.xp, "grade": s.grade
 		}
+	
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	file.store_string(JSON.stringify(data_save))
 	file.flush()
+	print("[GameState] Game saved with stats")
 
 func load_game() -> void:
 	if not FileAccess.file_exists(SAVE_PATH): return
@@ -382,8 +518,10 @@ func load_game() -> void:
 	var txt := file.get_as_text()
 	var parsed = JSON.parse_string(txt)
 	if typeof(parsed) != TYPE_DICTIONARY: return
+	
 	resources = parsed.get("resources", resources)
 	inventory = parsed.get("inventory", inventory)
+	
 	var saved_skills = parsed.get("skills", {})
 	for k in saved_skills.keys():
 		if skills.has(k):
@@ -392,38 +530,67 @@ func load_game() -> void:
 			s.level = int(d.get("level", s.level))
 			s.xp = float(d.get("xp", s.xp))
 			s.grade = String(d.get("grade", s.grade))
+	
 	craft_queue = parsed.get("craft_queue", [])
+	
 	var c = parsed.get("combat", {})
 	current_area = c.get("current_area", current_area)
 	current_mob = c.get("current_mob", current_mob)
 	enemy_hp = float(c.get("enemy_hp", 0.0))
 	kills = int(c.get("kills", 0))
 	combat_active = bool(c.get("combat_active", false))
+	
 	var a = parsed.get("action", {})
 	current_action_id = String(a.get("id",""))
 	action_time_left = float(a.get("left",0.0))
 	action_time_total = float(a.get("total",0.0))
+	
 	var b = parsed.get("bonuses", {})
 	bonus_dps_add = float(b.get("dps_add", 0.0))
 	bonus_dps_mult = float(b.get("dps_mult", 0.0))
-
+	
+	# NUOVO: Carica character stats
+	if parsed.has("character_stats") and character_stats:
+		character_stats.from_dict(parsed.character_stats)
+	
+	# NUOVO: Carica equipped items
+	if parsed.has("equipped_items"):
+		for slot in parsed.equipped_items.keys():
+			var item_id = parsed.equipped_items[slot]
+			if item_id != "" and data.items.has(item_id):
+				equipped_items[slot] = data.items[item_id]
+				# Riapplica stats
+				if equipped_items[slot].has("stats"):
+					character_stats.apply_equipment_stats(equipped_items[slot].stats)
+	
+	print("[GameState] Game loaded with stats")
 
 func reset_save() -> void:
-	# usa la costante SAVE_PATH già presente nel file (non ridefinirla)
 	if FileAccess.file_exists(SAVE_PATH):
 		var err := DirAccess.remove_absolute(SAVE_PATH)
 		if err != OK:
 			push_warning("Impossibile rimuovere il salvataggio: %s (err %d)" % [SAVE_PATH, err])
 
-	# ricarica i dati di default dai JSON
 	_load_default_data()
 
-	# opzionale: azzera stato runtime e notifica UI
 	current_action_id = ""
 	action_time_left = 0.0
 	action_time_total = 0.0
 	craft_queue.clear()
+	
+	# NUOVO: Reset stats
+	if character_stats:
+		character_stats = CharacterStats.new()
+		character_stats.stats_changed.connect(_on_character_stat_changed)
+		character_stats.hp_changed.connect(_on_hp_changed)
+		character_stats.mana_changed.connect(_on_mana_changed)
+	
+	# Reset equipment
+	for slot in equipped_items.keys():
+		equipped_items[slot] = null
+	
 	on_inventory_changed.emit()
 	on_craft_updated.emit()
+	on_stats_changed.emit()
 
 	print("[GameState] Reset eseguito. Skills caricate:", skills.keys())

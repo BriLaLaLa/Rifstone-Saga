@@ -1,0 +1,64 @@
+==============================================
+     COMANDI GIT - RIFTSTONE SAGA
+==============================================
+
+1. APRIRE IL TERMINALE
+   - Apri PowerShell o CMD
+   - Vai nella cartella progetto:
+   
+cd "C:\Users\Davide\Documents\GODOT\RiftStone Saga\RiftStone Saga\idleafkstarter_0.1"
+
+
+2. COMANDO VELOCE (TUTTO IN UNO)
+   
+git add . && git commit -m "Aggiornamento" && git push
+
+
+3. COMANDI SEPARATI (se preferisci)
+
+git add .
+git commit -m "Descrizione modifiche"
+git push
+
+
+4. ESEMPI MESSAGGI COMMIT
+
+git commit -m "Fixed enemy positioning"
+git commit -m "Added skill buttons functionality"
+git commit -m "Implemented loot system"
+git commit -m "Bug fix: inventory z-index"
+
+
+5. COMANDI UTILI
+
+Vedere cosa hai modificato:
+git status
+
+Vedere cronologia:
+git log --oneline
+
+Annullare modifiche locali (ATTENZIONE!):
+git reset --hard
+
+
+6. TEMPI
+   - git push: 10-30 secondi
+   - Claude vede modifiche: ISTANTANEO dopo push
+
+
+7. LINK REPOSITORY
+https://github.com/BriLaLaLa/Rifstone-Saga
+
+
+8. WORKFLOW
+   1. Fai modifiche in Godot
+   2. Salva file (Ctrl+S)
+   3. Apri terminale
+   4. Esegui: git add . && git commit -m "cosa hai fatto" && git push
+   5. Aspetta 20 secondi
+   6. Dì a Claude: "Ho pushato, guarda ora!"
+
+
+==============================================
+FINE - Salva questo file come "GIT_COMANDI.txt"
+==============================================
