@@ -37,8 +37,8 @@ func _ready() -> void:
 	call_deferred("_refresh_equipped_items")
 	
 	if LOG:
-		print("[EquipDrop] Ready - mouse_filter: %s" % mouse_filter)
-		print("[EquipDrop] Slot compatibility: %s" % ", ".join(slot_compatibility.keys()))
+		print("[EquipDrop] Ready - mouse_filter: ", mouse_filter)
+		print("[EquipDrop] Slot compatibility: ", ", ".join(slot_compatibility.keys()))
 
 func _auto_calibrate_slots() -> void:
 	"""Trova automaticamente le posizioni degli slot equipment"""
@@ -49,15 +49,20 @@ func _auto_calibrate_slots() -> void:
 	var equipment_slots_node = get_node_or_null("EquipmentSlots")
 	if equipment_slots_node == null:
 		print("[EquipDrop] ERROR: EquipmentSlots node not found!")
-		print("[EquipDrop] Available children: %s" % get_children().map(func(child): return child.name))
+		var children_names = []
+		for child in get_children():
+			children_names.append(child.name)
+		print("[EquipDrop] Available children: ", children_names)
 		# Usa coordinate di fallback
 		_use_fallback_coordinates()
 		return
 	
 	if LOG:
 		print("[EquipDrop] Found EquipmentSlots node")
-		var slot_children = equipment_slots_node.get_children().map(func(child): return child.name)
-		print("[EquipDrop] Available slot children: %s" % slot_children)
+		var slot_children = []
+		for child in equipment_slots_node.get_children():
+			slot_children.append(child.name)
+		print("[EquipDrop] Available slot children: ", slot_children)
 	
 	# Trova e calibra ogni slot
 	slot_rects.clear()
@@ -66,23 +71,31 @@ func _auto_calibrate_slots() -> void:
 	for slot_name in slot_compatibility.keys():
 		var slot_node = equipment_slots_node.get_node_or_null(slot_name)
 		if slot_node == null:
-			print("[EquipDrop] WARNING: %s not found, skipping" % slot_name)
+			print("[EquipDrop] WARNING: ", slot_name, " not found, skipping")
 			continue
 		
-		# Calcola posizione relativa a questo pannello (EquipmentPanel)
-		var local_pos = slot_node.position
-		var slot_rect = Rect2(local_pos, slot_node.size)
+		# CORREZIONE: Calcola posizione relativa a EquipmentPanel (questo Control)
+		# Somma la posizione di EquipmentSlots + la posizione dello slot
+		var equipment_slots_pos = equipment_slots_node.position
+		var slot_local_pos = slot_node.position
+		var final_pos = equipment_slots_pos + slot_local_pos
+		
+		var slot_rect = Rect2(final_pos, slot_node.size)
 		slot_rects[slot_name] = slot_rect
 		slots_found += 1
 		
 		if LOG:
-			print("[EquipDrop] Calibrated %s: pos=%s, size=%s" % [slot_name, local_pos, slot_node.size])
+			print("[EquipDrop] Calibrated ", slot_name, ":")
+			print("  EquipmentSlots pos: ", equipment_slots_pos)
+			print("  Slot local pos: ", slot_local_pos)
+			print("  Final pos: ", final_pos)
+			print("  Slot size: ", slot_node.size)
 	
 	if slots_found == 0:
 		print("[EquipDrop] No slots found! Using fallback coordinates")
 		_use_fallback_coordinates()
 	else:
-		print("[EquipDrop] Calibration complete: %d/%d slots found" % [slots_found, slot_compatibility.size()])
+		print("[EquipDrop] Calibration complete: ", slots_found, "/", slot_compatibility.size(), " slots found")
 		calibration_mode = false
 
 func _use_fallback_coordinates() -> void:
@@ -106,12 +119,18 @@ func _setup_slot_visuals() -> void:
 	var equipment_slots_node = get_node_or_null("EquipmentSlots")
 	if equipment_slots_node == null:
 		print("[EquipDrop] ERROR: EquipmentSlots node not found!")
-		print("[EquipDrop] Available children: %s" % get_children().map(func(child): return child.name))
+		var children_names = []
+		for child in get_children():
+			children_names.append(child.name)
+		print("[EquipDrop] Available children: ", children_names)
 		return
 	
 	if LOG:
-		print("[EquipDrop] Found EquipmentSlots node: %s" % equipment_slots_node.name)
-		print("[EquipDrop] EquipmentSlots children: %s" % equipment_slots_node.get_children().map(func(child): return child.name))
+		print("[EquipDrop] Found EquipmentSlots node: ", equipment_slots_node.name)
+		var children_names = []
+		for child in equipment_slots_node.get_children():
+			children_names.append(child.name)
+		print("[EquipDrop] EquipmentSlots children: ", children_names)
 	
 	# IMPORTANTE: Calcola le posizioni REALI degli slot dinamicamente
 	await get_tree().process_frame  # Aspetta che il layout sia aggiornato
@@ -119,24 +138,29 @@ func _setup_slot_visuals() -> void:
 	# Pulisci il dictionary prima di riempirlo
 	slot_rects.clear()
 	
+	# CORREZIONE: Usa lo stesso calcolo di _auto_calibrate_slots
+	var equipment_slots_pos = equipment_slots_node.position
+	
 	for slot_name in slot_compatibility.keys():
 		var slot_node = equipment_slots_node.get_node_or_null(slot_name)
 		if slot_node == null:
-			print("[EquipDrop] WARNING: Slot node %s not found in EquipmentSlots!" % slot_name)
+			print("[EquipDrop] WARNING: Slot node ", slot_name, " not found in EquipmentSlots!")
 			continue
 		
 		# Calcola la posizione relativa al nostro pannello EquipmentPanel
-		var slot_rect = Rect2(slot_node.position, slot_node.size)
+		var slot_local_pos = slot_node.position
+		var final_pos = equipment_slots_pos + slot_local_pos
+		var slot_rect = Rect2(final_pos, slot_node.size)
 		slot_rects[slot_name] = slot_rect
 		
 		if LOG:
-			print("[EquipDrop] Dynamic slot %s: %s" % [slot_name, slot_rect])
+			print("[EquipDrop] Dynamic slot ", slot_name, ": ", slot_rect)
 		
 		# Crea highlight panel
 		var highlight = Panel.new()
 		highlight.name = slot_name + "_Highlight"
-		highlight.position = slot_rect.position
-		highlight.size = slot_rect.size
+		highlight.position = final_pos
+		highlight.size = slot_node.size
 		highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		highlight.visible = false
 		
@@ -154,7 +178,7 @@ func _setup_slot_visuals() -> void:
 		_slot_highlights[slot_name] = highlight
 	
 	if LOG:
-		print("[EquipDrop] Final slot_rects: %s" % slot_rects)
+		print("[EquipDrop] Final slot_rects: ", slot_rects)
 
 func _connect_to_gamestate() -> void:
 	"""Connetti ai segnali del GameState per sincronizzazione"""
@@ -171,8 +195,10 @@ func _connect_to_gamestate() -> void:
 func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 	"""Verifica se un item può essere droppato negli equipment slots"""
 	if LOG:
-		print("[EquipDrop] _can_drop_data at position: %s" % at_position)
-		print("[EquipDrop] Data received: %s" % data)
+		print("[EquipDrop] _can_drop_data at position: ", at_position)
+		print("[EquipDrop] Data received: ", data)
+		print("[EquipDrop] My global position: ", global_position)
+		print("[EquipDrop] My position: ", position)
 	
 	if not _is_valid_item_data(data):
 		if LOG:
@@ -187,10 +213,17 @@ func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 		_clear_slot_highlights()
 		return false
 	
-	# Trova quale slot è sotto il mouse
-	var target_slot = _get_slot_at_position(at_position)
+	# CORREZIONE: Usa at_position direttamente - dovrebbe essere già corretto
+	# Il parametro at_position dovrebbe essere la posizione locale al Control
+	var local_pos = at_position
+	
 	if LOG:
-		print("[EquipDrop] Position: %s, Found slot: '%s'" % [at_position, target_slot])
+		print("[EquipDrop] Using at_position directly: ", local_pos)
+	
+	# Trova quale slot è sotto il mouse usando la posizione del parametro
+	var target_slot = _get_slot_at_position(local_pos)
+	if LOG:
+		print("[EquipDrop] Found slot: '", target_slot, "'")
 	
 	if target_slot == "":
 		if LOG:
@@ -203,7 +236,7 @@ func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 	var is_compatible = _is_item_compatible_with_slot(item_type, target_slot)
 	
 	if LOG:
-		print("[EquipDrop] Item: %s, Type: %s, Target slot: %s, Compatible: %s" % [item.item_id, item_type, target_slot, is_compatible])
+		print("[EquipDrop] Item: ", item.item_id, ", Type: ", item_type, ", Target slot: ", target_slot, ", Compatible: ", is_compatible)
 	
 	# Visual feedback
 	_clear_slot_highlights()
@@ -215,14 +248,14 @@ func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 		_hover_slot = ""
 	
 	if LOG:
-		print("[EquipDrop] Can drop %s (%s) on %s: %s" % [item.item_id, item_type, target_slot, is_compatible])
+		print("[EquipDrop] Can drop ", item.item_id, " (", item_type, ") on ", target_slot, ": ", is_compatible)
 	
 	return is_compatible
 
 func _drop_data(at_position: Vector2, data: Variant) -> void:
 	"""Gestisce il drop di un item su un equipment slot"""
 	if LOG:
-		print("[EquipDrop] _drop_data at position: %s" % at_position)
+		print("[EquipDrop] _drop_data at position: ", at_position)
 	
 	_clear_slot_highlights()
 	
@@ -233,6 +266,7 @@ func _drop_data(at_position: Vector2, data: Variant) -> void:
 	if item == null:
 		return
 	
+	# CORREZIONE: Usa at_position direttamente
 	var target_slot = _get_slot_at_position(at_position)
 	if target_slot == "":
 		return
@@ -246,10 +280,10 @@ func _drop_data(at_position: Vector2, data: Variant) -> void:
 			item.mark_drop_success()
 		
 		if LOG:
-			print("[EquipDrop] Successfully equipped %s to %s" % [item.item_id, target_slot])
+			print("[EquipDrop] Successfully equipped ", item.item_id, " to ", target_slot)
 	else:
 		if LOG:
-			print("[EquipDrop] Failed to equip %s to %s" % [item.item_id, target_slot])
+			print("[EquipDrop] Failed to equip ", item.item_id, " to ", target_slot)
 
 # ==================== EQUIPMENT LOGIC ====================
 
@@ -264,7 +298,7 @@ func _equip_item_to_slot(item: Item, slot_name: String) -> bool:
 	# Mappa nome slot UI a slot GameState
 	var gamestate_slot = _ui_slot_to_gamestate_slot(slot_name)
 	if gamestate_slot == "":
-		print("[EquipDrop] Invalid slot mapping: %s" % slot_name)
+		print("[EquipDrop] Invalid slot mapping: ", slot_name)
 		return false
 	
 	# Equipaggia tramite GameState
@@ -332,17 +366,24 @@ func _is_item_compatible_with_slot(item_type: String, slot_name: String) -> bool
 func _get_slot_at_position(local_pos: Vector2) -> String:
 	"""Trova quale slot si trova alla posizione locale specificata"""
 	if LOG:
-		print("[EquipDrop] Checking position %s against slots:" % local_pos)
+		print("[EquipDrop] Checking position ", local_pos, " against slots:")
+		print("[EquipDrop] This control size: ", size)
+		print("[EquipDrop] This control position: ", position)
 	
 	for slot_name in slot_rects.keys():
 		var rect = slot_rects[slot_name]
+		var contains = rect.has_point(local_pos)
 		if LOG:
-			print("[EquipDrop]   %s: %s (contains: %s)" % [slot_name, rect, rect.has_point(local_pos)])
-		if rect.has_point(local_pos):
+			print("[EquipDrop]   ", slot_name, ": ", rect)
+			print("[EquipDrop]     Position range: X(", rect.position.x, " to ", rect.position.x + rect.size.x, "), Y(", rect.position.y, " to ", rect.position.y + rect.size.y, ")")
+			print("[EquipDrop]     Contains ", local_pos, ": ", contains)
+		if contains:
+			if LOG:
+				print("[EquipDrop] ✅ Found slot: ", slot_name)
 			return slot_name
 	
 	if LOG:
-		print("[EquipDrop] No slot found")
+		print("[EquipDrop] ❌ No slot found")
 	return ""
 
 # ==================== VISUAL FEEDBACK ====================
@@ -420,7 +461,7 @@ func _create_equipped_item_visual(gamestate_slot: String, item_data: Dictionary)
 	add_child(item)
 	
 	if LOG:
-		print("[EquipDrop] Created visual for equipped item: %s in slot %s" % [item.item_id, ui_slot])
+		print("[EquipDrop] Created visual for equipped item: ", item.item_id, " in slot ", ui_slot)
 
 func _gamestate_slot_to_ui_slot(gamestate_slot: String) -> String:
 	"""Mappa i nomi degli slot GameState ai nomi degli slot UI"""
@@ -438,13 +479,13 @@ func _gamestate_slot_to_ui_slot(gamestate_slot: String) -> String:
 func _on_item_equipped_in_gamestate(slot: String, item_data: Dictionary) -> void:
 	"""Callback quando un item viene equipaggiato nel GameState"""
 	if LOG:
-		print("[EquipDrop] Item equipped in GameState: %s -> %s" % [item_data.get("name", "Unknown"), slot])
+		print("[EquipDrop] Item equipped in GameState: ", item_data.get("name", "Unknown"), " -> ", slot)
 	_refresh_equipped_items()
 
 func _on_item_unequipped_in_gamestate(slot: String, item_data: Dictionary) -> void:
 	"""Callback quando un item viene de-equipaggiato nel GameState"""
 	if LOG:
-		print("[EquipDrop] Item unequipped from GameState: %s <- %s" % [item_data.get("name", "Unknown"), slot])
+		print("[EquipDrop] Item unequipped from GameState: ", item_data.get("name", "Unknown"), " <- ", slot)
 	_refresh_equipped_items()
 
 # ==================== UTILITY FUNCTIONS ====================

@@ -86,6 +86,7 @@ grow_vertical = 2
 texture = ExtResource("6_equipment")
 expand_mode = 1
 stretch_mode = 5
+mouse_filter = 2
 
 [node name="EquipmentSlots" type="Control" parent="InvSplit/Right/EquipmentPanel"]
 layout_mode = 1
@@ -94,7 +95,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+mouse_filter = 0
 
 [node name="HelmetSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
 custom_minimum_size = Vector2(64, 64)
