@@ -103,7 +103,6 @@ offset_left = 137.0
 offset_top = 218.0
 offset_right = 201.0
 offset_bottom = 282.0
-mouse_filter = 2
 
 [node name="WeaponSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
 custom_minimum_size = Vector2(64, 128)
@@ -112,7 +111,6 @@ offset_left = 80.0
 offset_top = 230.0
 offset_right = 144.0
 offset_bottom = 358.0
-mouse_filter = 2
 
 [node name="ChestSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
 custom_minimum_size = Vector2(64, 128)
@@ -121,7 +119,6 @@ offset_left = 137.0
 offset_top = 267.0
 offset_right = 201.0
 offset_bottom = 395.0
-mouse_filter = 2
 
 [node name="ShieldSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
 custom_minimum_size = Vector2(64, 128)
@@ -130,7 +127,6 @@ offset_left = 203.0
 offset_top = 263.0
 offset_right = 267.0
 offset_bottom = 391.0
-mouse_filter = 2
 
 [node name="BeltSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
 custom_minimum_size = Vector2(128, 64)
@@ -139,7 +135,6 @@ offset_left = 108.0
 offset_top = 378.0
 offset_right = 236.0
 offset_bottom = 442.0
-mouse_filter = 2
 
 [node name="BootsSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
 custom_minimum_size = Vector2(64, 64)
@@ -148,4 +143,3 @@ offset_left = 134.0
 offset_top = 440.0
 offset_right = 198.0
 offset_bottom = 504.0
-mouse_filter = 2

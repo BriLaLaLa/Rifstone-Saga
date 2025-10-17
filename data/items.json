@@ -1,163 +1,84 @@
 [
   {
-	"id": "sword_iron",
-	"name": "Spada di Ferro",
-	"type": "weapon",
+	"id": "iron_sword",
+	"name": "Iron Sword",
+	"type": "Weapon",
 	"slot": "weapon",
-	"icon": "res://Item_Texture/ferroRosso2.png",
 	"size": [1, 2],
-	"description": "Una spada di ferro robusta.",
-	"attack": 12,
-	"defense": 0,
+	"icon": "res://icons/iron_sword.png",
 	"stats": {
-	  "physical_damage": 12,
-	  "strength": 2,
-	  "attack_speed": 0.1
-	}
+	  "physical_damage": 15,
+	  "strength": 2
+	},
+	"description": "A sturdy iron sword for beginning warriors."
   },
   {
-	"id": "belt_leather",
-	"name": "Cintura di Cuoio",
-	"type": "armor",
+	"id": "leather_helmet",
+	"name": "Leather Helmet", 
+	"type": "Armor",
+	"slot": "helmet",
+	"size": [1, 1],
+	"icon": "res://icons/leather_helmet.png",
+	"stats": {
+	  "physical_defense": 8,
+	  "vitality": 1
+	},
+	"description": "Basic protection for your head."
+  },
+  {
+	"id": "chainmail",
+	"name": "Chainmail Armor",
+	"type": "Armor", 
+	"slot": "chest",
+	"size": [1, 2],
+	"icon": "res://icons/chainmail.png",
+	"stats": {
+	  "physical_defense": 20,
+	  "vitality": 3,
+	  "max_hp": 25
+	},
+	"description": "Interlocked metal rings provide solid protection."
+  },
+  {
+	"id": "iron_shield",
+	"name": "Iron Shield",
+	"type": "Shield",
+	"slot": "shield", 
+	"size": [1, 2],
+	"icon": "res://icons/iron_shield.png",
+	"stats": {
+	  "physical_defense": 12,
+	  "block_chance": 15.0,
+	  "vitality": 2
+	},
+	"description": "A reliable shield for blocking attacks."
+  },
+  {
+	"id": "leather_boots",
+	"name": "Leather Boots",
+	"type": "Footwear",
+	"slot": "boots",
+	"size": [1, 1], 
+	"icon": "res://icons/leather_boots.png",
+	"stats": {
+	  "physical_defense": 5,
+	  "movement_speed": 10.0,
+	  "dexterity": 1
+	},
+	"description": "Comfortable boots for traveling."
+  },
+  {
+	"id": "utility_belt",
+	"name": "Adventurer's Belt",
+	"type": "Accessory",
 	"slot": "belt",
-	"icon": "res://Item_Texture/BeltdelDrago.png",
 	"size": [2, 1],
-	"description": "Una semplice cintura di cuoio.",
-	"attack": 0,
-	"defense": 5,
+	"icon": "res://icons/utility_belt.png", 
 	"stats": {
 	  "max_hp": 15,
-	  "physical_defense": 3,
-	  "vitality": 1
-	}
-  },
-  {
-	"id": "potion_health",
-	"name": "Pozione di Salute",
-	"type": "consumable",
-	"slot": "none",
-	"icon": "res://Item_Texture/lunaPiena.png",
-	"size": [1, 1],
-	"description": "Ripristina 50 HP.",
-	"heal": 50,
-	"stats": {}
-  },
-  {
-	"id": "sword_steel",
-	"name": "Spada d'Acciaio",
-	"type": "weapon",
-	"slot": "weapon",
-	"icon": "res://Item_Texture/ferroRosso2.png",
-	"size": [1, 2],
-	"description": "Spada forgiata in acciaio temprato.",
-	"attack": 24,
-	"defense": 0,
-	"stats": {
-	  "physical_damage": 24,
-	  "strength": 5,
-	  "attack_speed": 0.15,
-	  "crit_chance": 3.0
-	}
-  },
-  {
-	"id": "helmet_iron",
-	"name": "Elmo di Ferro",
-	"type": "armor",
-	"slot": "helmet",
-	"icon": "res://icon.svg",
-	"size": [1, 1],
-	"description": "Protegge la testa dai colpi.",
-	"attack": 0,
-	"defense": 8,
-	"stats": {
-	  "max_hp": 20,
-	  "physical_defense": 8,
-	  "vitality": 2
-	}
-  },
-  {
-	"id": "chest_leather",
-	"name": "Corazza di Cuoio",
-	"type": "armor",
-	"slot": "chest",
-	"icon": "res://icon.svg",
-	"size": [1, 2],
-	"description": "Armatura leggera ma resistente.",
-	"attack": 0,
-	"defense": 12,
-	"stats": {
-	  "max_hp": 30,
-	  "physical_defense": 12,
-	  "vitality": 3,
-	  "evasion": 2.0
-	}
-  },
-  {
-	"id": "shield_wooden",
-	"name": "Scudo di Legno",
-	"type": "armor",
-	"slot": "shield",
-	"icon": "res://icon.svg",
-	"size": [1, 2],
-	"description": "Scudo basilare per bloccare attacchi.",
-	"attack": 0,
-	"defense": 10,
-	"stats": {
-	  "physical_defense": 10,
-	  "block_chance": 15.0,
-	  "block_amount": 5
-	}
-  },
-  {
-	"id": "boots_leather",
-	"name": "Stivali di Cuoio",
-	"type": "armor",
-	"slot": "boots",
-	"icon": "res://icon.svg",
-	"size": [1, 1],
-	"description": "Stivali comodi per muoversi velocemente.",
-	"attack": 0,
-	"defense": 3,
-	"stats": {
-	  "movement_speed": 15.0,
-	  "dexterity": 2,
-	  "evasion": 3.0
-	}
-  },
-  {
-	"id": "ring_strength",
-	"name": "Anello della Forza",
-	"type": "accessory",
-	"slot": "any",
-	"icon": "res://icon.svg",
-	"size": [1, 1],
-	"description": "Aumenta la forza fisica.",
-	"attack": 5,
-	"defense": 0,
-	"stats": {
-	  "strength": 8,
-	  "physical_damage": 5,
-	  "crit_damage": 10.0
-	}
-  },
-  {
-	"id": "belt_dragon",
-	"name": "Cintura del Drago",
-	"type": "armor",
-	"slot": "belt",
-	"icon": "res://Item_Texture/BeltdelDrago.png",
-	"size": [2, 1],
-	"description": "Forgiata dalle scaglie di un drago.",
-	"attack": 8,
-	"defense": 25,
-	"stats": {
-	  "max_hp": 100,
-	  "physical_defense": 25,
-	  "magic_defense": 25,
-	  "vitality": 10,
-	  "strength": 8,
-	  "fire_resistance": 50.0,
-	  "lifesteal": 5.0
-	}
+	  "vitality": 2,
+	  "gold_find": 10.0
+	},
+	"description": "A belt with many pouches for the adventurous type."
   }
 ]
