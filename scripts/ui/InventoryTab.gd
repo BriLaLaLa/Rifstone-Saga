@@ -733,6 +733,23 @@ func can_remove_bag(slot_index: int) -> bool:
 	var slots_to_remove = bag_data.get("bag_slots", 0)
 	var remaining_slots = total_inventory_slots - slots_to_remove
 
+	# Calcola quante righe avremo dopo la rimozione
+	var new_rows = ceili(float(remaining_slots) / float(cols))
+
+	# CRITICAL: Check if all items are within the bounds of the reduced grid
+	for pos in items_at_position.keys():
+		var item = items_at_position[pos]
+		if not is_instance_valid(item):
+			continue
+
+		# Check if item's bottom edge would be outside the new grid
+		var item_bottom_row = pos.y + item.item_size.y - 1
+		if item_bottom_row >= new_rows:
+			if LOG:
+				print("[InventoryTab] can_remove_bag: Item %s at row %d would be outside new grid (rows: %d)" %
+					[item.item_id, pos.y, new_rows])
+			return false
+
 	# Conta quante celle sono occupate
 	var occupied_cells = 0
 	for item in items_at_position.values():
@@ -743,8 +760,8 @@ func can_remove_bag(slot_index: int) -> bool:
 	occupied_cells += 1
 
 	if LOG:
-		print("[InventoryTab] can_remove_bag check: occupied=%d, remaining=%d" %
-			[occupied_cells, remaining_slots])
+		print("[InventoryTab] can_remove_bag check: occupied=%d, remaining=%d, new_rows=%d" %
+			[occupied_cells, remaining_slots, new_rows])
 
 	return occupied_cells <= remaining_slots
 
