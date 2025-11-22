@@ -12,6 +12,7 @@ const LOG := true
 
 @onready var holder: GridContainer = $"InvSplit/Left/InventoryScroll/InventoryContainer/Holder"
 @onready var items_layer: Control = $"InvSplit/Left/InventoryScroll/InventoryContainer/ItemsLayer"
+@onready var inventory_container: Control = $"InvSplit/Left/InventoryScroll/InventoryContainer"
 @onready var bag_section: VBoxContainer = $"InvSplit/Left/BagSection"
 
 const DEFAULT_SLOT_SCENE_PATH := "res://scripts/ui/InventorySlot.tscn"
@@ -60,10 +61,18 @@ func _create_slots() -> void:
 	if holder == null:
 		push_error("[InventoryTab] Holder not found!")
 		return
-	
+
 	# Configura il GridContainer
 	holder.columns = cols
-	
+
+	# CRITICAL: Update container size for scrollbar to appear
+	# Each slot is cell_px tall, plus spacing
+	var total_height = rows * (cell_px + 4)  # 4px spacing between slots
+	if inventory_container:
+		inventory_container.custom_minimum_size = Vector2(512, total_height)
+		holder.custom_minimum_size = Vector2(512, total_height)
+		items_layer.custom_minimum_size = Vector2(512, total_height)
+
 	# Pulisci slot esistenti
 	for child in holder.get_children():
 		child.queue_free()

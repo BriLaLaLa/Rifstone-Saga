@@ -389,7 +389,7 @@
 		"name":  "Starter Bag",
 		"type":  "Bag",
 		"size":  [1, 1],
-		"icon":  "res://Item_Texture/inventoryPg.png",
+		"icon":  "res://Item_Texture/Miscellanous/Bag.png",
 		"stackable":  false,
 		"bag_slots":  20,
 		"description":  "Your starter bag with 20 inventory slots. Cannot be removed."
