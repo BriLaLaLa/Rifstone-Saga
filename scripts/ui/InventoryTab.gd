@@ -3,15 +3,16 @@ class_name InventoryTab
 
 const LOG := true
 
-@export var cols: int = 8
+@export var cols: int = 6  # Fixed to 6 for bag system compatibility
 @export var rows: int = 5
 @export var cell_px: int = 64
 
 @export var item_scene: PackedScene
 @export var slot_scene: PackedScene
 
-@onready var holder: GridContainer = $"InvSplit/Left/Holder"
-@onready var items_layer: Control = $"InvSplit/Left/ItemsLayer"
+@onready var holder: GridContainer = $"InvSplit/Left/InventoryScroll/InventoryContainer/Holder"
+@onready var items_layer: Control = $"InvSplit/Left/InventoryScroll/InventoryContainer/ItemsLayer"
+@onready var bag_section: VBoxContainer = $"InvSplit/Left/BagSection"
 
 const DEFAULT_SLOT_SCENE_PATH := "res://scripts/ui/InventorySlot.tscn"
 const DEFAULT_ITEM_SCENE_PATH := "res://scripts/ui/Item.tscn"
@@ -25,10 +26,22 @@ var items_at_position: Dictionary = {} # Vector2i -> Item
 # Riferimenti agli slot UI
 var slots: Array[InventorySlot] = []
 
+# ==================== BAG SYSTEM ====================
+const MAX_BAG_SLOTS := 5
+const STARTER_BAG_SLOTS := 20
+const BAG_SLOT_HEIGHT := 70
+
+var bag_slots: Array = []  # Array of BagSlot nodes
+var total_inventory_slots: int = 0
+var trash_bin: TrashBin = null
+
 func _ready() -> void:
 	_initialize_grid()
+	_create_bag_slots()
+	_create_trash_bin()
 	_create_slots()
 	_connect_to_gamestate()
+	_setup_starter_bag()
 	_refresh_from_gamestate()
 
 func _initialize_grid() -> void:
@@ -81,11 +94,10 @@ func _create_slots() -> void:
 		print("[InventoryTab] Created %d slots" % slots.size())
 
 func _connect_to_gamestate() -> void:
-	if Engine.has_singleton("GameState"):
-		var gs = Engine.get_singleton("GameState")
-		if gs and gs.has_signal("on_inventory_changed"):
-			if not gs.on_inventory_changed.is_connected(_on_gamestate_inventory_changed):
-				gs.on_inventory_changed.connect(_on_gamestate_inventory_changed)
+	var gs = _get_gamestate()
+	if gs and gs.has_signal("on_inventory_changed"):
+		if not gs.on_inventory_changed.is_connected(_on_gamestate_inventory_changed):
+			gs.on_inventory_changed.connect(_on_gamestate_inventory_changed)
 
 func _on_gamestate_inventory_changed() -> void:
 	_refresh_from_gamestate()
@@ -93,15 +105,12 @@ func _on_gamestate_inventory_changed() -> void:
 func _refresh_from_gamestate() -> void:
 	# Pulisci inventario visuale
 	_clear_all_items()
-	
-	if not Engine.has_singleton("GameState"):
+
+	var gs = _get_gamestate()
+	if not gs or not "inventory" in gs:
 		return
-	
-	var gs = Engine.get_singleton("GameState")
-	if not gs or not gs.has("inventory"):
-		return
-	
-	var inventory: Dictionary = gs.get("inventory")
+
+	var inventory: Dictionary = gs.inventory
 	
 	# Posiziona gli items nell'inventario
 	# Per ora, posizionamento automatico sequenziale
@@ -146,10 +155,9 @@ func _clear_all_items() -> void:
 		slot.clear()
 
 func _get_item_data(item_id: String) -> Dictionary:
-	if Engine.has_singleton("GameState"):
-		var gs = Engine.get_singleton("GameState")
-		if gs and gs.has("data") and gs.data.has("items"):
-			return gs.data.items.get(item_id, {})
+	var gs = _get_gamestate()
+	if gs and "data" in gs and "items" in gs.data:
+		return gs.data.items.get(item_id, {})
 	return {}
 
 func _create_item_visual(item_id: String, item_data: Dictionary) -> Item:
@@ -402,11 +410,10 @@ func _sync_to_gamestate() -> void:
 			inventory_count[id] = inventory_count.get(id, 0) + 1
 	
 	# Sincronizza con GameState
-	if Engine.has_singleton("GameState"):
-		var gs = Engine.get_singleton("GameState")
-		if gs:
-			gs.set("inventory", inventory_count)
-			# Non emettere il segnale per evitare loop infiniti
+	var gs = _get_gamestate()
+	if gs:
+		gs.set("inventory", inventory_count)
+		# Non emettere il segnale per evitare loop infiniti
 
 # ==================== METODI PUBBLICI PER AGGIUNGERE ITEMS ====================
 
@@ -538,3 +545,260 @@ func __cell_rect_for_highlight(cell: Vector2i) -> Rect2:
 		return Rect2()
 	var local_pos: Vector2 = ctrl.global_position - hl.global_position
 	return Rect2(local_pos, ctrl.size)
+
+# ==================== BAG SYSTEM METHODS ====================
+
+func _create_bag_slots() -> void:
+	"""Crea i 5 slot per le bag nella BagSection"""
+	if bag_section == null:
+		push_error("[InventoryTab] BagSection not found!")
+		return
+
+	# Pulisci eventuali bag slots esistenti
+	for child in bag_section.get_children():
+		child.queue_free()
+	bag_slots.clear()
+
+	# Crea container orizzontale per i bag slots
+	var bag_container = HBoxContainer.new()
+	bag_container.name = "BagContainer"
+	bag_container.custom_minimum_size = Vector2(512, BAG_SLOT_HEIGHT)
+	bag_section.add_child(bag_container)
+
+	# Aggiungi label
+	var label = Label.new()
+	label.text = "BAGS:"
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.custom_minimum_size = Vector2(60, BAG_SLOT_HEIGHT)
+	bag_container.add_child(label)
+
+	# Crea i 5 bag slots
+	for i in range(MAX_BAG_SLOTS):
+		var bag_slot = BagSlot.new()
+		bag_slot.name = "BagSlot%d" % i
+		bag_slot.slot_index = i
+		bag_slot.is_locked = (i == 0)  # Prima bag è locked (starter bag)
+		bag_slot.custom_minimum_size = Vector2(64, 64)
+		bag_slot.inventory_tab = self
+
+		# Connetti i segnali
+		bag_slot.bag_equipped.connect(_on_bag_equipped)
+		bag_slot.bag_removed.connect(_on_bag_removed)
+
+		bag_container.add_child(bag_slot)
+		bag_slots.append(bag_slot)
+
+	if LOG:
+		print("[InventoryTab] Created %d bag slots" % bag_slots.size())
+
+func _create_trash_bin() -> void:
+	"""Crea il cestino per eliminare items"""
+	if bag_section == null:
+		push_error("[InventoryTab] BagSection not found!")
+		return
+
+	# Crea il trash bin
+	trash_bin = TrashBin.new()
+	trash_bin.name = "TrashBin"
+	trash_bin.custom_minimum_size = Vector2(512, 60)
+	bag_section.add_child(trash_bin)
+
+	if LOG:
+		print("[InventoryTab] Created trash bin")
+
+func _on_bag_equipped(slot_index: int, bag_slots_count: int) -> void:
+	"""Chiamato quando una bag viene equipaggiata"""
+	if LOG:
+		print("[InventoryTab] Bag equipped in slot %d, adding %d slots" % [slot_index, bag_slots_count])
+
+	# Aggiungi gli slot della bag al totale
+	total_inventory_slots += bag_slots_count
+	_recalculate_inventory_size()
+
+	# Salva in GameState
+	_sync_equipped_bags_to_gamestate()
+
+func _on_bag_removed(slot_index: int) -> void:
+	"""Chiamato quando una bag viene rimossa"""
+	if LOG:
+		print("[InventoryTab] Bag removed from slot %d" % slot_index)
+
+	# Ricalcola il totale degli slot
+	_recalculate_total_slots()
+	_recalculate_inventory_size()
+
+	# Salva in GameState
+	_sync_equipped_bags_to_gamestate()
+
+func _setup_starter_bag() -> void:
+	"""Setup della starter bag (20 slots) nella prima bag slot"""
+	if bag_slots.is_empty():
+		push_error("[InventoryTab] No bag slots available!")
+		return
+
+	# Controlla se già esiste una starter bag in GameState
+	var gs = _get_gamestate()
+	if gs and "equipped_bags" in gs and not gs.equipped_bags.is_empty():
+		# Carica le bag salvate
+		_load_equipped_bags_from_gamestate()
+		return
+
+	# Crea la starter bag programmaticamente
+	var starter_bag_slot: BagSlot = bag_slots[0]
+
+	# Crea l'item della starter bag
+	var item_scene_to_use: PackedScene = item_scene
+	if item_scene_to_use == null:
+		item_scene_to_use = load(DEFAULT_ITEM_SCENE_PATH)
+
+	var starter_bag_item = item_scene_to_use.instantiate()
+	starter_bag_item.item_id = "starter_bag"
+	starter_bag_item.cell_px = cell_px
+	starter_bag_item.item_size = Vector2i(1, 1)
+
+	# Setup dell'item
+	var bag_data = {
+		"name": "Starter Bag",
+		"type": "Bag",
+		"bag_slots": STARTER_BAG_SLOTS,
+		"icon": "res://Item_Texture/inventoryPg.png"
+	}
+	starter_bag_item.setup_item("starter_bag", bag_data)
+
+	# Equipaggia la starter bag
+	starter_bag_slot.equip_starter_bag(starter_bag_item)
+
+	if LOG:
+		print("[InventoryTab] Starter bag equipped (%d slots)" % STARTER_BAG_SLOTS)
+
+func _recalculate_inventory_size() -> void:
+	"""Ricalcola le dimensioni della griglia in base alle bag equipaggiate"""
+	if total_inventory_slots == 0:
+		return
+
+	# Calcola nuove righe (manteniamo 6 colonne fisse per le bag)
+	cols = 6
+	rows = ceili(float(total_inventory_slots) / float(cols))
+
+	if LOG:
+		print("[InventoryTab] Recalculated grid: %dx%d = %d slots (total_slots: %d)" %
+			[cols, rows, cols * rows, total_inventory_slots])
+
+	# Ricrea la griglia e gli slot
+	_initialize_grid()
+	_create_slots()
+
+	# Ricarica gli items
+	_refresh_from_gamestate()
+
+func _recalculate_total_slots() -> void:
+	"""Ricalcola il totale degli slot dalle bag equipaggiate"""
+	total_inventory_slots = 0
+
+	for bag_slot in bag_slots:
+		if bag_slot.equipped_bag != null:
+			var bag_data = _get_item_data(bag_slot.equipped_bag.item_id)
+			var slots_count = bag_data.get("bag_slots", 0)
+			total_inventory_slots += slots_count
+
+	if LOG:
+		print("[InventoryTab] Total inventory slots: %d" % total_inventory_slots)
+
+func can_remove_bag(slot_index: int) -> bool:
+	"""Controlla se possiamo rimuovere una bag (c'è abbastanza spazio per gli items?)"""
+	# Trova la bag da rimuovere
+	if slot_index < 0 or slot_index >= bag_slots.size():
+		return false
+
+	var bag_slot = bag_slots[slot_index]
+	if bag_slot.equipped_bag == null:
+		return true  # Nessuna bag, ok
+
+	# Calcola gli slot che rimarranno dopo la rimozione
+	var bag_data = _get_item_data(bag_slot.equipped_bag.item_id)
+	var slots_to_remove = bag_data.get("bag_slots", 0)
+	var remaining_slots = total_inventory_slots - slots_to_remove
+
+	# Conta quante celle sono occupate
+	var occupied_cells = 0
+	for item in items_at_position.values():
+		if is_instance_valid(item):
+			occupied_cells += item.item_size.x * item.item_size.y
+
+	# Aggiungi 1 per la bag stessa che tornerà nell'inventario
+	occupied_cells += 1
+
+	if LOG:
+		print("[InventoryTab] can_remove_bag check: occupied=%d, remaining=%d" %
+			[occupied_cells, remaining_slots])
+
+	return occupied_cells <= remaining_slots
+
+func _sync_equipped_bags_to_gamestate() -> void:
+	"""Salva le bag equipaggiate in GameState"""
+	var gs = _get_gamestate()
+	if not gs:
+		return
+
+	var equipped_bags_data = []
+	for i in range(bag_slots.size()):
+		var bag_slot = bag_slots[i]
+		if bag_slot.equipped_bag != null:
+			equipped_bags_data.append({
+				"slot_index": i,
+				"item_id": bag_slot.equipped_bag.item_id
+			})
+
+	gs.set("equipped_bags", equipped_bags_data)
+
+	if LOG:
+		print("[InventoryTab] Synced %d equipped bags to GameState" % equipped_bags_data.size())
+
+func _load_equipped_bags_from_gamestate() -> void:
+	"""Carica le bag equipaggiate da GameState"""
+	var gs = _get_gamestate()
+	if not gs or not "equipped_bags" in gs:
+		return
+
+	var equipped_bags_data = gs.equipped_bags if "equipped_bags" in gs else []
+
+	for bag_data in equipped_bags_data:
+		var slot_index = bag_data.get("slot_index", -1)
+		var item_id = bag_data.get("item_id", "")
+
+		if slot_index < 0 or slot_index >= bag_slots.size() or item_id == "":
+			continue
+
+		# Crea l'item della bag
+		var item_data = _get_item_data(item_id)
+		if item_data.is_empty():
+			continue
+
+		var bag_item = _create_item_visual(item_id, item_data)
+		if bag_item == null:
+			continue
+
+		# Equipaggia la bag nello slot corrispondente
+		var bag_slot: BagSlot = bag_slots[slot_index]
+		if bag_slot.is_locked:
+			bag_slot.equip_starter_bag(bag_item)
+		else:
+			# Per bag non-locked, usa il metodo normale
+			bag_slot.equipped_bag = bag_item
+			bag_slot.add_child(bag_item)
+			bag_item.position = Vector2(4, 4)
+			bag_item.size = bag_slot.size - Vector2(8, 8)
+			bag_item.z_index = 5
+
+			# Emetti segnale
+			var bag_slots_count = item_data.get("bag_slots", 0)
+			bag_slot.bag_equipped.emit(slot_index, bag_slots_count)
+
+	if LOG:
+		print("[InventoryTab] Loaded %d equipped bags from GameState" % equipped_bags_data.size())
+
+func _get_gamestate() -> Node:
+	"""Helper per ottenere GameState"""
+	if not has_node("/root/GameState"):
+		return null
+	return get_node("/root/GameState")

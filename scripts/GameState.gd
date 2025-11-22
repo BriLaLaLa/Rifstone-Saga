@@ -40,6 +40,14 @@ var skills := {}         # skill_id -> Skill (Resource)
 var resources := {"gold": 0}
 var inventory := {}      # item_id -> count
 
+# NEW: Inventory item positions and stack info
+# Format: [ {"item_id": "...", "pos": Vector2i(x,y), "stack_count": N}, ... ]
+var inventory_items := []
+
+# NEW: Equipped bags in bag slots
+# Format: [{"item_id": "...", "bag_slots": N}, null, null, ...] (5 slots total)
+var equipped_bags := []
+
 var data := {
 	"items": {},
 	"recipes": {},
@@ -48,7 +56,8 @@ var data := {
 	"loot_tables": {},
 	"actions": {},
 	"promotions": [],
-	"npcs": {}
+	"npcs": {},
+	"skills": {}
 }
 
 # crafting (come prima)
@@ -80,29 +89,48 @@ const SAVE_PATH := "user://save.json"
 
 var rng := RandomNumberGenerator.new()
 
+# Autosave system
+var autosave_timer: float = 0.0
+const AUTOSAVE_INTERVAL: float = 5.0  # Autosave every 5 seconds
+
 func _ready() -> void:
 	rng.randomize()
 	_load_default_data()
-	
+
 	# NUOVO: Inizializza character stats
 	character_stats = CharacterStats.new()
 	character_stats.stats_changed.connect(_on_character_stat_changed)
 	character_stats.hp_changed.connect(_on_hp_changed)
 	character_stats.mana_changed.connect(_on_mana_changed)
 	print("[GameState] Character stats initialized")
-	
+
 	load_game()
 	set_process(true)
+	print("[GameState] Autosave enabled - saving every %d seconds" % AUTOSAVE_INTERVAL)
+
+func _notification(what: int) -> void:
+	"""Save game when closing"""
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		print("[GameState] 💾 Saving before closing...")
+		save_game()
+		print("[GameState] ✅ Game saved")
 
 func _process(delta: float) -> void:
 	_tick_accum += delta
 	if _tick_accum >= _tick_rate:
 		_tick_accum = 0.0
 		_tick()
-	
+
 	# NUOVO: Aggiorna stats temporanee
 	if character_stats:
 		character_stats.update_temporary_modifiers(delta)
+
+	# Autosave timer
+	autosave_timer += delta
+	if autosave_timer >= AUTOSAVE_INTERVAL:
+		autosave_timer = 0.0
+		save_game()
+		print("[GameState] ✅ Autosaved")
 
 func _tick() -> void:
 	_tick_skills_legacy()   # mantiene vecchio training se lo usi
@@ -470,11 +498,27 @@ func _load_default_data() -> void:
 		s.icon = d.get("icon","")
 		skills[s.id] = s
 
+		# Also store in data.skills for Skills Tab UI
+		data.skills[s.id] = {
+			"id": d.id,
+			"name": d.name,
+			"category": d.category,
+			"grade": d.grade,
+			"level": d.level,
+			"xp": float(d.xp),
+			"xp_curve": d.xp_curve,
+			"actions": d.actions,
+			"bonuses": d.bonuses,
+			"icon": d.get("icon", ""),
+			"skill_data": d.get("skill_data", {})
+		}
+
 # -------- Save/Load --------
 func save_game() -> void:
 	var data_save = {
 		"resources": resources,
-		"inventory": inventory,
+		"inventory": inventory,  # Old format (kept for compatibility)
+		"inventory_items": inventory_items,  # NEW: Grid-based inventory
 		"skills": {},
 		"craft_queue": craft_queue,
 		"combat": {
@@ -490,12 +534,13 @@ func save_game() -> void:
 			"total": action_time_total
 		},
 		"bonuses": {"dps_add": bonus_dps_add, "dps_mult": bonus_dps_mult},
-		
+
 		# NUOVO: Salva character stats
 		"character_stats": character_stats.to_dict() if character_stats else {},
-		"equipped_items": {}
+		"equipped_items": {},
+		"equipped_bags": equipped_bags  # NEW: Save equipped bags
 	}
-	
+
 	# NUOVO: Salva equipped items
 	for slot in equipped_items.keys():
 		if equipped_items[slot] != null:
@@ -520,8 +565,18 @@ func load_game() -> void:
 	if typeof(parsed) != TYPE_DICTIONARY: return
 	
 	resources = parsed.get("resources", resources)
-	inventory = parsed.get("inventory", inventory)
-	
+	inventory = parsed.get("inventory", inventory)  # Old format
+
+	# NEW: Load grid-based inventory
+	if parsed.has("inventory_items"):
+		inventory_items = parsed.get("inventory_items", [])
+		print("[GameState] Loaded %d items from grid inventory" % inventory_items.size())
+
+	# NEW: Load equipped bags
+	if parsed.has("equipped_bags"):
+		equipped_bags = parsed.get("equipped_bags", [])
+		print("[GameState] Loaded %d equipped bags" % equipped_bags.size())
+
 	var saved_skills = parsed.get("skills", {})
 	for k in saved_skills.keys():
 		if skills.has(k):
