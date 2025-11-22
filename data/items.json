@@ -1,84 +1,397 @@
 [
-  {
-	"id": "iron_sword",
-	"name": "Iron Sword",
-	"type": "Weapon",
-	"slot": "weapon",
-	"size": [1, 2],
-	"icon": "res://icons/iron_sword.png",
-	"stats": {
-	  "physical_damage": 15,
-	  "strength": 2
+	{
+		"id":  "iron_sword",
+		"name":  "Iron Sword",
+		"type":  "Weapon",
+		"slot":  "weapon",
+		"size":  [
+					 1,
+					 2
+				 ],
+		"icon":  "res://icons/lunaPiena.png",
+		"stats":  {
+					  "physical_damage":  15,
+					  "strength":  2
+				  },
+		"description":  "A sturdy iron sword for beginning warriors."
 	},
-	"description": "A sturdy iron sword for beginning warriors."
-  },
-  {
-	"id": "leather_helmet",
-	"name": "Leather Helmet", 
-	"type": "Armor",
-	"slot": "helmet",
-	"size": [1, 1],
-	"icon": "res://icons/leather_helmet.png",
-	"stats": {
-	  "physical_defense": 8,
-	  "vitality": 1
+	{
+		"id":  "leather_helmet",
+		"name":  "Leather Helmet",
+		"type":  "Armor",
+		"slot":  "helmet",
+		"size":  [
+					 1,
+					 1
+				 ],
+		"icon":  "res://icons/BeltdelDrago.png",
+		"stats":  {
+					  "physical_defense":  8,
+					  "vitality":  1
+				  },
+		"description":  "Basic protection for your head."
 	},
-	"description": "Basic protection for your head."
-  },
-  {
-	"id": "chainmail",
-	"name": "Chainmail Armor",
-	"type": "Armor", 
-	"slot": "chest",
-	"size": [1, 2],
-	"icon": "res://icons/chainmail.png",
-	"stats": {
-	  "physical_defense": 20,
-	  "vitality": 3,
-	  "max_hp": 25
+	{
+		"id":  "chainmail",
+		"name":  "Chainmail Armor",
+		"type":  "Armor",
+		"slot":  "chest",
+		"size":  [
+					 1,
+					 2
+				 ],
+		"icon":  "res://icons/chainmail.png",
+		"stats":  {
+					  "physical_defense":  20,
+					  "vitality":  3,
+					  "max_hp":  25
+				  },
+		"description":  "Interlocked metal rings provide solid protection."
 	},
-	"description": "Interlocked metal rings provide solid protection."
-  },
-  {
-	"id": "iron_shield",
-	"name": "Iron Shield",
-	"type": "Shield",
-	"slot": "shield", 
-	"size": [1, 2],
-	"icon": "res://icons/iron_shield.png",
-	"stats": {
-	  "physical_defense": 12,
-	  "block_chance": 15.0,
-	  "vitality": 2
+	{
+		"id":  "iron_shield",
+		"name":  "Iron Shield",
+		"type":  "Shield",
+		"slot":  "shield",
+		"size":  [
+					 1,
+					 2
+				 ],
+		"icon":  "res://icons/iron_shield.png",
+		"stats":  {
+					  "physical_defense":  12,
+					  "block_chance":  15.0,
+					  "vitality":  2
+				  },
+		"description":  "A reliable shield for blocking attacks."
 	},
-	"description": "A reliable shield for blocking attacks."
-  },
-  {
-	"id": "leather_boots",
-	"name": "Leather Boots",
-	"type": "Footwear",
-	"slot": "boots",
-	"size": [1, 1], 
-	"icon": "res://icons/leather_boots.png",
-	"stats": {
-	  "physical_defense": 5,
-	  "movement_speed": 10.0,
-	  "dexterity": 1
+	{
+		"id":  "leather_boots",
+		"name":  "Leather Boots",
+		"type":  "Footwear",
+		"slot":  "boots",
+		"size":  [
+					 1,
+					 1
+				 ],
+		"icon":  "res://icons/leather_boots.png",
+		"stats":  {
+					  "physical_defense":  5,
+					  "movement_speed":  10.0,
+					  "dexterity":  1
+				  },
+		"description":  "Comfortable boots for traveling."
 	},
-	"description": "Comfortable boots for traveling."
-  },
-  {
-	"id": "utility_belt",
-	"name": "Adventurer's Belt",
-	"type": "Accessory",
-	"slot": "belt",
-	"size": [2, 1],
-	"icon": "res://icons/utility_belt.png", 
-	"stats": {
-	  "max_hp": 15,
-	  "vitality": 2,
-	  "gold_find": 10.0
+	{
+		"id":  "utility_belt",
+		"name":  "Adventurer\u0027s Belt",
+		"type":  "Accessory",
+		"slot":  "belt",
+		"size":  [
+					 2,
+					 1
+				 ],
+		"icon":  "res://icons/utility_belt.png",
+		"stats":  {
+					  "max_hp":  15,
+					  "vitality":  2,
+					  "gold_find":  10.0
+				  },
+		"description":  "A belt with many pouches for the adventurous type."
 	},
-	"description": "A belt with many pouches for the adventurous type."
-  }
+	{
+		"id":  "novice_sword_lvl1",
+		"name":  "Novice Sword",
+		"type":  "Weapon",
+		"slot":  "weapon",
+		"level":  1,
+		"size":  [
+					 1,
+					 2
+				 ],
+		"icon":  "res://Item_Texture/Equip/Swords/Novice_Sword_LvL1.png",
+		"stats":  {
+					  "physical_damage":  10,
+					  "strength":  1
+				  },
+		"bonuses":  [
+
+					],
+		"description":  "A basic training sword for novice warriors."
+	},
+	{
+		"id":  "apprentice_sword_lvl10",
+		"name":  "Apprentice Sword",
+		"type":  "Weapon",
+		"slot":  "weapon",
+		"level":  10,
+		"size":  [
+					 1,
+					 2
+				 ],
+		"icon":  "res://Item_Texture/Equip/Swords/Apprentice_Sword_LvL10.png",
+		"stats":  {
+					  "physical_damage":  25,
+					  "strength":  3
+				  },
+		"bonuses":  [
+
+					],
+		"description":  "A refined blade for apprentice swordsmen."
+	},
+	{
+		"id":  "disciple_sword_lvl15",
+		"name":  "Disciple Sword",
+		"type":  "Weapon",
+		"slot":  "weapon",
+		"level":  15,
+		"size":  [
+					 1,
+					 2
+				 ],
+		"icon":  "res://Item_Texture/Equip/Swords/Disceple_Sword_LvL15.png",
+		"stats":  {
+					  "physical_damage":  40,
+					  "strength":  5
+				  },
+		"bonuses":  [
+
+					],
+		"description":  "A masterwork blade worthy of true disciples."
+	},
+	{
+		"id":  "force_gem",
+		"name":  "ForceGem",
+		"type":  "Gem",
+		"size":  [
+					 1,
+					 1
+				 ],
+		"icon":  "res://Item_Texture/Gems/ForceGem.png",
+		"stackable":  true,
+		"max_stack":  99,
+		"description":  "Adds 1 Prefix to a weapon (max 2). If already at max, the gem is returned."
+	},
+	{
+		"id":  "gem_of_agility",
+		"name":  "Gem of Agility",
+		"type":  "Gem",
+		"size":  [
+					 1,
+					 1
+				 ],
+		"icon":  "res://Item_Texture/Gems/Gem_of_Agility.png",
+		"stackable":  true,
+		"max_stack":  99,
+		"description":  "Adds 1 Suffix to a weapon (max 2). If already at max, the gem is returned."
+	},
+	{
+		"id":  "gem_of_chaos",
+		"name":  "Gem of Chaos",
+		"type":  "Gem",
+		"size":  [
+					 1,
+					 1
+				 ],
+		"icon":  "res://Item_Texture/Gems/Gem_of_Chaos.png",
+		"stackable":  true,
+		"max_stack":  99,
+		"description":  "Rerolls all bonus tiers (T1-T7) and values. Keeps bonus count and categories."
+	},
+	{
+		"id":  "gem_of_excellence",
+		"name":  "Gem of Excellence",
+		"type":  "Gem",
+		"size":  [
+					 1,
+					 1
+				 ],
+		"icon":  "res://Item_Texture/Gems/Gem_of_Excellence.png",
+		"stackable":  true,
+		"max_stack":  99,
+		"description":  "Adds the 5th bonus (Special) if not present. If already present, gem is returned."
+	},
+	{
+		"id":  "gem_of_renewal",
+		"name":  "Gem of Renewal",
+		"type":  "Gem",
+		"size":  [
+					 1,
+					 1
+				 ],
+		"icon":  "res://Item_Texture/Gems/Gem_of_Renewal.png",
+		"stackable":  true,
+		"max_stack":  99,
+		"description":  "Replaces 1 random bonus with another of the same category. Tier is maintained."
+	},
+	{
+		"id":  "iron_ore",
+		"name":  "Iron Ore",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/iron_ore.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Common ore used in crafting."
+	},
+	{
+		"id":  "copper_ore",
+		"name":  "Copper Ore",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/copper_ore.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Reddish ore used in various crafts."
+	},
+	{
+		"id":  "gold_ore",
+		"name":  "Gold Ore",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/gold_ore.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Valuable ore with a golden shine."
+	},
+	{
+		"id":  "diamond",
+		"name":  "Diamond",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/diamond.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Rare and precious gemstone."
+	},
+	{
+		"id":  "stone",
+		"name":  "Stone",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/stone.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Basic building material."
+	},
+	{
+		"id":  "herb",
+		"name":  "Herb",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/herb.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Common plant used in alchemy."
+	},
+	{
+		"id":  "flower",
+		"name":  "Flower",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/flower.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Colorful flower with various uses."
+	},
+	{
+		"id":  "mushroom",
+		"name":  "Mushroom",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/mushroom.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Fungus gathered from the forest."
+	},
+	{
+		"id":  "rare_plant",
+		"name":  "Rare Plant",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/rare_plant.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Uncommon plant with special properties."
+	},
+	{
+		"id":  "wood",
+		"name":  "Wood",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/wood.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Timber from trees."
+	},
+	{
+		"id":  "small_fish",
+		"name":  "Small Fish",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/small_fish.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Common fish caught from waters."
+	},
+	{
+		"id":  "medium_fish",
+		"name":  "Medium Fish",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/medium_fish.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Decent-sized fish with more meat."
+	},
+	{
+		"id":  "large_fish",
+		"name":  "Large Fish",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/large_fish.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Big fish, quite a catch!"
+	},
+	{
+		"id":  "rare_fish",
+		"name":  "Rare Fish",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/rare_fish.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Elusive fish with unique qualities."
+	},
+	{
+		"id":  "pearl",
+		"name":  "Pearl",
+		"type":  "Material",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Materials/pearl.png",
+		"stackable":  true,
+		"max_stack":  200,
+		"description":  "Beautiful pearl from the depths."
+	},
+	{
+		"id":  "bag_20slot",
+		"name":  "Bag (20 Slots)",
+		"type":  "Bag",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/Miscellanous/Bag.png",
+		"stackable":  false,
+		"bag_slots":  20,
+		"description":  "A bag that provides 20 additional inventory slots when equipped."
+	},
+	{
+		"id":  "starter_bag",
+		"name":  "Starter Bag",
+		"type":  "Bag",
+		"size":  [1, 1],
+		"icon":  "res://Item_Texture/inventoryPg.png",
+		"stackable":  false,
+		"bag_slots":  20,
+		"description":  "Your starter bag with 20 inventory slots. Cannot be removed."
+	}
 ]

@@ -688,8 +688,9 @@ func _recalculate_inventory_size() -> void:
 	_initialize_grid()
 	_create_slots()
 
-	# Ricarica gli items
-	_refresh_from_gamestate()
+	# NON ricaricare gli items - sono già nell'inventario
+	# Se ricarichiamo da GameState, duplichiamo tutto!
+	# Gli items esistenti rimarranno posizionati correttamente
 
 func _recalculate_total_slots() -> void:
 	"""Ricalcola il totale degli slot dalle bag equipaggiate"""
