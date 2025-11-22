@@ -45,15 +45,20 @@ func _ready() -> void:
 	_setup_starter_bag()
 	_refresh_from_gamestate()
 
-func _initialize_grid() -> void:
+func _initialize_grid(clear_items: bool = true) -> void:
 	grid_occupied.clear()
 	for y in range(rows):
 		var row: Array[bool] = []
 		for x in range(cols):
 			row.append(false)
 		grid_occupied.append(row)
-	
-	items_at_position.clear()
+
+	# Only clear items if explicitly requested (e.g., during initial setup)
+	# When resizing grid (bag equip/unequip), we want to preserve existing items
+	if clear_items:
+		items_at_position.clear()
+	# If not clearing items, grid_occupied will be rebuilt as items are accessed
+
 	if LOG:
 		print("[InventoryTab] Grid initialized: %dx%d" % [cols, rows])
 
@@ -697,8 +702,9 @@ func _recalculate_inventory_size() -> void:
 		print("[InventoryTab] Recalculated grid: %dx%d = %d slots (total_slots: %d)" %
 			[cols, rows, cols * rows, total_inventory_slots])
 
-	# Ricrea la griglia e gli slot
-	_initialize_grid()
+	# CRITICAL: Preserve existing items when resizing grid
+	# Pass clear_items=false to keep items_at_position intact
+	_initialize_grid(false)
 	_create_slots()
 
 	# NON ricaricare gli items - sono già nell'inventario
