@@ -352,6 +352,10 @@ func get_item_position(item: Item) -> Vector2i:
 			return pos
 	return Vector2i(-1, -1)  # Item non trovato
 
+func get_item_at(pos: Vector2i) -> Item:
+	"""Restituisce l'item alla posizione specificata, o null se vuota"""
+	return items_at_position.get(pos, null)
+
 func place_item(item: Item, pos: Vector2i) -> bool:
 	if item == null:
 		return false
