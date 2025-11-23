@@ -4,30 +4,48 @@ class_name BagSlot
 signal bag_equipped(slot_index: int, bag_slots: int)
 signal bag_removed(slot_index: int)
 
+# ==================== EXPORTED VARIABLES (Inspector) ====================
+@export_group("Slot Configuration")
 @export var slot_index: int = 0  # 0-4 (5 total slots)
 @export var is_locked: bool = false  # True for starter bag slot (non-removable)
 
+@export_group("Visual Style")
+@export var locked_bg_color: Color = Color(0.4, 0.3, 0.2, 0.9)  # Brown leather (starter bag)
+@export var unlocked_bg_color: Color = Color(0.3, 0.2, 0.15, 0.8)  # Darker brown (empty slot)
+@export var border_width: int = 2
+@export var border_color: Color = Color(0.7, 0.6, 0.3, 0.9)  # Gold border
+
+@export_group("Drag Feedback")
+@export var valid_drop_bg: Color = Color(0.2, 1.0, 0.2, 0.4)  # Green
+@export var valid_drop_border: Color = Color(0.0, 1.0, 0.0, 0.8)
+@export var invalid_drop_bg: Color = Color(1.0, 0.2, 0.2, 0.4)  # Red
+@export var invalid_drop_border: Color = Color(1.0, 0.0, 0.0, 0.8)
+
+@export_group("Error Message")
+@export var error_text_color: Color = Color(1, 0.3, 0.3)  # Red
+@export var error_outline_color: Color = Color.BLACK
+@export var error_font_size: int = 14
+@export var error_outline_size: int = 2
+
+# ==================== INTERNAL VARIABLES ====================
 var equipped_bag: Item = null
 var inventory_tab: InventoryTab = null
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Setup visual dello slot - colore marrone/pelle per distinguerlo dall'inventario
+	# Setup visual dello slot (usa valori dall'Inspector)
 	var style = StyleBoxFlat.new()
 	if is_locked:
-		# Locked slot (starter bag) - gold/brown color
-		style.bg_color = Color(0.4, 0.3, 0.2, 0.9)  # Brown leather look
+		style.bg_color = locked_bg_color
 	else:
-		# Empty bag slot - darker brown
-		style.bg_color = Color(0.3, 0.2, 0.15, 0.8)
+		style.bg_color = unlocked_bg_color
 
-	style.border_width_left = 2
-	style.border_width_right = 2
-	style.border_width_top = 2
-	style.border_width_bottom = 2
-	# Gold border for bag slots
-	style.border_color = Color(0.7, 0.6, 0.3, 0.9)
+	style.border_width_left = border_width
+	style.border_width_right = border_width
+	style.border_width_top = border_width
+	style.border_width_bottom = border_width
+	style.border_color = border_color
 	add_theme_stylebox_override("panel", style)
 
 	mouse_exited.connect(_on_mouse_exited)
@@ -236,33 +254,33 @@ func _show_highlight(is_valid: bool) -> void:
 	var style = get_theme_stylebox("panel")
 	if style is StyleBoxFlat:
 		if is_valid:
-			style.bg_color = Color(0.2, 1.0, 0.2, 0.4)
-			style.border_color = Color(0.0, 1.0, 0.0, 0.8)
+			style.bg_color = valid_drop_bg
+			style.border_color = valid_drop_border
 		else:
-			style.bg_color = Color(1.0, 0.2, 0.2, 0.4)
-			style.border_color = Color(1.0, 0.0, 0.0, 0.8)
+			style.bg_color = invalid_drop_bg
+			style.border_color = invalid_drop_border
 
 func _clear_highlight() -> void:
 	"""Rimuove highlight"""
 	var style = get_theme_stylebox("panel")
 	if style is StyleBoxFlat:
 		if is_locked:
-			style.bg_color = Color(0.4, 0.3, 0.2, 0.9)  # Brown leather
+			style.bg_color = locked_bg_color
 		else:
-			style.bg_color = Color(0.3, 0.2, 0.15, 0.8)  # Darker brown
-		style.border_color = Color(0.7, 0.6, 0.3, 0.9)  # Gold border
+			style.bg_color = unlocked_bg_color
+		style.border_color = border_color
 
 func _show_error_message(message: String) -> void:
 	"""Mostra un messaggio di errore visivo al player"""
 	print("[BagSlot] ERROR: %s" % message)
 
-	# Create floating error label
+	# Create floating error label (usa valori dall'Inspector)
 	var error_label = Label.new()
 	error_label.text = message
-	error_label.add_theme_font_size_override("font_size", 14)
-	error_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))  # Red
-	error_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	error_label.add_theme_constant_override("outline_size", 2)
+	error_label.add_theme_font_size_override("font_size", error_font_size)
+	error_label.add_theme_color_override("font_color", error_text_color)
+	error_label.add_theme_color_override("font_outline_color", error_outline_color)
+	error_label.add_theme_constant_override("outline_size", error_outline_size)
 
 	# Add to scene root so it's always visible
 	var root = get_tree().root
@@ -296,26 +314,78 @@ func _on_mouse_exited() -> void:
 
 func _on_child_exiting_tree(node: Node) -> void:
 	"""Chiamato quando un child viene rimosso (bag draggata via)"""
+	print("\n[BagSlot] ========== _on_child_exiting_tree START (slot %d) ==========" % slot_index)
+	print("[BagSlot]   Node exiting: %s (type: %s)" % [node.name if node else "null", node.get_class() if node else "null"])
+	print("[BagSlot]   is_locked: %s" % is_locked)
+	print("[BagSlot]   equipped_bag: %s" % (equipped_bag.item_id if equipped_bag else "null"))
+	print("[BagSlot]   node == equipped_bag: %s" % (node == equipped_bag))
+
 	# Locked slot non può avere items rimossi
 	if is_locked:
+		print("[BagSlot]   SKIPPING: Slot is locked")
 		return
 
 	if node == equipped_bag:
-		if GameLogger.ENABLED:
-			print("[BagSlot] Bag being removed from slot %d" % slot_index)
+		print("[BagSlot]   ✅ Node is equipped bag! Calling deferred _handle_bag_removed")
 		call_deferred("_handle_bag_removed")
+	else:
+		print("[BagSlot]   SKIPPING: Node is not the equipped bag")
+
+	print("[BagSlot] ========== _on_child_exiting_tree END ==========\n")
 
 func _handle_bag_removed() -> void:
 	"""Gestisce la rimozione della bag (chiamato in deferred)"""
-	if equipped_bag != null and equipped_bag.get_parent() != self:
-		if GameLogger.ENABLED:
-			print("[BagSlot] Bag confirmed removed from slot %d" % slot_index)
+	print("\n[BagSlot] ========== _handle_bag_removed START (slot %d) ==========" % slot_index)
+	print("[BagSlot]   equipped_bag: %s" % (equipped_bag.item_id if equipped_bag else "null"))
+	print("[BagSlot]   equipped_bag != null: %s" % (equipped_bag != null))
 
+	if equipped_bag != null:
+		var parent = equipped_bag.get_parent()
+		print("[BagSlot]   equipped_bag.get_parent(): %s (type: %s)" % [parent.name if parent else "null", parent.get_class() if parent else "null"])
+		print("[BagSlot]   self: %s" % name)
+		print("[BagSlot]   equipped_bag.get_parent() != self: %s" % (parent != self))
+
+	if equipped_bag != null and equipped_bag.get_parent() != self:
+		print("[BagSlot] === BAG BEING DRAGGED AWAY from slot %d ===" % slot_index)
+
+		# CRITICAL: Controlla se possiamo rimuovere questa bag
+		if inventory_tab and inventory_tab.has_method("can_remove_bag"):
+			var can_remove = inventory_tab.can_remove_bag(slot_index)
+			print("[BagSlot] can_remove_bag(%d) = %s" % [slot_index, can_remove])
+
+			if not can_remove:
+				print("[BagSlot] ❌ CANNOT REMOVE BAG - not enough space! Returning bag to slot...")
+
+				# CRITICAL: Rimuovi la bag dall'inventory (items_at_position) se è stata aggiunta
+				if inventory_tab and inventory_tab.has_method("_remove_item_if_exists"):
+					inventory_tab._remove_item_if_exists(equipped_bag)
+					print("[BagSlot] Removed bag from inventory items_at_position")
+
+				# Rimetti la bag nel slot
+				if equipped_bag.get_parent():
+					equipped_bag.get_parent().remove_child(equipped_bag)
+				add_child(equipped_bag)
+				equipped_bag.position = Vector2(4, 4)
+				equipped_bag.size = size - Vector2(8, 8)
+
+				_show_error_message("Cannot remove bag: not enough space to redistribute items!")
+				return
+
+		print("[BagSlot] ✅ Can remove bag, proceeding...")
 		var bag_slots = _get_bag_slots(equipped_bag)
 		equipped_bag = null
 
 		# Emetti segnale per ridurre l'inventario
+		print("[BagSlot] Emitting bag_removed signal for slot %d" % slot_index)
 		bag_removed.emit(slot_index)
+	else:
+		print("[BagSlot] ❌ CONDITION FAILED - bag removal check skipped!")
+		if equipped_bag == null:
+			print("[BagSlot]   Reason: equipped_bag is null")
+		elif equipped_bag.get_parent() == self:
+			print("[BagSlot]   Reason: bag parent is still self (not moved yet)")
+
+	print("[BagSlot] ========== _handle_bag_removed END ==========\n")
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_END:

@@ -6,22 +6,27 @@
 extends ScrollContainer
 class_name StatsPanel
 
-const LOG := false
+# const LOG removed - using GameLogger
 
+# ==================== EXPORTED VARIABLES (Inspector) ====================
+@export_group("Colors - Stats")
+@export var color_normal: Color = Color.WHITE  # Normal stat value
+@export var color_bonus: Color = Color.GREEN  # Stat with positive bonus
+@export var color_malus: Color = Color.RED  # Stat with negative bonus
+@export var color_category: Color = Color(1.0, 0.8, 0.3)  # Category headers (Gold)
+
+@export_group("Colors - Resource Bars")
+@export var hp_bar_color: Color = Color.GREEN
+@export var mana_bar_color: Color = Color.DODGER_BLUE
+
+@export_group("Animation")
+@export var animation_speed: float = 2.0  # Stat value interpolation speed
+
+# ==================== INTERNAL VARIABLES ====================
 # Stats display structure
 var stat_labels := {}  # stat_name -> Label node
 var stat_current_values := {}  # Per animazioni
 var stat_target_values := {}
-
-# Animation
-var animation_speed := 2.0  # Velocità interpolazione
-
-# Colors
-const COLOR_NORMAL := Color.WHITE
-const COLOR_BONUS := Color.GREEN
-const COLOR_MALUS := Color.RED
-const COLOR_MODIFIED := Color.YELLOW
-const COLOR_CATEGORY := Color(1.0, 0.8, 0.3)  # Gold
 
 @onready var stats_container: VBoxContainer = $StatsContainer
 
@@ -32,7 +37,7 @@ func _ready() -> void:
 	# First update
 	call_deferred("_update_all_stats")
 	
-	if LOG:
+	if GameLogger.ENABLED:
 		print("[StatsPanel] Ready")
 
 func _process(delta: float) -> void:
@@ -98,7 +103,7 @@ func _build_stats_ui() -> void:
 		"lifesteal", "gold_find", "magic_find"
 	])
 	
-	if LOG:
+	if GameLogger.ENABLED:
 		print("[StatsPanel] UI built with %d stat labels" % stat_labels.size())
 
 func _create_title(text: String) -> Label:
@@ -106,7 +111,7 @@ func _create_title(text: String) -> Label:
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 20)
-	label.add_theme_color_override("font_color", COLOR_CATEGORY)
+	label.add_theme_color_override("font_color", color_category)
 	return label
 
 func _create_resource_bars() -> void:
@@ -126,7 +131,7 @@ func _create_resource_bars() -> void:
 	hp_bar.value = 100
 	hp_bar.max_value = 100
 	hp_bar.show_percentage = false
-	hp_bar.modulate = Color.GREEN
+	hp_bar.modulate = hp_bar_color
 	
 	hp_container.add_child(hp_label)
 	hp_container.add_child(hp_bar)
@@ -147,7 +152,7 @@ func _create_resource_bars() -> void:
 	mana_bar.value = 50
 	mana_bar.max_value = 50
 	mana_bar.show_percentage = false
-	mana_bar.modulate = Color.DODGER_BLUE
+	mana_bar.modulate = mana_bar_color
 	
 	mana_container.add_child(mana_label)
 	mana_container.add_child(mana_bar)
@@ -162,7 +167,7 @@ func _create_category_section(title: String, stats: Array) -> void:
 	header.text = title
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	header.add_theme_font_size_override("font_size", 16)
-	header.add_theme_color_override("font_color", COLOR_CATEGORY)
+	header.add_theme_color_override("font_color", color_category)
 	stats_container.add_child(header)
 	
 	# Stats rows
@@ -190,7 +195,7 @@ func _create_stat_row(stat_name: String) -> void:
 	value_label.text = "0"
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	value_label.custom_minimum_size.x = 80
-	value_label.add_theme_color_override("font_color", COLOR_NORMAL)
+	value_label.add_theme_color_override("font_color", color_normal)
 	row.add_child(value_label)
 	
 	stats_container.add_child(row)
@@ -215,10 +220,10 @@ func _add_separator() -> void:
 # ============================================
 
 func _connect_to_gamestate() -> void:
-	if not Engine.has_singleton("GameState"):
+	if not has_node("/root/GameState"):
 		return
 	
-	var gs = Engine.get_singleton("GameState")
+	var gs = get_node("/root/GameState")
 	if gs == null:
 		return
 	
@@ -228,7 +233,7 @@ func _connect_to_gamestate() -> void:
 			gs.on_stats_changed.connect(_update_all_stats)
 	
 	# HP/Mana changed
-	if gs.has("character_stats") and gs.character_stats:
+	if "character_stats" in gs and gs.character_stats:
 		var stats = gs.character_stats
 		if stats.has_signal("hp_changed"):
 			if not stats.hp_changed.is_connected(_update_hp):
@@ -237,7 +242,7 @@ func _connect_to_gamestate() -> void:
 			if not stats.mana_changed.is_connected(_update_mana):
 				stats.mana_changed.connect(_update_mana)
 	
-	if LOG:
+	if GameLogger.ENABLED:
 		print("[StatsPanel] Connected to GameState")
 
 # ============================================
@@ -246,11 +251,11 @@ func _connect_to_gamestate() -> void:
 
 func _update_all_stats() -> void:
 	"""Aggiorna tutte le stats con animazione"""
-	if not Engine.has_singleton("GameState"):
+	if not has_node("/root/GameState"):
 		return
 	
-	var gs = Engine.get_singleton("GameState")
-	if gs == null or not gs.has("character_stats") or gs.character_stats == null:
+	var gs = get_node("/root/GameState")
+	if gs == null or not "character_stats" in gs or gs.character_stats == null:
 		return
 	
 	var stats = gs.character_stats
@@ -271,7 +276,7 @@ func _update_all_stats() -> void:
 	_update_hp(stats.current_hp, stats.get_stat("max_hp"))
 	_update_mana(stats.current_mana, stats.get_stat("max_mana"))
 	
-	if LOG:
+	if GameLogger.ENABLED:
 		print("[StatsPanel] Stats updated")
 
 func _animate_stats(delta: float) -> void:
@@ -291,18 +296,18 @@ func _animate_stats(delta: float) -> void:
 				label.text = _format_stat_value(stat_name, current)
 
 func _update_stat_color(stat_name: String, base: float, bonus: float) -> void:
-	"""Aggiorna il colore di una stat in base al bonus"""
+	"""Aggiorna il colore di una stat in base al bonus (usa colori dall'Inspector)"""
 	if not stat_labels.has(stat_name):
 		return
-	
+
 	var label = stat_labels[stat_name]
-	
+
 	if bonus > 0:
-		label.add_theme_color_override("font_color", COLOR_BONUS)
+		label.add_theme_color_override("font_color", color_bonus)
 	elif bonus < 0:
-		label.add_theme_color_override("font_color", COLOR_MALUS)
+		label.add_theme_color_override("font_color", color_malus)
 	else:
-		label.add_theme_color_override("font_color", COLOR_NORMAL)
+		label.add_theme_color_override("font_color", color_normal)
 
 func _update_hp(current: float, maximum: float) -> void:
 	"""Aggiorna HP bar"""

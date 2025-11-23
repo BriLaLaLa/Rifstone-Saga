@@ -4,15 +4,26 @@
 extends Control
 class_name BattleArea
 
-const LOG := true
+# const LOG removed - using GameLogger
 
 const ENEMY_SLOT_SCENE_PATH := "res://scenes/battle/EnemySlot.tscn"
+const GridLayoutManager = preload("res://scripts/battle/GridLayoutManager.gd")
+
 var enemy_slot_scene: PackedScene = null
 
 @onready var spawn_points: Control = $SpawnPoints
 
-const NORMAL_SLOT_SIZE := Vector2(120, 140)
-const BOSS_SLOT_SIZE := Vector2(180, 200)
+# ==================== EXPORTED VARIABLES (Inspector) ====================
+@export_group("Slot Sizes")
+@export var normal_slot_size: Vector2 = Vector2(120, 140)
+@export var boss_slot_size: Vector2 = Vector2(180, 200)
+
+# Grid layout configuration
+@export_group("Grid Layout")
+@export var use_grid_layout: bool = true
+@export var grid_rows: int = 2
+@export var grid_cols: int = 3
+var grid_manager: GridLayoutManager = null
 
 var enemy_slots: Array[EnemySlot] = []
 var current_target_slot: EnemySlot = null
@@ -27,26 +38,115 @@ func _ready() -> void:
 	if not _load_enemy_slot_scene():
 		push_error("[BattleArea] Impossibile caricare EnemySlot scene!")
 		return
-	
+
+	# Initialize grid layout manager (usa valori dall'Inspector)
+	if use_grid_layout:
+		grid_manager = GridLayoutManager.new(grid_rows, grid_cols, normal_slot_size)
+		# Wait for the control to be properly sized
+		await get_tree().process_frame
+		_update_grid_layout()
+
 	_connect_to_gamestate()
+
+	# Connect resize signal for responsive grid
+	if use_grid_layout:
+		resized.connect(_on_resized)
+
 	print("[BattleArea] Ready")
 
 func _initialize_slots() -> void:
 	if slots_created:
 		return
-	
+
 	print("\n[BattleArea] === INITIALIZING SLOTS ===")
-	await _create_enemy_slots_from_spawn_points()
+
+	if use_grid_layout and grid_manager:
+		await _create_enemy_slots_grid()
+	else:
+		await _create_enemy_slots_from_spawn_points()
+
 	slots_created = true
 	print("[BattleArea] ✅ %d slots created\n" % enemy_slots.size())
+
+func _update_grid_layout() -> void:
+	if not grid_manager:
+		return
+
+	var container_size = size
+	if container_size == Vector2.ZERO:
+		container_size = get_viewport_rect().size
+
+	grid_manager.set_container_size(container_size)
+	grid_manager.auto_adjust_spacing(Vector2(30, 30), Vector2(80, 80))
+
+	if GameLogger.ENABLED:
+		print("[BattleArea] Grid layout updated for size: %s" % container_size)
+		var info = grid_manager.get_grid_info()
+		print("[BattleArea] Grid: %dx%d, offset: %s" % [info.rows, info.cols, info.grid_offset])
 
 func _load_enemy_slot_scene() -> bool:
 	if not ResourceLoader.exists(ENEMY_SLOT_SCENE_PATH):
 		push_error("[BattleArea] EnemySlot.tscn non trovata")
 		return false
-	
+
 	enemy_slot_scene = load(ENEMY_SLOT_SCENE_PATH)
 	return enemy_slot_scene != null
+
+func _create_enemy_slots_grid() -> void:
+	if not grid_manager:
+		push_error("[BattleArea] Grid manager not initialized!")
+		return
+
+	var positions = grid_manager.get_all_positions()
+	var total_slots = positions.size()
+
+	if GameLogger.ENABLED:
+		print("[BattleArea] Creating %d slots using grid layout" % total_slots)
+
+	for i in range(total_slots):
+		var slot_num = i + 1
+		# Last slot is reserved for boss
+		var is_boss = (slot_num == total_slots)
+
+		var slot: EnemySlot = enemy_slot_scene.instantiate() as EnemySlot
+		if slot == null:
+			push_error("[BattleArea] Failed to instantiate slot %d" % slot_num)
+			continue
+
+		var slot_size: Vector2 = boss_slot_size if is_boss else normal_slot_size
+		var target_pos = positions[i]
+
+		# Setup completo PRIMA di add_child
+		slot.size = slot_size
+		slot.custom_minimum_size = slot_size
+
+		# Usa offset per posizionamento manuale
+		slot.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		slot.anchor_left = 0
+		slot.anchor_top = 0
+		slot.anchor_right = 0
+		slot.anchor_bottom = 0
+
+		slot.offset_left = target_pos.x
+		slot.offset_top = target_pos.y
+		slot.offset_right = target_pos.x + slot_size.x
+		slot.offset_bottom = target_pos.y + slot_size.y
+
+		slot.z_index = 10
+
+		if GameLogger.ENABLED:
+			print("[BattleArea] Creating slot %d at grid pos %s" % [slot_num, target_pos])
+
+		add_child(slot)
+		await get_tree().process_frame
+
+		if GameLogger.ENABLED:
+			print("[BattleArea] Slot %d positioned: pos=%s, global=%s" % [slot_num, slot.position, slot.global_position])
+
+		slot.enemy_clicked.connect(_on_enemy_clicked)
+		slot.enemy_died.connect(_on_enemy_died)
+
+		enemy_slots.append(slot)
 
 func _create_enemy_slots_from_spawn_points() -> void:
 	if spawn_points == null:
@@ -64,13 +164,13 @@ func _create_enemy_slots_from_spawn_points() -> void:
 		var marker = markers[i] as Control
 		var slot_num = i + 1
 		var is_boss = (slot_num == markers.size() or "boss" in marker.name.to_lower() or marker.name == "SpawnPoint7")
-		
+
 		var slot: EnemySlot = enemy_slot_scene.instantiate() as EnemySlot
 		if slot == null:
 			push_error("[BattleArea] Failed to instantiate slot %d" % slot_num)
 			continue
-		
-		var slot_size: Vector2 = BOSS_SLOT_SIZE if is_boss else NORMAL_SLOT_SIZE
+
+		var slot_size: Vector2 = boss_slot_size if is_boss else normal_slot_size
 		var target_pos = marker.position
 		
 		# Setup completo PRIMA di add_child
@@ -91,19 +191,39 @@ func _create_enemy_slots_from_spawn_points() -> void:
 		
 		slot.z_index = 10
 		
-		if LOG:
+		if GameLogger.ENABLED:
 			print("[BattleArea] Creating slot %d at marker pos %s" % [slot_num, target_pos])
 		
 		add_child(slot)
 		await get_tree().process_frame
 		
-		if LOG:
+		if GameLogger.ENABLED:
 			print("[BattleArea] Slot %d AFTER frame: pos=%s, global=%s" % [slot_num, slot.position, slot.global_position])
 		
 		slot.enemy_clicked.connect(_on_enemy_clicked)
 		slot.enemy_died.connect(_on_enemy_died)
 		
 		enemy_slots.append(slot)
+
+func _on_resized() -> void:
+	if not use_grid_layout or not grid_manager or not slots_created:
+		return
+
+	_update_grid_layout()
+
+	# Reposition all existing slots
+	var positions = grid_manager.get_all_positions()
+	for i in range(min(enemy_slots.size(), positions.size())):
+		var slot = enemy_slots[i]
+		var new_pos = positions[i]
+
+		slot.offset_left = new_pos.x
+		slot.offset_top = new_pos.y
+		slot.offset_right = new_pos.x + slot.size.x
+		slot.offset_bottom = new_pos.y + slot.size.y
+
+		if GameLogger.ENABLED:
+			print("[BattleArea] Repositioned slot %d to %s" % [i, new_pos])
 
 func _connect_to_gamestate() -> void:
 	if Engine.has_singleton("GameState"):
@@ -286,9 +406,40 @@ func spawn_test_wave() -> void:
 		
 		slot.spawn_enemy("enemy_%d" % i, enemy_data)
 		
-		if LOG:
+		if GameLogger.ENABLED:
 			print("[BattleArea] Spawned '%s' in slot %d at pos=%s" % [enemy_data["name"], i, slot.position])
 	
 	_auto_target_first_alive()
 	
 	print("[BattleArea] ✅ Test wave complete - %d enemies spawned\n" % enemy_slots.size())
+
+func get_all_enemy_slots() -> Array[EnemySlot]:
+	"""Restituisce tutti gli slot nemici (vivi o morti)"""
+	var result: Array[EnemySlot] = []
+	for slot in enemy_slots:
+		if slot != null and is_instance_valid(slot):
+			result.append(slot)
+	return result
+
+# ==================== SKILL SYSTEM SUPPORT ====================
+
+func get_random_alive_enemy():
+	"""Get a random alive enemy (for single-target skills)"""
+	var alive = get_alive_enemies()
+	if alive.is_empty():
+		return null
+	return alive[randi() % alive.size()]
+
+func get_all_alive_enemies() -> Array:
+	"""Get all alive enemies (for AOE skills)"""
+	var alive_array: Array = []
+	for slot in get_alive_enemies():
+		alive_array.append(slot)
+	return alive_array
+
+func damage_enemy(enemy, amount: float, ignore_defense: bool = false) -> void:
+	"""Damage a specific enemy (for skills)"""
+	if enemy and enemy.is_enemy_alive():
+		# For now, EnemySlot.take_damage doesn't support ignore_defense
+		# We'll just apply the damage directly
+		enemy.take_damage(amount)
