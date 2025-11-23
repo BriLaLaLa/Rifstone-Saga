@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://ci6nt0nevsu6h" path="res://scripts/ui/InventorySlot.tscn" id="3_s3c4d"]
 [ext_resource type="Script" uid="uid://c4exoc0ywhuiu" path="res://scripts/ui/HighlightLayer.gd" id="5_highlight"]
 [ext_resource type="Texture2D" uid="uid://dfq1oqkgjdkny" path="res://scripts/ui/inventoryPg.png" id="6_equipment"]
-[ext_resource type="Script" uid="uid://bbsbwwvbke84g" path="res://scripts/ui/EquipDrop.gd" id="6_nlt8l"]
+[ext_resource type="Script" uid="uid://cg2qas0h4r2vg" path="res://scripts/ui/EquipmentSlot.gd" id="7_equipment_slot"]
 
 [node name="InventoryTab" type="Control"]
 layout_mode = 3
@@ -26,36 +26,45 @@ offset_bottom = 768.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Left" type="Control" parent="InvSplit"]
+[node name="Left" type="VBoxContainer" parent="InvSplit"]
 custom_minimum_size = Vector2(512, 768)
 layout_mode = 2
 
-[node name="Holder" type="GridContainer" parent="InvSplit/Left"]
+[node name="BagSection" type="VBoxContainer" parent="InvSplit/Left"]
+layout_mode = 2
+
+[node name="InventoryScroll" type="ScrollContainer" parent="InvSplit/Left"]
+custom_minimum_size = Vector2(512, 400)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="InventoryContainer" type="Control" parent="InvSplit/Left/InventoryScroll"]
+custom_minimum_size = Vector2(512, 320)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Holder" type="GridContainer" parent="InvSplit/Left/InventoryScroll/InventoryContainer"]
 layout_mode = 0
 offset_right = 512.0
 offset_bottom = 320.0
 columns = 8
 
-[node name="ItemsLayer" type="Control" parent="InvSplit/Left"]
+[node name="ItemsLayer" type="Control" parent="InvSplit/Left/InventoryScroll/InventoryContainer"]
 anchors_preset = 0
 offset_right = 512.0
 offset_bottom = 320.0
 mouse_filter = 2
 
-[node name="HighlightLayer" type="Control" parent="InvSplit/Left"]
+[node name="HighlightLayer" type="Control" parent="InvSplit/Left/InventoryScroll/InventoryContainer"]
 anchors_preset = 0
 offset_right = 512.0
 offset_bottom = 320.0
 mouse_filter = 2
 script = ExtResource("5_highlight")
 
-[node name="Bottone" type="Button" parent="InvSplit/Left"]
-layout_mode = 0
-offset_left = 9.0
-offset_top = 395.0
-offset_right = 548.0
-offset_bottom = 576.0
-text = "Droppa Random Item"
+[node name="Bottone" type="HBoxContainer" parent="InvSplit/Left"]
+layout_mode = 2
 script = ExtResource("3_i2wco")
 
 [node name="Right" type="Control" parent="InvSplit"]
@@ -68,7 +77,6 @@ offset_left = 121.0
 offset_top = -50.0
 offset_right = 521.0
 offset_bottom = 718.0
-script = ExtResource("6_nlt8l")
 
 [node name="CharacterBackground" type="TextureRect" parent="InvSplit/Right/EquipmentPanel"]
 layout_mode = 1
@@ -83,10 +91,10 @@ offset_right = 128.0
 offset_bottom = 256.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 texture = ExtResource("6_equipment")
 expand_mode = 1
 stretch_mode = 5
-mouse_filter = 2
 
 [node name="EquipmentSlots" type="Control" parent="InvSplit/Right/EquipmentPanel"]
 layout_mode = 1
@@ -95,7 +103,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 
 [node name="HelmetSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
 custom_minimum_size = Vector2(64, 64)
@@ -104,6 +111,8 @@ offset_left = 137.0
 offset_top = 218.0
 offset_right = 201.0
 offset_bottom = 282.0
+script = ExtResource("7_equipment_slot")
+accepted_types = Array[String](["helmet", "hat"])
 
 [node name="WeaponSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
 custom_minimum_size = Vector2(64, 128)
@@ -112,6 +121,9 @@ offset_left = 80.0
 offset_top = 230.0
 offset_right = 144.0
 offset_bottom = 358.0
+script = ExtResource("7_equipment_slot")
+slot_type = "weapon"
+accepted_types = Array[String](["weapon", "sword", "axe", "bow", "staff"])
 
 [node name="ChestSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
 custom_minimum_size = Vector2(64, 128)
@@ -120,6 +132,9 @@ offset_left = 137.0
 offset_top = 267.0
 offset_right = 201.0
 offset_bottom = 395.0
+script = ExtResource("7_equipment_slot")
+slot_type = "chest"
+accepted_types = Array[String](["chest", "armor", "robe"])
 
 [node name="ShieldSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
 custom_minimum_size = Vector2(64, 128)
@@ -128,6 +143,9 @@ offset_left = 203.0
 offset_top = 263.0
 offset_right = 267.0
 offset_bottom = 391.0
+script = ExtResource("7_equipment_slot")
+slot_type = "shield"
+accepted_types = Array[String](["shield", "offhand"])
 
 [node name="BeltSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
 custom_minimum_size = Vector2(128, 64)
@@ -136,6 +154,9 @@ offset_left = 108.0
 offset_top = 378.0
 offset_right = 236.0
 offset_bottom = 442.0
+script = ExtResource("7_equipment_slot")
+slot_type = "belt"
+accepted_types = Array[String](["belt", "waist"])
 
 [node name="BootsSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
 custom_minimum_size = Vector2(64, 64)
@@ -144,3 +165,6 @@ offset_left = 134.0
 offset_top = 440.0
 offset_right = 198.0
 offset_bottom = 504.0
+script = ExtResource("7_equipment_slot")
+slot_type = "boots"
+accepted_types = Array[String](["boots", "shoes"])

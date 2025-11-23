@@ -33,6 +33,7 @@ const STARTER_BAG_SLOTS := 20
 const BAG_SLOT_HEIGHT := 70
 
 var bag_slots: Array = []  # Array of BagSlot nodes
+var bag_equipped_slots: Array[int] = []  # Slots provided by each equipped bag
 var total_inventory_slots: int = 0
 var trash_bin: TrashBin = null
 
@@ -125,11 +126,19 @@ func _refresh_from_gamestate() -> void:
 		return
 
 	var inventory: Dictionary = gs.inventory
-	
+
+	# CRITICAL: Rimuovi solo la starter bag dall'inventario - non dovrebbe mai essere lì!
+	# La starter bag è unica e locked nello slot 0
+	var bags_to_remove = ["starter_bag"]
+	for bag_id in bags_to_remove:
+		if inventory.has(bag_id):
+			print("[InventoryTab] CLEANUP: Removing %s from inventory (bags should only be in bag slots!)" % bag_id)
+			inventory.erase(bag_id)
+
 	# Posiziona gli items nell'inventario
 	# Per ora, posizionamento automatico sequenziale
 	var current_pos := Vector2i(0, 0)
-	
+
 	for item_id in inventory.keys():
 		var quantity: int = inventory[item_id]
 		var item_data = _get_item_data(item_id)
@@ -257,7 +266,13 @@ func _place_item_internal(item: Item, pos: Vector2i) -> bool:
 	if items_layer == null:
 		print("[InventoryTab] ERROR: ItemsLayer is null!")
 		return false
-	
+
+	# CRITICAL: Rimuovi l'item dal parent corrente PRIMA di aggiungerlo a ItemsLayer
+	# Questo è necessario quando l'item proviene da un BagSlot o altro parent
+	if item.get_parent():
+		print("[InventoryTab] Removing item %s from current parent: %s" % [item.item_id, item.get_parent().name])
+		item.get_parent().remove_child(item)
+
 	items_layer.add_child(item)
 	
 	# FIX: Posiziona l'item usando call_deferred per evitare problemi di timing
@@ -576,6 +591,10 @@ func _create_bag_slots() -> void:
 	for child in bag_section.get_children():
 		child.queue_free()
 	bag_slots.clear()
+	bag_equipped_slots.clear()
+	bag_equipped_slots.resize(MAX_BAG_SLOTS)
+	for i in range(MAX_BAG_SLOTS):
+		bag_equipped_slots[i] = 0
 
 	# Crea container orizzontale per i bag slots
 	var bag_container = HBoxContainer.new()
@@ -629,6 +648,10 @@ func _on_bag_equipped(slot_index: int, bag_slots_count: int) -> void:
 	if LOG:
 		print("[InventoryTab] Bag equipped in slot %d, adding %d slots" % [slot_index, bag_slots_count])
 
+	# CRITICAL: Memorizza quanti slot fornisce questa bag
+	if slot_index >= 0 and slot_index < bag_equipped_slots.size():
+		bag_equipped_slots[slot_index] = bag_slots_count
+
 	# Aggiungi gli slot della bag al totale
 	total_inventory_slots += bag_slots_count
 	_recalculate_inventory_size()
@@ -638,15 +661,56 @@ func _on_bag_equipped(slot_index: int, bag_slots_count: int) -> void:
 
 func _on_bag_removed(slot_index: int) -> void:
 	"""Chiamato quando una bag viene rimossa"""
-	if LOG:
-		print("[InventoryTab] Bag removed from slot %d" % slot_index)
+	print("[InventoryTab] === _on_bag_removed() called for slot %d ===" % slot_index)
+	print("  Current state: total_slots=%d, rows=%d" % [total_inventory_slots, rows])
 
-	# Ricalcola il totale degli slot
+	# CRITICAL: Azzera gli slot di questa bag nell'array
+	if slot_index >= 0 and slot_index < bag_equipped_slots.size():
+		bag_equipped_slots[slot_index] = 0
+
+	# CRITICAL: Redistribuisci item PRIMA di ridurre la griglia
+	# Calculate new size first
 	_recalculate_total_slots()
+	var new_rows = ceili(float(total_inventory_slots) / float(cols))
+	print("  After recalc: total_slots=%d, new_rows=%d" % [total_inventory_slots, new_rows])
+
+	# Redistribute items that would be outside new bounds
+	print("  Calling redistribute_items_after_bag_removal()...")
+	var redistribution_success = redistribute_items_after_bag_removal(new_rows)
+	print("  Redistribution result: %s" % ("SUCCESS" if redistribution_success else "FAILED"))
+
+	# Now resize the grid
+	print("  Calling _recalculate_inventory_size()...")
 	_recalculate_inventory_size()
+	print("  After resize: rows=%d, grid_occupied size=%dx%d" % [rows, grid_occupied[0].size() if grid_occupied.size() > 0 else 0, grid_occupied.size()])
+
+	# CRITICAL: Rebuild grid_occupied after resize
+	# _initialize_grid() clears grid_occupied, so we need to rebuild it based on actual item positions
+	print("  Rebuilding grid_occupied after resize...")
+	_rebuild_grid_occupied()
+	print("  Grid occupancy rebuilt")
+
+	# CRITICAL: Re-place all items to update their visual positions correctly
+	# We need to call place_item() again for each item to position them with the new slot layout
+	print("  Re-placing all items to update visual positions...")
+	var items_to_reposition = []
+	for pos in items_at_position.keys():
+		var item = items_at_position[pos]
+		if is_instance_valid(item):
+			items_to_reposition.append({"item": item, "pos": pos})
+
+	# Re-place each item
+	for entry in items_to_reposition:
+		var item: Item = entry["item"]
+		var pos: Vector2i = entry["pos"]
+		place_item(item, pos)
+		print("    Re-placed %s at (%d, %d)" % [item.item_id, pos.x, pos.y])
+	print("  Visual positions updated")
 
 	# Salva in GameState
 	_sync_equipped_bags_to_gamestate()
+
+	print("[InventoryTab] === _on_bag_removed() COMPLETE ===")
 
 func _setup_starter_bag() -> void:
 	"""Setup della starter bag (20 slots) nella prima bag slot"""
@@ -705,6 +769,11 @@ func _recalculate_inventory_size() -> void:
 	# CRITICAL: Preserve existing items when resizing grid
 	# Pass clear_items=false to keep items_at_position intact
 	_initialize_grid(false)
+
+	# CRITICAL: Rebuild grid_occupied based on existing items!
+	# _initialize_grid() always clears grid_occupied, so we must rebuild it
+	_rebuild_grid_occupied()
+
 	_create_slots()
 
 	# NON ricaricare gli items - sono già nell'inventario
@@ -715,61 +784,264 @@ func _recalculate_total_slots() -> void:
 	"""Ricalcola il totale degli slot dalle bag equipaggiate"""
 	total_inventory_slots = 0
 
-	for bag_slot in bag_slots:
-		if bag_slot.equipped_bag != null:
-			var bag_data = _get_item_data(bag_slot.equipped_bag.item_id)
-			var slots_count = bag_data.get("bag_slots", 0)
-			total_inventory_slots += slots_count
+	# CRITICAL: Use bag_equipped_slots array instead of accessing bag data
+	# This is more reliable and doesn't depend on GameState access
+	for i in range(bag_equipped_slots.size()):
+		total_inventory_slots += bag_equipped_slots[i]
 
 	if LOG:
-		print("[InventoryTab] Total inventory slots: %d" % total_inventory_slots)
+		print("[InventoryTab] Total inventory slots: %d (from bag_equipped_slots: %s)" %
+			[total_inventory_slots, bag_equipped_slots])
 
 func can_remove_bag(slot_index: int) -> bool:
-	"""Controlla se possiamo rimuovere una bag (c'è abbastanza spazio per gli items?)"""
+	"""Controlla se possiamo rimuovere una bag (c'è abbastanza spazio per ridistribuire gli items?)"""
+	print("\n========== can_remove_bag() START (slot %d) ==========" % slot_index)
+
 	# Trova la bag da rimuovere
 	if slot_index < 0 or slot_index >= bag_slots.size():
+		print("[ERROR] Invalid slot_index: %d" % slot_index)
 		return false
 
 	var bag_slot = bag_slots[slot_index]
 	if bag_slot.equipped_bag == null:
+		print("[INFO] No bag equipped in slot %d, removal OK" % slot_index)
 		return true  # Nessuna bag, ok
 
-	# Calcola gli slot che rimarranno dopo la rimozione
-	var bag_data = _get_item_data(bag_slot.equipped_bag.item_id)
-	var slots_to_remove = bag_data.get("bag_slots", 0)
-	var remaining_slots = total_inventory_slots - slots_to_remove
+	# CRITICAL: Calcola gli slot rimanenti usando l'array memorizzato
+	print("\n[STEP 1] Bag equipped slots array:")
+	for i in range(bag_equipped_slots.size()):
+		print("  bag_equipped_slots[%d] = %d" % [i, bag_equipped_slots[i]])
+
+	var remaining_slots = 0
+	for i in range(bag_equipped_slots.size()):
+		if i == slot_index:
+			print("  Skipping slot %d (bag to remove)" % i)
+			continue  # Skip la bag da rimuovere
+		remaining_slots += bag_equipped_slots[i]
+
+	var slots_to_remove = total_inventory_slots - remaining_slots
 
 	# Calcola quante righe avremo dopo la rimozione
 	var new_rows = ceili(float(remaining_slots) / float(cols))
 
-	# CRITICAL: Check if all items are within the bounds of the reduced grid
+	print("\n[STEP 2] Slot calculation:")
+	print("  total_inventory_slots: %d" % total_inventory_slots)
+	print("  slots_to_remove: %d" % slots_to_remove)
+	print("  remaining_slots after removal: %d" % remaining_slots)
+	print("  new_rows (after removal): %d (cols: %d)" % [new_rows, cols])
+	print("  current rows: %d" % rows)
+
+	# CRITICAL: Get the bag item to exclude it from calculations
+	var bag_item = bag_slot.equipped_bag
+	print("\n[STEP 3] Bag to remove: %s (instance id: %d)" % [bag_item.item_id, bag_item.get_instance_id()])
+
+	# Count items that need to be redistributed (items outside new bounds)
+	var items_to_redistribute: Array[Item] = []
+	var items_in_safe_positions: Array[Item] = []
+
+	print("\n[STEP 4] Checking all items in inventory (%d total):" % items_at_position.size())
+	var item_index = 0
+	for pos in items_at_position.keys():
+		var item = items_at_position[pos]
+		item_index += 1
+
+		if not is_instance_valid(item):
+			print("  [%d] INVALID item at %s - SKIPPING" % [item_index, pos])
+			continue
+
+		var item_size_str = "%dx%d" % [item.item_size.x, item.item_size.y]
+		var cells = item.item_size.x * item.item_size.y
+
+		# CRITICAL: Skip the bag we're removing - it shouldn't be counted!
+		if item == bag_item:
+			print("  [%d] %s at %s (size %s, %d cells) - THIS IS THE BAG, SKIPPING!" %
+				[item_index, item.item_id, pos, item_size_str, cells])
+			continue
+
+		# Check if item's bottom edge would be outside the new grid
+		var item_bottom_row = pos.y + item.item_size.y - 1
+
+		if item_bottom_row >= new_rows:
+			items_to_redistribute.append(item)
+			print("  [%d] %s at %s (size %s, %d cells) bottom_row=%d >= new_rows=%d → NEEDS REDISTRIBUTION" %
+				[item_index, item.item_id, pos, item_size_str, cells, item_bottom_row, new_rows])
+		else:
+			items_in_safe_positions.append(item)
+			print("  [%d] %s at %s (size %s, %d cells) bottom_row=%d < new_rows=%d → SAFE" %
+				[item_index, item.item_id, pos, item_size_str, cells, item_bottom_row, new_rows])
+
+	# Calculate occupied cells in safe positions
+	var occupied_cells_safe = 0
+	for item in items_in_safe_positions:
+		occupied_cells_safe += item.item_size.x * item.item_size.y
+
+	# Calculate cells needed for items to redistribute
+	var cells_needed = 0
+	for item in items_to_redistribute:
+		cells_needed += item.item_size.x * item.item_size.y
+
+	# CRITICAL FIX: Available space is grid cells, not slots!
+	# With 20 slots in a 6-column grid → 4 rows → 24 cells available!
+	var grid_cells_after_removal = cols * new_rows
+	var available_space = grid_cells_after_removal - occupied_cells_safe
+
+	print("\n[STEP 5] Final calculation:")
+	print("  Items in SAFE positions: %d items, %d cells occupied" %
+		[items_in_safe_positions.size(), occupied_cells_safe])
+	print("  Items to REDISTRIBUTE: %d items, %d cells needed" %
+		[items_to_redistribute.size(), cells_needed])
+	print("  Remaining slots: %d" % remaining_slots)
+	print("  Grid after removal: %d cols × %d rows = %d cells" % [cols, new_rows, grid_cells_after_removal])
+	print("  Occupied cells (safe): %d" % occupied_cells_safe)
+	print("  Available space: %d - %d = %d" % [grid_cells_after_removal, occupied_cells_safe, available_space])
+	print("  Cells needed: %d" % cells_needed)
+
+	var can_remove = cells_needed <= available_space
+	print("\n[RESULT] cells_needed (%d) <= available_space (%d) = %s" %
+		[cells_needed, available_space, can_remove])
+	print("========== can_remove_bag() END ==========\n")
+
+	return can_remove
+
+func redistribute_items_after_bag_removal(new_rows: int) -> bool:
+	"""
+	Redistribuisce gli item che sarebbero fuori dai bounds dopo la rimozione di una bag.
+	Gli item in posizioni sicure rimangono dove sono.
+	Restituisce true se la redistribuzione ha successo, false altrimenti.
+	"""
+	if LOG:
+		print("[InventoryTab] Redistributing items for new grid size: %dx%d" % [cols, new_rows])
+
+	# Find items that need to be redistributed
+	var items_to_move: Array[Dictionary] = []  # {item: Item, old_pos: Vector2i}
+
 	for pos in items_at_position.keys():
 		var item = items_at_position[pos]
 		if not is_instance_valid(item):
 			continue
 
-		# Check if item's bottom edge would be outside the new grid
+		# Check if item would be outside new bounds
 		var item_bottom_row = pos.y + item.item_size.y - 1
+
 		if item_bottom_row >= new_rows:
-			if LOG:
-				print("[InventoryTab] can_remove_bag: Item %s at row %d would be outside new grid (rows: %d)" %
-					[item.item_id, pos.y, new_rows])
-			return false
+			items_to_move.append({"item": item, "old_pos": pos})
 
-	# Conta quante celle sono occupate
-	var occupied_cells = 0
-	for item in items_at_position.values():
-		if is_instance_valid(item):
-			occupied_cells += item.item_size.x * item.item_size.y
-
-	# Aggiungi 1 per la bag stessa che tornerà nell'inventario
-	occupied_cells += 1
+	if items_to_move.is_empty():
+		if LOG:
+			print("[InventoryTab] No items need redistribution")
+		return true
 
 	if LOG:
-		print("[InventoryTab] can_remove_bag check: occupied=%d, remaining=%d, new_rows=%d" %
-			[occupied_cells, remaining_slots, new_rows])
+		print("[InventoryTab] Found %d items to redistribute" % items_to_move.size())
 
-	return occupied_cells <= remaining_slots
+	# Remove items from their old positions
+	for data in items_to_move:
+		var item: Item = data["item"]
+		var old_pos: Vector2i = data["old_pos"]
+		items_at_position.erase(old_pos)
+		if LOG:
+			print("[InventoryTab]   Removing %s from %s" % [item.item_id, old_pos])
+
+	# Try to place items in new positions (only within new_rows bounds)
+	for data in items_to_move:
+		var item: Item = data["item"]
+
+		# Find position within the NEW grid bounds (not the old grid)
+		var free_pos = Vector2i(-1, -1)
+		for y in range(new_rows):
+			for x in range(cols):
+				var test_pos = Vector2i(x, y)
+				# Check if this position can fit the item within new bounds
+				if test_pos.x + item.item_size.x > cols or test_pos.y + item.item_size.y > new_rows:
+					continue
+
+				# Check if position is free (not occupied by safe items)
+				var is_free = true
+				for check_y in range(test_pos.y, test_pos.y + item.item_size.y):
+					for check_x in range(test_pos.x, test_pos.x + item.item_size.x):
+						# Check if this cell overlaps with any existing item
+						for existing_pos in items_at_position.keys():
+							var existing_item = items_at_position[existing_pos]
+							if not is_instance_valid(existing_item):
+								continue
+
+							# Check if cell (check_x, check_y) is within the bounds of existing_item
+							if check_x >= existing_pos.x and check_x < existing_pos.x + existing_item.item_size.x:
+								if check_y >= existing_pos.y and check_y < existing_pos.y + existing_item.item_size.y:
+									is_free = false
+									break
+						if not is_free:
+							break
+					if not is_free:
+						break
+
+				if is_free:
+					free_pos = test_pos
+					break
+			if free_pos != Vector2i(-1, -1):
+				break
+
+		if free_pos == Vector2i(-1, -1):
+			push_error("[InventoryTab] CRITICAL: No space to redistribute item %s!" % item.item_id)
+			return false
+
+		# Place item in new position
+		items_at_position[free_pos] = item
+		item.position = Vector2(free_pos.x * (cell_px + 4), free_pos.y * (cell_px + 4))
+
+		if LOG:
+			print("[InventoryTab]   Redistributed %s to %s" % [item.item_id, free_pos])
+
+	if LOG:
+		print("[InventoryTab] Redistribution complete!")
+
+	# CRITICAL: Rebuild grid_occupied based on new items positions
+	_rebuild_grid_occupied()
+
+	return true
+
+func _update_all_item_positions() -> void:
+	"""Aggiorna le posizioni visuali di tutti gli items basandosi su items_at_position"""
+	for pos in items_at_position.keys():
+		var item = items_at_position[pos]
+		if not is_instance_valid(item):
+			continue
+
+		# Get the slot at this grid position to get its actual pixel position
+		var slot_index = pos.y * cols + pos.x
+		if slot_index >= 0 and slot_index < slots.size():
+			var slot = slots[slot_index]
+			if slot:
+				# Position item relative to holder
+				var slot_pos = slot.position
+				item.position = slot_pos
+				item.size = Vector2(item.item_size.x * (cell_px + 4) - 4, item.item_size.y * (cell_px + 4) - 4)
+				print("[InventoryTab]   Updated visual position of %s at grid (%d, %d) to pixel (%d, %d)" %
+					[item.item_id, pos.x, pos.y, slot_pos.x, slot_pos.y])
+
+func _rebuild_grid_occupied() -> void:
+	"""Ricostruisce grid_occupied basandosi su items_at_position"""
+	print("[InventoryTab] Rebuilding grid_occupied from items_at_position...")
+
+	# Clear grid_occupied
+	for y in range(rows):
+		for x in range(cols):
+			grid_occupied[y][x] = false
+
+	# Mark cells occupied by items
+	for pos in items_at_position.keys():
+		var item = items_at_position[pos]
+		if not is_instance_valid(item):
+			continue
+
+		# Mark all cells occupied by this item
+		for y in range(pos.y, pos.y + item.item_size.y):
+			for x in range(pos.x, pos.x + item.item_size.x):
+				if y < rows and x < cols:
+					grid_occupied[y][x] = true
+
+	if LOG:
+		print("[InventoryTab] Grid occupied rebuilt")
 
 func _sync_equipped_bags_to_gamestate() -> void:
 	"""Salva le bag equipaggiate in GameState"""
