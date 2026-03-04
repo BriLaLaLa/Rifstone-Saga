@@ -8,6 +8,7 @@ const LOG := true
 @export var cell_px: int = 64
 
 @export var item_scene: PackedScene
+@export var craftable_item_scene: PackedScene
 @export var slot_scene: PackedScene
 
 @onready var holder: GridContainer = $"InvSplit/Left/InventoryScroll/InventoryContainer/Holder"
@@ -15,8 +16,17 @@ const LOG := true
 @onready var inventory_container: Control = $"InvSplit/Left/InventoryScroll/InventoryContainer"
 @onready var bag_section: VBoxContainer = $"InvSplit/Left/BagSection"
 
+# Bag slots from scene
+@onready var bag_slot_0: BagSlot = $"InvSplit/Left/BagSection/BagContainer/BagSlot0"
+@onready var bag_slot_1: BagSlot = $"InvSplit/Left/BagSection/BagContainer/BagSlot1"
+@onready var bag_slot_2: BagSlot = $"InvSplit/Left/BagSection/BagContainer/BagSlot2"
+@onready var bag_slot_3: BagSlot = $"InvSplit/Left/BagSection/BagContainer/BagSlot3"
+@onready var bag_slot_4: BagSlot = $"InvSplit/Left/BagSection/BagContainer/BagSlot4"
+@onready var trash_bin: TrashBin = $"InvSplit/Left/BagSection/TrashBin"
+
 const DEFAULT_SLOT_SCENE_PATH := "res://scripts/ui/InventorySlot.tscn"
 const DEFAULT_ITEM_SCENE_PATH := "res://scripts/ui/Item.tscn"
+const DEFAULT_CRAFTABLE_ITEM_SCENE_PATH := "res://scripts/ui/CraftableItem.tscn"
 
 # Griglia logica dell'inventario: true = occupato, false = libero
 var grid_occupied: Array[Array] = []
@@ -35,16 +45,18 @@ const BAG_SLOT_HEIGHT := 70
 var bag_slots: Array = []  # Array of BagSlot nodes
 var bag_equipped_slots: Array[int] = []  # Slots provided by each equipped bag
 var total_inventory_slots: int = 0
-var trash_bin: TrashBin = null
 
 func _ready() -> void:
 	_initialize_grid()
-	_create_bag_slots()
-	_create_trash_bin()
+	_init_bag_slots_from_scene()
 	_create_slots()
 	_connect_to_gamestate()
 	_setup_starter_bag()
 	_refresh_from_gamestate()
+
+	# CRITICAL: Listen for children removed from ItemsLayer
+	if items_layer:
+		items_layer.child_exiting_tree.connect(_on_item_removed_from_layer)
 
 func _initialize_grid(clear_items: bool = true) -> void:
 	grid_occupied.clear()
@@ -113,18 +125,38 @@ func _connect_to_gamestate() -> void:
 	if gs and gs.has_signal("on_inventory_changed"):
 		if not gs.on_inventory_changed.is_connected(_on_gamestate_inventory_changed):
 			gs.on_inventory_changed.connect(_on_gamestate_inventory_changed)
+			print("[InventoryTab] 🔗 Connected to GameState.on_inventory_changed signal")
+		else:
+			print("[InventoryTab] ⚠️ Already connected to GameState.on_inventory_changed signal")
+	else:
+		print("[InventoryTab] ❌ Failed to connect - GameState or signal not found")
 
 func _on_gamestate_inventory_changed() -> void:
+	print("[InventoryTab] 📥 Received on_inventory_changed signal!")
 	_refresh_from_gamestate()
+	print("[InventoryTab] 📥 Refresh complete.")
 
 func _refresh_from_gamestate() -> void:
 	# Pulisci inventario visuale
 	_clear_all_items()
 
 	var gs = _get_gamestate()
-	if not gs or not "inventory" in gs:
+	if not gs:
 		return
 
+	# PRIORITY: Use NEW grid-based inventory_items if it exists
+	# CRITICAL FIX: If inventory_items exists (even if empty), use it and DON'T fall back to old format
+	# The old fallback was overwriting loaded data with empty arrays!
+	if "inventory_items" in gs:
+		print("[InventoryTab] 📂 Loading from inventory_items (NEW format): %d items" % gs.inventory_items.size())
+		_load_from_inventory_items(gs.inventory_items)
+		return
+
+	# FALLBACK: Use old inventory dictionary ONLY if inventory_items doesn't exist at all
+	if not "inventory" in gs:
+		return
+
+	print("[InventoryTab] 📂 Loading from inventory dictionary (OLD format - fallback for migration)")
 	var inventory: Dictionary = gs.inventory
 
 	# CRITICAL: Rimuovi solo la starter bag dall'inventario - non dovrebbe mai essere lì!
@@ -142,13 +174,13 @@ func _refresh_from_gamestate() -> void:
 	for item_id in inventory.keys():
 		var quantity: int = inventory[item_id]
 		var item_data = _get_item_data(item_id)
-		
+
 		# Per ogni quantità, crea un item separato (puoi modificare per stack)
 		for i in range(quantity):
 			var item = _create_item_visual(item_id, item_data)
 			if item == null:
 				continue
-			
+
 			# Trova prossima posizione libera
 			var pos = _find_next_free_position(current_pos, item.item_size)
 			if pos == Vector2i(-1, -1):
@@ -156,13 +188,134 @@ func _refresh_from_gamestate() -> void:
 					print("[InventoryTab] No space for item: %s" % item_id)
 				item.queue_free()
 				continue
-			
+
 			# Posiziona l'item
 			if _place_item_internal(item, pos):
 				current_pos = Vector2i(pos.x + item.item_size.x, pos.y)
 				if current_pos.x >= cols:
 					current_pos.x = 0
 					current_pos.y += 1
+
+	# MIGRATION: Sync to populate inventory_items for first-time OLD format users
+	_sync_to_gamestate()
+	print("[InventoryTab] ✅ Migrated from OLD format and synced %d items to inventory_items" % items_at_position.size())
+
+func _load_from_inventory_items(inventory_items: Array) -> void:
+	"""Load inventory from the NEW inventory_items format (with positions and bonuses)"""
+	var loaded_count = 0
+
+	# CRITICAL FIX: Use instance_id for unique identification instead of item_id!
+	# This prevents the bug where ALL items with same item_id get skipped on reload
+	var gs = _get_gamestate()
+	var equipped_instance_ids = []  # Use instance_id for unique identification!
+	if gs and "equipped_items" in gs:
+		for slot in gs.equipped_items.keys():
+			if gs.equipped_items[slot] != null:
+				var instance_id = gs.equipped_items[slot].get("instance_id", "")
+				if instance_id != "":
+					equipped_instance_ids.append(instance_id)
+					print("[InventoryTab] 🔍 Item with instance_id '%s' is equipped, will skip loading" % instance_id)
+				else:
+					# Fallback to item_id if no instance_id (legacy saves before this fix)
+					var item_id = gs.equipped_items[slot].get("id", "")
+					if item_id != "":
+						equipped_instance_ids.append("legacy:" + item_id)
+						print("[InventoryTab] ⚠️ Legacy equipped item '%s' (no instance_id)" % item_id)
+
+	for item_entry in inventory_items:
+		if typeof(item_entry) != TYPE_DICTIONARY:
+			continue
+
+		var item_id = item_entry.get("item_id", "")
+		if item_id == "":
+			continue
+
+		# CRITICAL FIX: Skip items that are equipped (using instance_id for uniqueness!)
+		var entry_instance_id = item_entry.get("instance_id", "")
+		if entry_instance_id in equipped_instance_ids:
+			print("[InventoryTab] ⏭️ Skipping item '%s' (instance: %s) - equipped" % [item_id, entry_instance_id])
+			continue
+		# Legacy fallback: skip by item_id if it has legacy marker
+		if ("legacy:" + item_id) in equipped_instance_ids:
+			print("[InventoryTab] ⏭️ Skipping item '%s' (legacy check)" % item_id)
+			continue
+
+		# Get base item data
+		var item_data = _get_item_data(item_id)
+		if item_data.is_empty():
+			print("[InventoryTab] ⚠️ Unknown item: %s" % item_id)
+			continue
+
+		# Apply saved data (bonuses, upgrade_level, enhancement_level, instance_id, etc.)
+		if item_entry.has("bonuses") or item_entry.has("upgrade_level") or item_entry.has("enhancement_level") or item_entry.has("instance_id"):
+			item_data = item_data.duplicate(true)
+
+			# Apply bonuses if present
+			if item_entry.has("bonuses"):
+				item_data["bonuses"] = item_entry.bonuses
+				print("[InventoryTab] → Item %s has %d bonuses" % [item_id, item_entry.bonuses.size()])
+
+			# Apply upgrade level if present and RECALCULATE stats
+			if item_entry.has("upgrade_level"):
+				var upgrade_level = item_entry.upgrade_level
+				item_data["upgrade_level"] = upgrade_level
+				print("[InventoryTab] → Item %s is at upgrade level +%d" % [item_id, upgrade_level])
+
+				# RECALCULATE stats based on upgrade level (same formula as ForgeUI)
+				if item_data.has("stats") and upgrade_level > 0:
+					_apply_upgrade_bonus_to_item(item_data, upgrade_level)
+					print("[InventoryTab] → Recalculated stats for +%d upgrade" % upgrade_level)
+
+			# Apply enhancement level if present (NEW: Enhancement System)
+			if item_entry.has("enhancement_level"):
+				var enhancement_level = item_entry.enhancement_level
+				item_data["enhancement_level"] = enhancement_level
+				print("[InventoryTab] → Item %s is at enhancement level +%d" % [item_id, enhancement_level])
+			# AUTO-FIX: Sync enhancement_level from upgrade_level for old saves
+			elif item_entry.has("upgrade_level") and item_entry.upgrade_level >= 7:
+				var sync_level = item_entry.upgrade_level
+				item_data["enhancement_level"] = sync_level
+				print("[InventoryTab] 🔧 Auto-synced enhancement_level +%d from upgrade_level" % sync_level)
+
+			# CRITICAL: Restore instance_id to item_data so it gets saved in metadata
+			if item_entry.has("instance_id") and item_entry.instance_id != "":
+				item_data["instance_id"] = item_entry.instance_id
+				print("[InventoryTab] → Restoring instance_id: %s" % item_entry.instance_id)
+
+		# Create visual item
+		var item = _create_item_visual(item_id, item_data)
+		if item == null:
+			print("[InventoryTab] ⚠️ Failed to create item: %s" % item_id)
+			continue
+
+		# Note: instance_id is already set in _create_item_visual if not in item_data
+		# or restored from item_data["instance_id"] above
+
+		# Get saved position (support both Vector2i and Dictionary formats)
+		var pos: Vector2i
+		var pos_entry = item_entry.get("pos", Vector2i(0, 0))
+		if pos_entry is Vector2i:
+			pos = pos_entry
+		elif typeof(pos_entry) == TYPE_DICTIONARY:
+			pos = Vector2i(pos_entry.get("x", 0), pos_entry.get("y", 0))
+		else:
+			pos = Vector2i(0, 0)
+
+		# Place item at saved position
+		if _place_item_internal(item, pos):
+			print("[InventoryTab] ✅ Loaded %s at (%d, %d)" % [item_id, pos.x, pos.y])
+			loaded_count += 1
+		else:
+			print("[InventoryTab] ❌ Failed to place %s at (%d, %d)" % [item_id, pos.x, pos.y])
+			item.queue_free()
+
+	print("[InventoryTab] ✅ Loaded %d items from inventory_items" % loaded_count)
+
+	# REMOVED: DO NOT sync after loading from NEW format!
+	# When loading from inventory_items, we are READING data, not WRITING.
+	# Syncing here would overwrite the loaded data with whatever is in the UI,
+	# causing empty arrays to be written back.
+	# Only sync when items are MODIFIED (drag/drop/equip), not when LOADING.
 
 func _clear_all_items() -> void:
 	# Rimuovi tutti gli items visuali
@@ -183,39 +336,90 @@ func _get_item_data(item_id: String) -> Dictionary:
 		return gs.data.items.get(item_id, {})
 	return {}
 
+func _generate_unique_instance_id() -> String:
+	"""Genera un ID univoco per questa istanza di item"""
+	return "item_%d_%d" % [Time.get_ticks_msec(), randi()]
+
 func _create_item_visual(item_id: String, item_data: Dictionary) -> Item:
-	var item_scene_to_use: PackedScene = item_scene
-	if item_scene_to_use == null:
-		item_scene_to_use = load(DEFAULT_ITEM_SCENE_PATH)
-	
+	# CRITICAL: Determine if item should be CraftableItem (weapons/armor) or regular Item
+	var item_type = item_data.get("slot", "")  # weapon, helmet, chest, belt, boots, shield
+	var is_craftable = item_type in ["weapon", "helmet", "chest", "belt", "boots", "shield"]
+
 	var item: Item
-	if item_scene_to_use != null:
-		item = item_scene_to_use.instantiate()
+
+	if is_craftable:
+		# Create CraftableItem for equipment that can accept gems
+		var craftable_scene_to_use: PackedScene = craftable_item_scene
+		if craftable_scene_to_use == null:
+			craftable_scene_to_use = load(DEFAULT_CRAFTABLE_ITEM_SCENE_PATH)
+
+		if craftable_scene_to_use != null:
+			item = craftable_scene_to_use.instantiate()
+		else:
+			push_error("[InventoryTab] Failed to load CraftableItem scene for %s" % item_id)
+			return null
+		print("[InventoryTab] Created CraftableItem for %s (type: %s)" % [item_id, item_type])
 	else:
-		# Fallback: crea item base
-		item = Item.new()
-	
+		# Create regular Item for materials, consumables, gems, etc.
+		var item_scene_to_use: PackedScene = item_scene
+		if item_scene_to_use == null:
+			item_scene_to_use = load(DEFAULT_ITEM_SCENE_PATH)
+
+		if item_scene_to_use != null:
+			item = item_scene_to_use.instantiate()
+		else:
+			push_error("[InventoryTab] Failed to load Item scene for %s" % item_id)
+			return null
+		print("[InventoryTab] Created Item for %s (type: %s)" % [item_id, item_type])
+
 	# Configura l'item
 	item.item_id = item_id
 	item.cell_px = cell_px
-	
+
 	# Imposta dimensioni (default 1x1 se non specificato)
 	if item_data.has("size"):
 		var size_array = item_data.size
 		if size_array is Array and size_array.size() >= 2:
 			item.item_size = Vector2i(size_array[0], size_array[1])
-	
+
 	# Imposta texture se disponibile (usa 'icon' invece di 'texture')
 	if item_data.has("icon") and item_data.icon != "":
 		var texture = load(item_data.icon)
 		if texture:
 			item.texture = texture
+
+	# CRITICAL FIX: Generate unique instance_id for EVERY new item
+	# Only restore existing instance_id if it was EXPLICITLY passed in item_data
+	# (this happens when loading from save, where each inventory_items entry has its own instance_id)
+	var instance_id: String
 	
+	# Check if this item_data has a UNIQUE instance_id (passed from save file)
+	# We detect this by checking if it was explicitly passed (not from database)
+	if item_data.has("instance_id") and item_data.instance_id != "":
+		# IMPORTANT: Only restore if the instance_id looks like it came from a save
+		# (not from the database being accidentally modified previously)
+		instance_id = item_data.instance_id
+		print("[InventoryTab] Restoring existing instance_id: %s" % instance_id)
+	else:
+		# ALWAYS generate a new unique instance_id for new items
+		instance_id = _generate_unique_instance_id()
+		print("[InventoryTab] Generated new instance_id: %s" % instance_id)
+	
+	# CRITICAL: Store ONLY in item metadata, NOT in the database dictionary!
+	item.set_meta("instance_id", instance_id)
+
 	# IMPORTANTE: Chiama setup_item per configurare il tooltip
 	print("[InventoryTab] Calling setup_item with data: %s" % item_data)
 	item.setup_item(item_id, item_data)
 	print("[InventoryTab] After setup_item, tooltip: '%s'" % item.tooltip_text)
-	
+
+	# NEW: Apply enhancement level if present (Enhancement System)
+	if item_data.has("enhancement_level"):
+		var enh_level = item_data.enhancement_level
+		if enh_level > 0:
+			item.set_enhancement_level(enh_level)
+			print("[InventoryTab] ✨ Applied enhancement level +%d to %s" % [enh_level, item_id])
+
 	return item
 
 func _find_next_free_position(start_pos: Vector2i, item_size: Vector2i) -> Vector2i:
@@ -261,7 +465,10 @@ func _place_item_internal(item: Item, pos: Vector2i) -> bool:
 	
 	# Aggiungi alla mappa posizioni
 	items_at_position[pos] = item
-	
+
+	# CRITICAL FIX: Save grid_position as metadata for equipment system
+	item.set_meta("grid_position", pos)
+
 	# FIX: Aggiungi l'item al ItemsLayer
 	if items_layer == null:
 		print("[InventoryTab] ERROR: ItemsLayer is null!")
@@ -293,21 +500,32 @@ func _place_item_internal(item: Item, pos: Vector2i) -> bool:
 func _position_item_deferred(item: Item, pos: Vector2i) -> void:
 	# Attendi che il layout sia aggiornato
 	await get_tree().process_frame
-	
+
+	# CRITICAL: Check if item is still valid after await
+	if not is_instance_valid(item):
+		print("[InventoryTab] ⚠️ Item was freed before positioning, skipping")
+		return
+
+	# CRITICAL FIX: Check if item is still tracked in items_at_position
+	# This prevents positioning items that were removed during the deferred delay
+	if not items_at_position.has(pos) or items_at_position[pos] != item:
+		print("[InventoryTab] ⚠️ Item %s no longer at position %s, skipping positioning (likely removed by bag system)" % [item.item_id, pos])
+		return
+
 	# FIX CRITICO: Calcola la posizione usando le coordinate LOCALI dello slot rispetto al holder
 	var slot_index = pos.y * cols + pos.x
 	if slot_index >= slots.size():
 		print("[InventoryTab] ERROR: Invalid slot index %d" % slot_index)
 		return
-	
+
 	var slot = slots[slot_index]
-	
+
 	# DEBUG: Confronta posizione calcolata vs posizione reale dello slot
 	var calculated_pos = Vector2(pos.x * cell_px, pos.y * cell_px)
 	var slot_actual_pos = slot.position
 	var slot_global = slot.global_position
 	var holder_global = holder.global_position
-	
+
 	print("[InventoryTab] === POSITIONING DEBUG DETAILED ===")
 	print("  Item: %s at logical pos: %s" % [item.item_id, pos])
 	print("  Slot index: %d" % slot_index)
@@ -352,16 +570,29 @@ func compute_top_left_from_hotspot(slot: InventorySlot, item: Item, hotspot: Vec
 func validate_item_placement(item: Item, pos: Vector2i) -> bool:
 	if item == null:
 		return false
-	
-	# Rimuovi temporaneamente l'item se già posizionato
-	var was_placed = _remove_item_if_exists(item)
-	var result = _can_place_at(pos, item.item_size)
-	
-	# Se era già posizionato, rimettilo
-	if was_placed.has("pos"):
-		_place_item_internal(item, was_placed.pos)
-	
-	return result
+
+	# CRITICAL FIX: Don't actually remove/replace during validation!
+	# Just check if the cells would be free (ignoring the item being dragged)
+
+	# Check bounds
+	if pos.x < 0 or pos.y < 0:
+		return false
+	if pos.x + item.item_size.x > cols or pos.y + item.item_size.y > rows:
+		return false
+
+	# Check if cells are free (but ignore cells occupied by THIS item)
+	for y in range(pos.y, pos.y + item.item_size.y):
+		for x in range(pos.x, pos.x + item.item_size.x):
+			if y < grid_occupied.size() and x < grid_occupied[y].size():
+				if grid_occupied[y][x]:
+					# Cell is occupied - check if it's by THIS item
+					var cell_pos = Vector2i(x, y)
+					var occupying_item = get_item_occupying(cell_pos)
+					if occupying_item != item:
+						# Occupied by a different item
+						return false
+
+	return true
 
 # ==================== NUOVI METODI PER IL FIX DEL DRAG & DROP ====================
 
@@ -373,8 +604,32 @@ func get_item_position(item: Item) -> Vector2i:
 	return Vector2i(-1, -1)  # Item non trovato
 
 func get_item_at(pos: Vector2i) -> Item:
-	"""Restituisce l'item alla posizione specificata, o null se vuota"""
-	return items_at_position.get(pos, null)
+	"""Restituisce l'item alla posizione specificata (solo top-left), o null se vuota"""
+	var result = items_at_position.get(pos, null)
+	print("[InventoryTab] get_item_at(%s) = %s" % [pos, result.item_id if result else "null"])
+	print("  → items_at_position has %d items total" % items_at_position.size())
+	print("  → items_at_position keys: %s" % str(items_at_position.keys()))
+	return result
+
+func get_item_occupying(pos: Vector2i) -> Item:
+	"""Restituisce l'item che OCCUPA questa posizione (anche se non è il suo top-left)"""
+	# CRITICAL: Check ALL items to see if they occupy this position
+	for item_pos in items_at_position.keys():
+		var item = items_at_position[item_pos]
+		if item == null:
+			continue
+
+		# Check if this position is within the item's bounds
+		var item_size = item.item_size
+		for dx in range(item_size.x):
+			for dy in range(item_size.y):
+				var occupied_pos = Vector2i(item_pos.x + dx, item_pos.y + dy)
+				if occupied_pos == pos:
+					print("[InventoryTab] 🎯 get_item_occupying(%s) = %s (top-left at %s)" % [pos, item.item_id, item_pos])
+					return item
+
+	print("[InventoryTab] get_item_occupying(%s) = null" % pos)
+	return null
 
 func place_item(item: Item, pos: Vector2i) -> bool:
 	if item == null:
@@ -405,47 +660,109 @@ func place_item(item: Item, pos: Vector2i) -> bool:
 				print("[InventoryTab] CRITICAL: Could not restore item to original position!")
 		return false
 
+func remove_item(item: Item) -> void:
+	"""Rimuove un item dall'inventario (funzione pubblica)"""
+	_remove_item_if_exists(item)
+	_sync_to_gamestate()
+
 func _remove_item_if_exists(item: Item) -> Dictionary:
 	# Trova l'item nella mappa posizioni
+	if LOG:
+		print("[InventoryTab] 🔍 _remove_item_if_exists searching for item: %s (instance_id: %d)" % [item.item_id if item else "null", item.get_instance_id() if item else 0])
+		print("[InventoryTab] 🔍 Current items_at_position has %d items:" % items_at_position.size())
+		for p in items_at_position.keys():
+			var it = items_at_position[p]
+			print("[InventoryTab]   → pos %s: %s (instance_id: %d)" % [p, it.item_id if it else "null", it.get_instance_id() if it else 0])
+
 	for pos in items_at_position.keys():
 		if items_at_position[pos] == item:
+			if LOG:
+				print("[InventoryTab] ✅ Found item at position %s, removing..." % pos)
+
 			# Libera le celle
 			for y in range(pos.y, pos.y + item.item_size.y):
 				for x in range(pos.x, pos.x + item.item_size.x):
 					if y < grid_occupied.size() and x < grid_occupied[y].size():
 						grid_occupied[y][x] = false
-			
+
 			# Sblocca gli slot
 			for y in range(pos.y, pos.y + item.item_size.y):
 				for x in range(pos.x, pos.x + item.item_size.x):
 					var idx = y * cols + x
 					if idx < slots.size():
 						slots[idx].clear()
-			
+
 			# Rimuovi dalla mappa
 			items_at_position.erase(pos)
+
+			if LOG:
+				print("[InventoryTab] ✅ Item removed, items_at_position now has %d items" % items_at_position.size())
 			
 			# Rimuovi dal parent se necessario
 			if item.get_parent():
 				item.get_parent().remove_child(item)
 			
-			return {"pos": pos}
-	
-	return {}
+			return {"pos": pos, "removed": true}
+
+	if LOG:
+		print("[InventoryTab] ⚠️ Item NOT found in items_at_position!")
+	return {"removed": false}
 
 func _sync_to_gamestate() -> void:
-	# Conta gli items per tipo
+	print("[InventoryTab] 🔄 _sync_to_gamestate() called - scanning items_at_position (%d items)" % items_at_position.size())
+
+	# Conta gli items per tipo (old format)
 	var inventory_count: Dictionary = {}
-	
-	for item in items_at_position.values():
+
+	# NEW: Build inventory_items array with positions and bonuses
+	var inventory_items_array: Array = []
+
+	for pos in items_at_position.keys():
+		var item = items_at_position[pos]
+		print("[InventoryTab]   → Found item '%s' at position %s" % [item.item_id if item else "null", pos])
 		if is_instance_valid(item):
 			var id = item.item_id
 			inventory_count[id] = inventory_count.get(id, 0) + 1
-	
+
+			# NEW: Add to inventory_items with position, bonuses, upgrade_level, and INSTANCE_ID
+			var item_entry = {
+				"item_id": id,
+				"pos": {"x": pos.x, "y": pos.y},  # Save as dict for JSON compatibility
+				"instance_id": item.get_meta("instance_id", "")  # CRITICAL: Unique identifier
+			}
+
+			# CRITICAL: Save stack_count for stackable items
+			if "stack_count" in item and item.stack_count > 1:
+				item_entry["stack_count"] = item.stack_count
+
+			# Include bonuses and upgrade_level if item has them (CraftableItem)
+			if item.has_meta("item_data"):
+				var item_data = item.get_meta("item_data")
+
+				# Save bonuses
+				if item_data.has("bonuses"):
+					item_entry["bonuses"] = item_data.bonuses
+
+				# Save upgrade_level (for ForgeUI system)
+				if item_data.has("upgrade_level"):
+					item_entry["upgrade_level"] = item_data.upgrade_level
+
+			# CRITICAL: Save enhancement_level from Item node (for particle effects)
+			if item.has_method("get_enhancement_level"):
+				var enh_level = item.get_enhancement_level()
+				if enh_level > 0:
+					item_entry["enhancement_level"] = enh_level
+
+			inventory_items_array.append(item_entry)
+
 	# Sincronizza con GameState
 	var gs = _get_gamestate()
 	if gs:
-		gs.set("inventory", inventory_count)
+		gs.set("inventory", inventory_count)  # Old format
+		gs.set("inventory_items", inventory_items_array)  # NEW format
+
+		if LOG:
+			print("[InventoryTab] 💾 Synced to GameState: %d items (old format: %s)" % [inventory_items_array.size(), str(inventory_count)])
 		# Non emettere il segnale per evitare loop infiniti
 
 # ==================== METODI PUBBLICI PER AGGIUNGERE ITEMS ====================
@@ -537,16 +854,21 @@ func has_space_for_item(item_id: String) -> bool:
 
 # ==================== HIGHLIGHT OVERLAY ====================
 
-var __hl_path: NodePath = NodePath("InvSplit/Left/HighlightLayer")
+var __hl_path: NodePath = NodePath("InvSplit/Left/InventoryScroll/InventoryContainer/HighlightLayer")
 
 func __hl() -> HighlightLayer:
 	var n: Node = get_node_or_null(__hl_path)
 	return n as HighlightLayer
 
 func render_highlight_preview(item: Item, tl: Vector2i, is_ok: bool) -> void:
+	print("[InventoryTab] 🎨 render_highlight_preview called: item=%s, tl=%s, valid=%s" % [item.item_id, tl, is_ok])
+
 	var hl: HighlightLayer = __hl()
 	if hl == null:
+		print("[InventoryTab] ❌ HighlightLayer is NULL!")
 		return
+
+	print("[InventoryTab] ✅ HighlightLayer found")
 
 	var rects: Array[Rect2] = []
 	for y in range(tl.y, tl.y + item.item_size.y):
@@ -555,7 +877,9 @@ func render_highlight_preview(item: Item, tl: Vector2i, is_ok: bool) -> void:
 				var r: Rect2 = __cell_rect_for_highlight(Vector2i(x, y))
 				if r.size.x > 0.0 and r.size.y > 0.0:
 					rects.append(r)
+					print("[InventoryTab] → Added rect for cell (%d, %d): pos=%s, size=%s" % [x, y, r.position, r.size])
 
+	print("[InventoryTab] → Total rects: %d" % rects.size())
 	hl.show_preview_rects(rects, is_ok)
 
 func clear_highlight() -> void:
@@ -581,67 +905,30 @@ func __cell_rect_for_highlight(cell: Vector2i) -> Rect2:
 
 # ==================== BAG SYSTEM METHODS ====================
 
-func _create_bag_slots() -> void:
-	"""Crea i 5 slot per le bag nella BagSection"""
-	if bag_section == null:
-		push_error("[InventoryTab] BagSection not found!")
-		return
-
-	# Pulisci eventuali bag slots esistenti
-	for child in bag_section.get_children():
-		child.queue_free()
-	bag_slots.clear()
+func _init_bag_slots_from_scene() -> void:
+	"""Initialize bag slots from the scene tree instead of creating them at runtime"""
+	# Initialize bag_equipped_slots array
 	bag_equipped_slots.clear()
 	bag_equipped_slots.resize(MAX_BAG_SLOTS)
 	for i in range(MAX_BAG_SLOTS):
 		bag_equipped_slots[i] = 0
 
-	# Crea container orizzontale per i bag slots
-	var bag_container = HBoxContainer.new()
-	bag_container.name = "BagContainer"
-	bag_container.custom_minimum_size = Vector2(512, BAG_SLOT_HEIGHT)
-	bag_section.add_child(bag_container)
+	# Populate bag_slots array with references to scene nodes
+	bag_slots.clear()
+	bag_slots.append(bag_slot_0)
+	bag_slots.append(bag_slot_1)
+	bag_slots.append(bag_slot_2)
+	bag_slots.append(bag_slot_3)
+	bag_slots.append(bag_slot_4)
 
-	# Aggiungi label
-	var label = Label.new()
-	label.text = "BAGS:"
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.custom_minimum_size = Vector2(60, BAG_SLOT_HEIGHT)
-	bag_container.add_child(label)
-
-	# Crea i 5 bag slots
-	for i in range(MAX_BAG_SLOTS):
-		var bag_slot = BagSlot.new()
-		bag_slot.name = "BagSlot%d" % i
-		bag_slot.slot_index = i
-		bag_slot.is_locked = (i == 0)  # Prima bag è locked (starter bag)
-		bag_slot.custom_minimum_size = Vector2(64, 64)
+	# Connect signals and set inventory_tab reference for each bag slot
+	for bag_slot in bag_slots:
 		bag_slot.inventory_tab = self
-
-		# Connetti i segnali
 		bag_slot.bag_equipped.connect(_on_bag_equipped)
 		bag_slot.bag_removed.connect(_on_bag_removed)
 
-		bag_container.add_child(bag_slot)
-		bag_slots.append(bag_slot)
-
 	if LOG:
-		print("[InventoryTab] Created %d bag slots" % bag_slots.size())
-
-func _create_trash_bin() -> void:
-	"""Crea il cestino per eliminare items"""
-	if bag_section == null:
-		push_error("[InventoryTab] BagSection not found!")
-		return
-
-	# Crea il trash bin
-	trash_bin = TrashBin.new()
-	trash_bin.name = "TrashBin"
-	trash_bin.custom_minimum_size = Vector2(512, 60)
-	bag_section.add_child(trash_bin)
-
-	if LOG:
-		print("[InventoryTab] Created trash bin")
+		print("[InventoryTab] Initialized %d bag slots from scene" % bag_slots.size())
 
 func _on_bag_equipped(slot_index: int, bag_slots_count: int) -> void:
 	"""Chiamato quando una bag viene equipaggiata"""
@@ -1106,8 +1393,55 @@ func _load_equipped_bags_from_gamestate() -> void:
 	if LOG:
 		print("[InventoryTab] Loaded %d equipped bags from GameState" % equipped_bags_data.size())
 
+func _on_item_removed_from_layer(node: Node) -> void:
+	"""Called when an item is removed from ItemsLayer (e.g., equipped)"""
+	if not node is Item:
+		return
+
+	var item = node as Item
+	print("[InventoryTab] 🗑️ Item removed from ItemsLayer: %s" % item.item_id)
+
+	# Find and remove from items_at_position
+	for pos in items_at_position.keys():
+		if items_at_position[pos] == item:
+			print("[InventoryTab] ✅ Removing from items_at_position at %s" % pos)
+			items_at_position.erase(pos)
+
+			# Free grid cells
+			for y in range(pos.y, pos.y + item.item_size.y):
+				for x in range(pos.x, pos.x + item.item_size.x):
+					if y < grid_occupied.size() and x < grid_occupied[y].size():
+						grid_occupied[y][x] = false
+
+			# Sync to GameState
+			call_deferred("_sync_to_gamestate")
+			break
+
 func _get_gamestate() -> Node:
 	"""Helper per ottenere GameState"""
 	if not has_node("/root/GameState"):
 		return null
 	return get_node("/root/GameState")
+
+func _apply_upgrade_bonus_to_item(item_data: Dictionary, upgrade_level: int) -> void:
+	"""Recalculate item stats based on upgrade level (same formula as ForgeUI)"""
+	const STAT_BOOST_PER_LEVEL = 0.05  # 5% boost per upgrade level (must match ForgeUI!)
+
+	if not item_data.has("stats"):
+		return
+
+	# Save original stats as base_stats if not already saved
+	if not item_data.has("base_stats"):
+		item_data["base_stats"] = item_data["stats"].duplicate(true)
+
+	var base_stats = item_data["base_stats"]
+	var multiplier = 1.0 + (upgrade_level * STAT_BOOST_PER_LEVEL)
+
+	# Recalculate all stats
+	var boosted_stats = {}
+	for stat_key in base_stats.keys():
+		var base_value = base_stats[stat_key]
+		boosted_stats[stat_key] = int(base_value * multiplier)  # Round to int for display
+
+	item_data["stats"] = boosted_stats
+	print("[InventoryTab] 📊 Stats boosted by %d%% (level +%d)" % [int(multiplier * 100) - 100, upgrade_level])
