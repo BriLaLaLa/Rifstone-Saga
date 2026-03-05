@@ -277,10 +277,15 @@ func _give_quest_rewards(quest: Quest) -> void:
 
 	# Item rewards
 	for item_id in quest.reward_items:
-		var item_data = ItemDatabase.get_item(item_id)
-		if not item_data.is_empty():
-			game_state._add_item_to_visual_inventory(item_id, item_data)
-			print("[QuestSystem] Rewarded item: %s" % item_id)
+		# Access ItemDatabase through autoload (IData)
+		if has_node("/root/IData"):
+			var item_db = get_node("/root/IData")
+			if item_db.items.has(item_id):
+				var item_data = item_db.items[item_id].duplicate(true)
+				game_state._add_item_to_visual_inventory(item_id, item_data)
+				print("[QuestSystem] Rewarded item: %s" % item_id)
+			else:
+				print("[QuestSystem] ⚠️ Item not found in database: %s" % item_id)
 
 
 ## Get quest by ID
