@@ -1,18 +1,22 @@
-[gd_scene load_steps=8 format=3 uid="uid://ws76uxi0un62"]
+[gd_scene load_steps=11 format=3 uid="uid://ws76uxi0un62"]
 
 [ext_resource type="Script" uid="uid://dgjlui52rxfti" path="res://scripts/ui/InventoryTab.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://dkaue3cv30vgn" path="res://scripts/ui/Item.tscn" id="2_rjnd6"]
+[ext_resource type="PackedScene" uid="uid://bvrmq8k5j8tqa" path="res://scripts/ui/CraftableItem.tscn" id="2_craftable"]
 [ext_resource type="Script" uid="uid://cw68mtn3vj5iq" path="res://scripts/ui/DACANCELLAREbottone.gd" id="3_i2wco"]
 [ext_resource type="PackedScene" uid="uid://ci6nt0nevsu6h" path="res://scripts/ui/InventorySlot.tscn" id="3_s3c4d"]
 [ext_resource type="Script" uid="uid://c4exoc0ywhuiu" path="res://scripts/ui/HighlightLayer.gd" id="5_highlight"]
 [ext_resource type="Texture2D" uid="uid://dfq1oqkgjdkny" path="res://scripts/ui/inventoryPg.png" id="6_equipment"]
 [ext_resource type="Script" uid="uid://cg2qas0h4r2vg" path="res://scripts/ui/EquipmentSlot.gd" id="7_equipment_slot"]
+[ext_resource type="Script" uid="uid://bfkcm4d8dg7y5" path="res://scripts/ui/BagSlot.gd" id="8_bagslot"]
+[ext_resource type="Script" uid="uid://bh3e3sl4xtrlv" path="res://scripts/ui/TrashBin.gd" id="9_trashbin"]
 
 [node name="InventoryTab" type="Control"]
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1")
 item_scene = ExtResource("2_rjnd6")
+craftable_item_scene = ExtResource("2_craftable")
 slot_scene = ExtResource("3_s3c4d")
 
 [node name="InvSplit" type="HSplitContainer" parent="."]
@@ -32,6 +36,56 @@ layout_mode = 2
 
 [node name="BagSection" type="VBoxContainer" parent="InvSplit/Left"]
 layout_mode = 2
+
+[node name="BagContainer" type="HBoxContainer" parent="InvSplit/Left/BagSection"]
+custom_minimum_size = Vector2(512, 70)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="InvSplit/Left/BagSection/BagContainer"]
+custom_minimum_size = Vector2(60, 70)
+layout_mode = 2
+text = "BAGS:"
+vertical_alignment = 1
+
+[node name="BagSlot0" type="Panel" parent="InvSplit/Left/BagSection/BagContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+script = ExtResource("8_bagslot")
+slot_index = 0
+is_locked = true
+
+[node name="BagSlot1" type="Panel" parent="InvSplit/Left/BagSection/BagContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+script = ExtResource("8_bagslot")
+slot_index = 1
+is_locked = false
+
+[node name="BagSlot2" type="Panel" parent="InvSplit/Left/BagSection/BagContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+script = ExtResource("8_bagslot")
+slot_index = 2
+is_locked = false
+
+[node name="BagSlot3" type="Panel" parent="InvSplit/Left/BagSection/BagContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+script = ExtResource("8_bagslot")
+slot_index = 3
+is_locked = false
+
+[node name="BagSlot4" type="Panel" parent="InvSplit/Left/BagSection/BagContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+script = ExtResource("8_bagslot")
+slot_index = 4
+is_locked = false
+
+[node name="TrashBin" type="Control" parent="InvSplit/Left/BagSection"]
+custom_minimum_size = Vector2(512, 60)
+layout_mode = 2
+script = ExtResource("9_trashbin")
 
 [node name="InventoryScroll" type="ScrollContainer" parent="InvSplit/Left"]
 custom_minimum_size = Vector2(512, 400)

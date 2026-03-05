@@ -1,0 +1,54 @@
+{
+	"version": "2.0",
+	"description": "Battle background configurations using battlefield scenes with visual spawn points",
+	"system": "scene_based",
+	"comment": "Each background has its own .tscn file with visually positioned spawn points in the editor",
+	"spawn_rules": {
+		"max_spawns": 12,
+		"boss_slot_name": "BossSpawn",
+		"normal_slot_prefix": "Spawn",
+		"comment": "BossSpawn node is always the boss position, Spawn1-Spawn11 are normal enemies"
+	},
+	"backgrounds": {
+		"m1_z1_1": {
+			"scene_path": "res://scenes/battle/backgrounds/m1_z1_1_battlefield.tscn",
+			"texture_path": "res://Item_Texture/Backgrounds/M1/Z1/m1_z1_1.png",
+			"description": "Central path with trees on sides, scattered rocks"
+		},
+		"m1_z1_2": {
+			"scene_path": "res://scenes/battle/backgrounds/m1_z1_2_battlefield.tscn",
+			"texture_path": "res://Item_Texture/Backgrounds/M1/Z1/m1_z1_2.png",
+			"description": "Bridge over river with framing trees"
+		},
+		"m1_z1_3": {
+			"scene_path": "res://scenes/battle/backgrounds/m1_z1_3_battlefield.tscn",
+			"texture_path": "res://Item_Texture/Backgrounds/M1/Z1/m1_z1_3.png",
+			"description": "Ancient ruins with columns and mist"
+		},
+		"m1_z1_4": {
+			"scene_path": "res://scenes/battle/backgrounds/m1_z1_4_battlefield.tscn",
+			"texture_path": "res://Item_Texture/Backgrounds/M1/Z1/m1_z1_4.png",
+			"description": "Open forest clearing - maximum freedom"
+		},
+		"m1_z1_5": {
+			"scene_path": "res://scenes/battle/backgrounds/m1_z1_5_battlefield.tscn",
+			"texture_path": "res://Item_Texture/Backgrounds/M1/Z1/m1_z1_5.png",
+			"description": "Dense forest with marked trees (claw marks)"
+		},
+		"m1_z1_6": {
+			"scene_path": "res://scenes/battle/backgrounds/m1_z1_6_battlefield.tscn",
+			"texture_path": "res://Item_Texture/Backgrounds/M1/Z1/m1_z1_6.png",
+			"description": "Forest path with side ruins"
+		},
+		"m1_z1_7": {
+			"scene_path": "res://scenes/battle/backgrounds/m1_z1_7_battlefield.tscn",
+			"texture_path": "res://Item_Texture/Backgrounds/M1/Z1/m1_z1_7.png",
+			"description": "River cutting through the scene"
+		},
+		"m1_z1_8": {
+			"scene_path": "res://scenes/battle/backgrounds/m1_z1_8_battlefield.tscn",
+			"texture_path": "res://Item_Texture/Backgrounds/M1/Z1/m1_z1_8.png",
+			"description": "Panoramic open view - maximum freedom"
+		}
+	}
+}

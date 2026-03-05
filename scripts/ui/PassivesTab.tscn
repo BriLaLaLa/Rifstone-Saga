@@ -1,0 +1,696 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" uid="uid://passives_tab_script" path="res://scripts/ui/PassivesTab.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scripts/ui/PassiveNode.tscn" id="2"]
+
+[node name="PassivesTab" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.08, 0.12, 1)
+
+[node name="CategoryTabs" type="TabBar" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 40.0
+grow_horizontal = 2
+tab_count = 4
+tab_0/title = "Main"
+tab_1/title = "Mining"
+tab_2/title = "Herbalism"
+tab_3/title = "Fishing"
+
+[node name="TreeContainer" type="Control" parent="."]
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainTreeCanvas" type="Control" parent="TreeContainer"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -400.0
+offset_right = 500.0
+offset_bottom = 400.0
+
+[node name="ConnectionLines" type="Control" parent="TreeContainer/MainTreeCanvas"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="NodesContainer" type="Control" parent="TreeContainer/MainTreeCanvas"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Start" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 468.0
+offset_top = 368.0
+offset_right = 532.0
+offset_bottom = 432.0
+passive_id = "start"
+passive_name = "Origin"
+passive_description = "The starting point of your journey."
+is_start_node = true
+
+[node name="Strength1" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 368.0
+offset_top = 268.0
+offset_right = 432.0
+offset_bottom = 332.0
+passive_id = "str1"
+passive_name = "Strength I"
+passive_description = "+5 Strength"
+connected_nodes = Array[String](["start"])
+
+[node name="Attack1" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 268.0
+offset_top = 168.0
+offset_right = 332.0
+offset_bottom = 232.0
+passive_id = "atk1"
+passive_name = "Attack I"
+passive_description = "+10 Physical Damage"
+connected_nodes = Array[String](["str1"])
+
+[node name="CritChance" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 168.0
+offset_top = 268.0
+offset_right = 232.0
+offset_bottom = 332.0
+passive_id = "crit1"
+passive_name = "Critical Strike"
+passive_description = "+3% Critical Chance"
+connected_nodes = Array[String](["atk1", "str1"])
+
+[node name="CritDamage" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 68.0
+offset_top = 368.0
+offset_right = 132.0
+offset_bottom = 432.0
+passive_id = "critdmg"
+passive_name = "Deadly Strikes"
+passive_description = "+20% Critical Damage"
+connected_nodes = Array[String](["crit1"])
+
+[node name="Vitality1" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 568.0
+offset_top = 268.0
+offset_right = 632.0
+offset_bottom = 332.0
+passive_id = "vit1"
+passive_name = "Vitality I"
+passive_description = "+5 Vitality"
+connected_nodes = Array[String](["start"])
+
+[node name="Health1" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 668.0
+offset_top = 168.0
+offset_right = 732.0
+offset_bottom = 232.0
+passive_id = "hp1"
+passive_name = "Life Force"
+passive_description = "+50 Max HP"
+connected_nodes = Array[String](["vit1"])
+
+[node name="Regen1" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 768.0
+offset_top = 268.0
+offset_right = 832.0
+offset_bottom = 332.0
+passive_id = "regen1"
+passive_name = "Regeneration"
+passive_description = "+2 HP Regen per second"
+connected_nodes = Array[String](["hp1", "vit1"])
+
+[node name="Defense1" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 468.0
+offset_top = 168.0
+offset_right = 532.0
+offset_bottom = 232.0
+passive_id = "def1"
+passive_name = "Defense I"
+passive_description = "+10 Physical Defense"
+connected_nodes = Array[String](["str1", "vit1"])
+
+[node name="Block1" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 468.0
+offset_top = 68.0
+offset_right = 532.0
+offset_bottom = 132.0
+passive_id = "block1"
+passive_name = "Shield Mastery"
+passive_description = "+5% Block Chance"
+connected_nodes = Array[String](["def1"])
+
+[node name="Speed1" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 368.0
+offset_top = 468.0
+offset_right = 432.0
+offset_bottom = 532.0
+passive_id = "spd1"
+passive_name = "Swiftness"
+passive_description = "+5% Attack Speed"
+connected_nodes = Array[String](["start"])
+
+[node name="Evasion1" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 268.0
+offset_top = 568.0
+offset_right = 332.0
+offset_bottom = 632.0
+passive_id = "eva1"
+passive_name = "Evasion"
+passive_description = "+3% Dodge Chance"
+connected_nodes = Array[String](["spd1"])
+
+[node name="Luck1" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 568.0
+offset_top = 468.0
+offset_right = 632.0
+offset_bottom = 532.0
+passive_id = "luck1"
+passive_name = "Fortune"
+passive_description = "+5% Item Drop Rate"
+connected_nodes = Array[String](["start"])
+
+[node name="Gold1" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 668.0
+offset_top = 568.0
+offset_right = 732.0
+offset_bottom = 632.0
+passive_id = "gold1"
+passive_name = "Treasure Hunter"
+passive_description = "+10% Gold Find"
+connected_nodes = Array[String](["luck1"])
+
+[node name="Exp1" parent="TreeContainer/MainTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 468.0
+offset_top = 568.0
+offset_right = 532.0
+offset_bottom = 632.0
+passive_id = "exp1"
+passive_name = "Quick Learner"
+passive_description = "+5% Experience Gain"
+connected_nodes = Array[String](["luck1", "spd1"])
+
+[node name="MiningTreeCanvas" type="Control" parent="TreeContainer"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -400.0
+offset_right = 500.0
+offset_bottom = 400.0
+
+[node name="MiningSkillPanel" type="PanelContainer" parent="TreeContainer/MiningTreeCanvas"]
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 10.0
+offset_right = 150.0
+offset_bottom = 60.0
+grow_horizontal = 2
+
+[node name="VBox" type="VBoxContainer" parent="TreeContainer/MiningTreeCanvas/MiningSkillPanel"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="MiningLevelLabel" type="Label" parent="TreeContainer/MiningTreeCanvas/MiningSkillPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.8, 1)
+theme_override_font_sizes/font_size = 16
+text = "Mining Level 1"
+horizontal_alignment = 1
+
+[node name="MiningExpBar" type="ProgressBar" parent="TreeContainer/MiningTreeCanvas/MiningSkillPanel/VBox"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="MiningExpLabel" type="Label" parent="TreeContainer/MiningTreeCanvas/MiningSkillPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "0 / 100 EXP"
+horizontal_alignment = 1
+
+[node name="ConnectionLines" type="Control" parent="TreeContainer/MiningTreeCanvas"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="NodesContainer" type="Control" parent="TreeContainer/MiningTreeCanvas"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="StartMining" parent="TreeContainer/MiningTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 468.0
+offset_top = 368.0
+offset_right = 532.0
+offset_bottom = 432.0
+passive_id = "mining_start"
+passive_name = "Mining Origin"
+passive_description = "Start of your mining journey."
+is_start_node = true
+
+[node name="MiningSpeed1" parent="TreeContainer/MiningTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 368.0
+offset_top = 268.0
+offset_right = 432.0
+offset_bottom = 332.0
+passive_id = "mining_speed1"
+passive_name = "Swift Pickaxe"
+passive_description = "+10% Mining Speed"
+connected_nodes = Array[String](["mining_start"])
+
+[node name="MiningYield1" parent="TreeContainer/MiningTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 568.0
+offset_top = 268.0
+offset_right = 632.0
+offset_bottom = 332.0
+passive_id = "mining_yield1"
+passive_name = "Rich Veins"
+passive_description = "+15% Mining Yield"
+connected_nodes = Array[String](["mining_start"])
+
+[node name="OreQuality1" parent="TreeContainer/MiningTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 268.0
+offset_top = 168.0
+offset_right = 332.0
+offset_bottom = 232.0
+passive_id = "ore_quality1"
+passive_name = "Ore Finder"
+passive_description = "+5% Rare Ore Chance"
+connected_nodes = Array[String](["mining_speed1"])
+
+[node name="PickaxeMastery" parent="TreeContainer/MiningTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 468.0
+offset_top = 168.0
+offset_right = 532.0
+offset_bottom = 232.0
+passive_id = "pickaxe_mastery"
+passive_name = "Pickaxe Mastery"
+passive_description = "+20% Tool Durability"
+connected_nodes = Array[String](["mining_speed1", "mining_yield1"])
+
+[node name="GemChance" parent="TreeContainer/MiningTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 668.0
+offset_top = 168.0
+offset_right = 732.0
+offset_bottom = 232.0
+passive_id = "gem_chance"
+passive_name = "Gem Hunter"
+passive_description = "+3% Gem Drop Chance"
+connected_nodes = Array[String](["mining_yield1"])
+
+[node name="HerbalismTreeCanvas" type="Control" parent="TreeContainer"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -400.0
+offset_right = 500.0
+offset_bottom = 400.0
+
+[node name="HerbalismSkillPanel" type="PanelContainer" parent="TreeContainer/HerbalismTreeCanvas"]
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 10.0
+offset_right = 150.0
+offset_bottom = 60.0
+grow_horizontal = 2
+
+[node name="VBox" type="VBoxContainer" parent="TreeContainer/HerbalismTreeCanvas/HerbalismSkillPanel"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="HerbalismLevelLabel" type="Label" parent="TreeContainer/HerbalismTreeCanvas/HerbalismSkillPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.8, 0.4, 1)
+theme_override_font_sizes/font_size = 16
+text = "Herbalism Level 1"
+horizontal_alignment = 1
+
+[node name="HerbalismExpBar" type="ProgressBar" parent="TreeContainer/HerbalismTreeCanvas/HerbalismSkillPanel/VBox"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="HerbalismExpLabel" type="Label" parent="TreeContainer/HerbalismTreeCanvas/HerbalismSkillPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "0 / 100 EXP"
+horizontal_alignment = 1
+
+[node name="ConnectionLines" type="Control" parent="TreeContainer/HerbalismTreeCanvas"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="NodesContainer" type="Control" parent="TreeContainer/HerbalismTreeCanvas"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="StartHerbalism" parent="TreeContainer/HerbalismTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 468.0
+offset_top = 368.0
+offset_right = 532.0
+offset_bottom = 432.0
+passive_id = "herbalism_start"
+passive_name = "Herbalism Origin"
+passive_description = "Start of your herbalism journey."
+is_start_node = true
+
+[node name="GatherSpeed1" parent="TreeContainer/HerbalismTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 368.0
+offset_top = 268.0
+offset_right = 432.0
+offset_bottom = 332.0
+passive_id = "gather_speed1"
+passive_name = "Swift Hands"
+passive_description = "+10% Gathering Speed"
+connected_nodes = Array[String](["herbalism_start"])
+
+[node name="HerbYield1" parent="TreeContainer/HerbalismTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 568.0
+offset_top = 268.0
+offset_right = 632.0
+offset_bottom = 332.0
+passive_id = "herb_yield1"
+passive_name = "Bountiful Harvest"
+passive_description = "+15% Herb Yield"
+connected_nodes = Array[String](["herbalism_start"])
+
+[node name="RareHerbs" parent="TreeContainer/HerbalismTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 268.0
+offset_top = 168.0
+offset_right = 332.0
+offset_bottom = 232.0
+passive_id = "rare_herbs"
+passive_name = "Herb Seeker"
+passive_description = "+5% Rare Herb Chance"
+connected_nodes = Array[String](["gather_speed1"])
+
+[node name="HerbalistEye" parent="TreeContainer/HerbalismTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 468.0
+offset_top = 168.0
+offset_right = 532.0
+offset_bottom = 232.0
+passive_id = "herbalist_eye"
+passive_name = "Herbalist's Eye"
+passive_description = "+10% Find Hidden Herbs"
+connected_nodes = Array[String](["gather_speed1", "herb_yield1"])
+
+[node name="PotionBonus" parent="TreeContainer/HerbalismTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 668.0
+offset_top = 168.0
+offset_right = 732.0
+offset_bottom = 232.0
+passive_id = "potion_bonus"
+passive_name = "Alchemist Touch"
+passive_description = "+20% Potion Ingredient Quality"
+connected_nodes = Array[String](["herb_yield1"])
+
+[node name="FishingTreeCanvas" type="Control" parent="TreeContainer"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -400.0
+offset_right = 500.0
+offset_bottom = 400.0
+
+[node name="FishingSkillPanel" type="PanelContainer" parent="TreeContainer/FishingTreeCanvas"]
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 10.0
+offset_right = 150.0
+offset_bottom = 60.0
+grow_horizontal = 2
+
+[node name="VBox" type="VBoxContainer" parent="TreeContainer/FishingTreeCanvas/FishingSkillPanel"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="FishingLevelLabel" type="Label" parent="TreeContainer/FishingTreeCanvas/FishingSkillPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.6, 0.9, 1)
+theme_override_font_sizes/font_size = 16
+text = "Fishing Level 1"
+horizontal_alignment = 1
+
+[node name="FishingExpBar" type="ProgressBar" parent="TreeContainer/FishingTreeCanvas/FishingSkillPanel/VBox"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="FishingExpLabel" type="Label" parent="TreeContainer/FishingTreeCanvas/FishingSkillPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "0 / 100 EXP"
+horizontal_alignment = 1
+
+[node name="ConnectionLines" type="Control" parent="TreeContainer/FishingTreeCanvas"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="NodesContainer" type="Control" parent="TreeContainer/FishingTreeCanvas"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="StartFishing" parent="TreeContainer/FishingTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 468.0
+offset_top = 368.0
+offset_right = 532.0
+offset_bottom = 432.0
+passive_id = "fishing_start"
+passive_name = "Fishing Origin"
+passive_description = "Start of your fishing journey."
+is_start_node = true
+
+[node name="FishingSpeed1" parent="TreeContainer/FishingTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 368.0
+offset_top = 268.0
+offset_right = 432.0
+offset_bottom = 332.0
+passive_id = "fishing_speed1"
+passive_name = "Quick Cast"
+passive_description = "+10% Fishing Speed"
+connected_nodes = Array[String](["fishing_start"])
+
+[node name="BiggerCatch" parent="TreeContainer/FishingTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 568.0
+offset_top = 268.0
+offset_right = 632.0
+offset_bottom = 332.0
+passive_id = "bigger_catch"
+passive_name = "Bigger Catch"
+passive_description = "+15% Fish Size"
+connected_nodes = Array[String](["fishing_start"])
+
+[node name="RareFish" parent="TreeContainer/FishingTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 268.0
+offset_top = 168.0
+offset_right = 332.0
+offset_bottom = 232.0
+passive_id = "rare_fish"
+passive_name = "Trophy Hunter"
+passive_description = "+5% Rare Fish Chance"
+connected_nodes = Array[String](["fishing_speed1"])
+
+[node name="RodMastery" parent="TreeContainer/FishingTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 468.0
+offset_top = 168.0
+offset_right = 532.0
+offset_bottom = 232.0
+passive_id = "rod_mastery"
+passive_name = "Rod Mastery"
+passive_description = "+20% Line Strength"
+connected_nodes = Array[String](["fishing_speed1", "bigger_catch"])
+
+[node name="TreasureHook" parent="TreeContainer/FishingTreeCanvas/NodesContainer" instance=ExtResource("2")]
+layout_mode = 0
+offset_left = 668.0
+offset_top = 168.0
+offset_right = 732.0
+offset_bottom = 232.0
+passive_id = "treasure_hook"
+passive_name = "Treasure Hook"
+passive_description = "+3% Find Treasure While Fishing"
+connected_nodes = Array[String](["bigger_catch"])
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopBar" type="HBoxContainer" parent="UI"]
+offset_left = 16.0
+offset_top = 48.0
+offset_right = 400.0
+offset_bottom = 80.0
+
+[node name="PointsLabel" type="Label" parent="UI/TopBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Available Points: 5"
+
+[node name="Spacer" type="Control" parent="UI/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ResetButton" type="Button" parent="UI/TopBar"]
+layout_mode = 2
+text = "Reset Tree"
+
+[node name="ZoomLabel" type="Label" parent="UI"]
+offset_left = 16.0
+offset_bottom = 24.0
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -40.0
+offset_bottom = -16.0
+theme_override_font_sizes/font_size = 14
+text = "Scroll to zoom | Right-click drag to pan"
+
+[node name="TooltipPanel" type="Panel" parent="UI"]
+visible = false
+offset_right = 200.0
+offset_bottom = 80.0
+
+[node name="TooltipLabel" type="Label" parent="UI/TooltipPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 12

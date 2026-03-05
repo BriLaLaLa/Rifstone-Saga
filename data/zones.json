@@ -1,0 +1,137 @@
+{
+  "kingdoms": [
+    {
+      "id": "red_kingdom",
+      "name": "Red Kingdom",
+      "unlocked": true,
+      "unlock_requirement": 1,
+      "map_image": "res://Icons/maps/regno principale.png",
+      "zoom_map": "res://Icons/maps/regno principale Zoom1.png",
+      "clickable_area": {
+        "type": "rect",
+        "x": 50,
+        "y": 50,
+        "width": 300,
+        "height": 250
+      },
+      "zones": [
+        {
+          "id": "red_kingdom_lv1_10",
+          "name": "Red Kingdom - Plains",
+          "description": "A peaceful region with gentle creatures. Perfect for beginners.",
+          "level_range": [1, 10],
+          "unlocked": true,
+          "unlock_requirement": 1,
+          "area_id": "forest_1",
+          "recommended_level": 5,
+          "clickable_area": {
+            "type": "rect",
+            "x": 100,
+            "y": 80,
+            "width": 180,
+            "height": 150
+          },
+          "enemies": ["lupo", "cinghiale"],
+          "boss_types": ["scrofa"],
+          "metin_types": ["metin"],
+          "gold_min": 10,
+          "gold_max": 25,
+          "xp_min": 50,
+          "xp_max": 100,
+          "rewards": {
+            "gold_range": [10, 25],
+            "xp_range": [50, 100]
+          }
+        },
+        {
+          "id": "red_kingdom_lv11_30",
+          "name": "Red Kingdom - Mountains",
+          "description": "Rocky terrain with stronger monsters lurking in the peaks.",
+          "level_range": [11, 30],
+          "unlocked": false,
+          "unlock_requirement": 11,
+          "area_id": "mountain_1",
+          "recommended_level": 20,
+          "clickable_area": {
+            "type": "rect",
+            "x": 400,
+            "y": 100,
+            "width": 200,
+            "height": 180
+          },
+          "enemies": ["lupo", "cinghiale"],
+          "boss_types": ["scrofa"],
+          "metin_types": ["metin"],
+          "gold_min": 50,
+          "gold_max": 100,
+          "xp_min": 200,
+          "xp_max": 400,
+          "rewards": {
+            "gold_range": [50, 100],
+            "xp_range": [200, 400]
+          }
+        },
+        {
+          "id": "red_kingdom_lv31_50",
+          "name": "Red Kingdom - Dark Forest",
+          "description": "A dangerous forest shrouded in darkness. Only the brave venture here.",
+          "level_range": [31, 50],
+          "unlocked": false,
+          "unlock_requirement": 31,
+          "area_id": "dark_forest_1",
+          "recommended_level": 40,
+          "clickable_area": {
+            "type": "rect",
+            "x": 80,
+            "y": 350,
+            "width": 220,
+            "height": 160
+          },
+          "enemies": ["lupo", "cinghiale"],
+          "boss_types": ["scrofa"],
+          "metin_types": ["metin"],
+          "gold_min": 150,
+          "gold_max": 300,
+          "xp_min": 800,
+          "xp_max": 1500,
+          "rewards": {
+            "gold_range": [150, 300],
+            "xp_range": [800, 1500]
+          }
+        }
+      ]
+    },
+    {
+      "id": "blue_kingdom",
+      "name": "Blue Kingdom",
+      "unlocked": false,
+      "unlock_requirement": 50,
+      "map_image": "res://Icons/maps/regno principale.png",
+      "zoom_map": null,
+      "clickable_area": {
+        "type": "rect",
+        "x": 500,
+        "y": 200,
+        "width": 280,
+        "height": 220
+      },
+      "zones": []
+    },
+    {
+      "id": "green_kingdom",
+      "name": "Green Kingdom",
+      "unlocked": false,
+      "unlock_requirement": 75,
+      "map_image": "res://Icons/maps/regno principale.png",
+      "zoom_map": null,
+      "clickable_area": {
+        "type": "rect",
+        "x": 200,
+        "y": 400,
+        "width": 260,
+        "height": 200
+      },
+      "zones": []
+    }
+  ]
+}

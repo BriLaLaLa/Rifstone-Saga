@@ -17,6 +17,11 @@ signal on_promotion_result(skill_id: String, success: bool, msg: String)
 # ============================================
 var character_stats: CharacterStats = null
 
+# ============================================
+# GATHERING SKILLS SYSTEM
+# ============================================
+var gathering_skills: GatheringSkillsManager = null
+
 # Equipment slots
 var equipped_items := {
 	"helmet": null,
@@ -45,8 +50,32 @@ var inventory := {}      # item_id -> count
 var inventory_items := []
 
 # NEW: Equipped bags in bag slots
-# Format: [{"item_id": "...", "bag_slots": N}, null, null, ...] (5 slots total)
+# Format: [{\"item_id\": \"...\", \"bag_slots\": N}, null, null, ...] (5 slots total)
 var equipped_bags := []
+
+# NEW: Passive skill tree (LEGACY - keep for backwards compatibility)
+var passive_points: int = 0  # Available points to spend (CHANGED: was 5, now 0 - earned by leveling)
+var activated_passives: Array = []  # List of activated passive IDs
+
+# NEW: Passive skill tree by category
+# Points now earned through leveling:
+# - "main": +1 point per combat level
+# - "mining/herbalism/fishing": +1 point per gathering skill level
+var passive_points_by_category: Dictionary = {
+	"main": 0,
+	"mining": 0,
+	"herbalism": 0,
+	"fishing": 0
+}
+
+# User preferences
+var auto_continue_battles: bool = true  # Auto-continue to next battle after victory
+var activated_passives_by_category: Dictionary = {
+	"main": [],
+	"mining": [],
+	"herbalism": [],
+	"fishing": []
+}
 
 var data := {
 	"items": {},
@@ -85,7 +114,10 @@ var action_time_total: float = 0.0
 
 var _tick_accum := 0.0
 var _tick_rate := 1.0
-const SAVE_PATH := "user://save.json"
+var SAVE_PATH := "user://save.dat"  # Binary format with store_var() - much faster than JSON!
+
+# CRITICAL: Prevent concurrent saves
+var _is_saving := false
 
 var rng := RandomNumberGenerator.new()
 
@@ -102,7 +134,13 @@ func _ready() -> void:
 	character_stats.stats_changed.connect(_on_character_stat_changed)
 	character_stats.hp_changed.connect(_on_hp_changed)
 	character_stats.mana_changed.connect(_on_mana_changed)
+	character_stats.level_up.connect(_on_combat_level_up)
 	print("[GameState] Character stats initialized")
+
+	# NUOVO: Inizializza gathering skills
+	gathering_skills = GatheringSkillsManager.new()
+	gathering_skills.skill_level_up.connect(_on_gathering_skill_level_up)
+	print("[GameState] Gathering skills initialized")
 
 	load_game()
 	set_process(true)
@@ -376,6 +414,30 @@ func _remove_item(item_id: String, amount: int) -> void:
 		inventory[item_id] = left
 	on_inventory_changed.emit()
 
+func add_gold(amount: int) -> void:
+	"""Add gold to player resources"""
+	if amount <= 0:
+		return
+	resources["gold"] = int(resources.get("gold", 0)) + amount
+	if GameLogger.ENABLED:
+		print("[GameState] 💰 Added %d gold (total: %d)" % [amount, resources["gold"]])
+
+func remove_gold(amount: int) -> bool:
+	"""Remove gold from player resources. Returns true if successful."""
+	var current = int(resources.get("gold", 0))
+	if current < amount:
+		if GameLogger.ENABLED:
+			print("[GameState] ⚠️ Not enough gold! Have: %d, Need: %d" % [current, amount])
+		return false
+	resources["gold"] = current - amount
+	if GameLogger.ENABLED:
+		print("[GameState] 💸 Removed %d gold (remaining: %d)" % [amount, resources["gold"]])
+	return true
+
+func get_gold() -> int:
+	"""Get current gold amount"""
+	return int(resources.get("gold", 0))
+
 # ============================================
 # NUOVO: EQUIPMENT MANAGEMENT
 # ============================================
@@ -385,23 +447,109 @@ func equip_item_to_slot(item_id: String, slot: String) -> bool:
 	if not data.items.has(item_id):
 		print("[GameState] Item non trovato: ", item_id)
 		return false
-	
-	var item_data = data.items[item_id]
-	
+
+	# Get BASE item data from database
+	var item_data = data.items[item_id].duplicate(true)
+
+	# CRITICAL: Search for this item in inventory_items to get bonuses and upgrade_level
+	for inv_item in inventory_items:
+		if inv_item.get("item_id") == item_id:
+			print("[GameState] 📦 Found item in inventory_items with upgrades/bonuses")
+
+			# Apply bonuses from inventory
+			if inv_item.has("bonuses"):
+				item_data["bonuses"] = inv_item.bonuses
+				print("[GameState] → Applied %d bonuses" % inv_item.bonuses.size())
+
+			# CRITICAL: Apply enhancement_level (for particle effects)
+			if inv_item.has("enhancement_level"):
+				item_data["enhancement_level"] = inv_item.enhancement_level
+				print("[GameState] → Item has enhancement level +%d (for visual effects)" % inv_item.enhancement_level)
+
+			# Apply upgrade_level and RECALCULATE stats
+			if inv_item.has("upgrade_level"):
+				var upgrade_level = inv_item.upgrade_level
+				item_data["upgrade_level"] = upgrade_level
+				print("[GameState] → Item is at upgrade level +%d" % upgrade_level)
+
+				# RECALCULATE stats with upgrade bonus (same formula as ForgeUI/InventoryTab)
+				if item_data.has("stats") and upgrade_level > 0:
+					const STAT_BOOST_PER_LEVEL = 0.05  # 5% boost per upgrade level
+
+					# Save original stats
+					if not item_data.has("base_stats"):
+						item_data["base_stats"] = item_data["stats"].duplicate(true)
+
+					var base_stats = item_data["base_stats"]
+					var multiplier = 1.0 + (upgrade_level * STAT_BOOST_PER_LEVEL)
+
+					# Recalculate stats
+					var boosted_stats = {}
+					for stat_key in base_stats.keys():
+						boosted_stats[stat_key] = int(base_stats[stat_key] * multiplier)
+
+					item_data["stats"] = boosted_stats
+					print("[GameState] → Stats boosted by %d%%" % (int(multiplier * 100) - 100))
+
+			break  # Found the item, stop searching
+
+	# Apply bonuses from gems to stats (if any)
+	if item_data.has("bonuses") and item_data.bonuses.size() > 0:
+		print("[GameState] 💎 Applying %d gem bonuses to stats" % item_data.bonuses.size())
+
+		const ItemBonus = preload("res://scripts/crafting/ItemBonus.gd")
+
+		for bonus_dict in item_data.bonuses:
+			var bonus = ItemBonus.new()
+			bonus.from_dict(bonus_dict)
+
+			# Apply bonus based on type
+			match bonus.bonus_stat:
+				ItemBonus.BonusStat.PHYSICAL_DAMAGE:
+					if item_data["stats"].has("physical_damage"):
+						var current = item_data["stats"]["physical_damage"]
+						item_data["stats"]["physical_damage"] = int(current * (1.0 + bonus.value1 / 100.0))
+						print("[GameState] → Physical Damage: %d → %d (+%.1f%%)" % [current, item_data["stats"]["physical_damage"], bonus.value1])
+
+				ItemBonus.BonusStat.ATTACK_SPEED:
+					# Attack speed is usually stored differently, but if it exists:
+					if item_data["stats"].has("attack_speed"):
+						var current = item_data["stats"]["attack_speed"]
+						item_data["stats"]["attack_speed"] = current * (1.0 + bonus.value1 / 100.0)
+						print("[GameState] → Attack Speed: %.1f → %.1f (+%.1f%%)" % [current, item_data["stats"]["attack_speed"], bonus.value1])
+
+				ItemBonus.BonusStat.HP_REGEN:
+					# HP Regen bonus (usually a new stat)
+					if not item_data["stats"].has("hp_regen"):
+						item_data["stats"]["hp_regen"] = 0
+					item_data["stats"]["hp_regen"] += bonus.value1
+					print("[GameState] → HP Regen: +%.1f" % bonus.value1)
+
+				ItemBonus.BonusStat.AUTO_HEAL_ON_DAMAGE:
+					# Special bonus (stored separately, not in stats)
+					if not item_data.has("special_effects"):
+						item_data["special_effects"] = []
+					item_data["special_effects"].append({
+						"type": "auto_heal",
+						"chance": bonus.value1,
+						"heal": bonus.value2
+					})
+					print("[GameState] → Auto Heal: %.1f%% chance to heal %.1f HP" % [bonus.value1, bonus.value2])
+
 	# Verifica che l'item possa essere equipaggiato in questo slot
 	var item_slot = item_data.get("slot", "none")
 	if item_slot != slot and item_slot != "any":
 		print("[GameState] Item non compatibile con slot: ", item_id, " -> ", slot)
 		return false
-	
+
 	# Se c'è già qualcosa equipaggiato, unequip prima
 	if equipped_items[slot] != null:
 		unequip_item_from_slot(slot)
-	
+
 	# Equipaggia
 	equipped_items[slot] = item_data
-	
-	# Applica stats
+
+	# Applica stats (now with upgrades and bonuses!)
 	if item_data.has("stats"):
 		character_stats.apply_equipment_stats(item_data.stats)
 	
@@ -410,9 +558,194 @@ func equip_item_to_slot(item_id: String, slot: String) -> bool:
 	
 	on_item_equipped.emit(slot, item_data)
 	on_stats_changed.emit()
-	
+
 	print("[GameState] Equipped: ", item_data.get("name", item_id), " in ", slot)
 	return true
+
+func _add_item_to_visual_inventory(item_id: String, item_data: Dictionary) -> bool:
+	"""Add an item to visual inventory system (inventory_items array with position)
+	Used by ExplorationCombatController to add drops after combat.
+
+	Args:
+		item_id: The item ID from database
+		item_data: Full item data including bonuses, upgrade_level, etc.
+
+	Returns:
+		true if item was added successfully, false if inventory is full
+	"""
+	print("[GameState] 📦 _add_item_to_visual_inventory called: %s" % item_id)
+
+	# Get base item data from database if not provided
+	var full_item_data = item_data.duplicate(true) if not item_data.is_empty() else {}
+
+	# Merge with database data (item_data overrides database for bonuses/upgrades)
+	if data.items.has(item_id):
+		var db_data = data.items[item_id].duplicate(true)
+		# Merge database properties first, then override with item_data
+		for key in db_data.keys():
+			if not full_item_data.has(key):
+				full_item_data[key] = db_data[key]
+	else:
+		push_error("[GameState] Item not found in database: %s" % item_id)
+		return false
+
+	# Get item size
+	var item_size = Vector2i(1, 1)
+	if full_item_data.has("size") and full_item_data.size is Array and full_item_data.size.size() >= 2:
+		item_size = Vector2i(full_item_data.size[0], full_item_data.size[1])
+
+	# Check if item is stackable
+	var is_stackable = full_item_data.get("stackable", false)
+	var max_stack = full_item_data.get("max_stack", 99)
+	var amount = 1  # Always add 1 item at a time from drops
+
+	# OLD FORMAT: Update count (for compatibility)
+	if not inventory.has(item_id):
+		inventory[item_id] = 0
+	inventory[item_id] += amount
+
+	# NEW FORMAT: Add to inventory_items with position
+	var items_were_stacked = false  # Track if we modified existing stacks
+	if is_stackable:
+		# Try to stack with existing items first
+		var stacked_amount = 0
+		for inv_item in inventory_items:
+			if inv_item.get("item_id") == item_id:
+				var current_stack = inv_item.get("stack_count", 1)
+				if current_stack < max_stack:
+					var can_add = min(amount - stacked_amount, max_stack - current_stack)
+					inv_item["stack_count"] = current_stack + can_add
+					stacked_amount += can_add
+					items_were_stacked = true
+					print("[GameState] 📦 Stacked +%d %s (now %d)" % [can_add, item_id, inv_item["stack_count"]])
+
+					if stacked_amount >= amount:
+						break  # All items stacked
+
+		amount = amount - stacked_amount  # Remaining items to add as new stacks
+
+	# If items were stacked and no new items need to be added, emit signal now
+	if items_were_stacked and amount <= 0:
+		print("[GameState] 📢 Emitting on_inventory_changed signal (after stacking)...")
+		on_inventory_changed.emit()
+		print("[GameState] 📢 Signal emitted. Connected listeners: %d" % on_inventory_changed.get_connections().size())
+		return true
+
+	# Add remaining items as new entries
+	while amount > 0:
+		var stack_size = min(amount, max_stack) if is_stackable else 1
+
+		# Find first empty position in inventory
+		var pos = _find_empty_inventory_position(item_size)
+		if pos != Vector2i(-1, -1):
+			# Add to inventory_items
+			var new_item = {
+				"item_id": item_id,
+				"pos": {"x": pos.x, "y": pos.y},  # Dictionary format for JSON compatibility
+				"stack_count": stack_size
+			}
+
+			# Include bonuses if present (for crafted/upgraded items)
+			if full_item_data.has("bonuses") and full_item_data.bonuses.size() > 0:
+				new_item["bonuses"] = full_item_data.bonuses
+
+			# Include upgrade_level if present (for upgraded items)
+			if full_item_data.has("upgrade_level") and full_item_data.upgrade_level > 0:
+				new_item["upgrade_level"] = full_item_data.upgrade_level
+
+			inventory_items.append(new_item)
+			print("[GameState] ✅ Added %s x%d at position %s" % [item_id, stack_size, pos])
+
+			# Emit signal to refresh inventory UI
+			print("[GameState] 📢 Emitting on_inventory_changed signal...")
+			on_inventory_changed.emit()
+			print("[GameState] 📢 Signal emitted. Connected listeners: %d" % on_inventory_changed.get_connections().size())
+
+			amount -= stack_size
+			return true
+		else:
+			push_error("[GameState] ❌ No space in inventory for %s! Lost %d items" % [item_id, amount])
+			return false
+
+	return true
+
+func _find_empty_inventory_position(item_size: Vector2i) -> Vector2i:
+	"""Find first available position in inventory grid for an item of given size
+
+	Args:
+		item_size: Size of item in grid cells (e.g. Vector2i(1, 2) for a 1x2 sword)
+
+	Returns:
+		Vector2i position of first available slot, or Vector2i(-1, -1) if no space
+	"""
+	# Get inventory grid dimensions
+	# Base: 6x5 (30 slots)
+	# + bags (each bag adds rows)
+	var cols = 6
+	var base_rows = 5
+
+	# Calculate total rows based on equipped bags
+	var total_slots = base_rows * cols  # Start with base
+	for bag_data in equipped_bags:
+		if bag_data != null and bag_data.has("bag_slots"):
+			total_slots += bag_data.bag_slots
+
+	var rows = ceili(float(total_slots) / float(cols))
+
+	# Build occupancy grid from existing inventory_items
+	var grid_occupied = []
+	for y in range(rows):
+		var row = []
+		for x in range(cols):
+			row.append(false)
+		grid_occupied.append(row)
+
+	# Mark occupied cells
+	for inv_item in inventory_items:
+		var pos = inv_item.get("pos")
+		var inv_item_id = inv_item.get("item_id", "")
+
+		# Convert Dictionary to Vector2i if needed
+		var pos_vec: Vector2i
+		if pos is Dictionary:
+			pos_vec = Vector2i(pos.get("x", 0), pos.get("y", 0))
+		else:
+			pos_vec = pos
+
+		# Get item size from database
+		var inv_item_data = data.items.get(inv_item_id, {})
+		var inv_item_size = Vector2i(1, 1)
+		if inv_item_data.has("size") and inv_item_data.size is Array and inv_item_data.size.size() >= 2:
+			inv_item_size = Vector2i(inv_item_data.size[0], inv_item_data.size[1])
+
+		# Mark all cells occupied by this item
+		for y in range(pos_vec.y, min(pos_vec.y + inv_item_size.y, rows)):
+			for x in range(pos_vec.x, min(pos_vec.x + inv_item_size.x, cols)):
+				if y < rows and x < cols:
+					grid_occupied[y][x] = true
+
+	# Find first empty position that fits the item
+	for y in range(rows):
+		for x in range(cols):
+			# Check if item fits at this position
+			if x + item_size.x > cols or y + item_size.y > rows:
+				continue  # Doesn't fit
+
+			# Check if all required cells are free
+			var can_place = true
+			for dy in range(item_size.y):
+				for dx in range(item_size.x):
+					if grid_occupied[y + dy][x + dx]:
+						can_place = false
+						break
+				if not can_place:
+					break
+
+			if can_place:
+				return Vector2i(x, y)
+
+	# No space found
+	return Vector2i(-1, -1)
 
 func unequip_item_from_slot(slot: String) -> bool:
 	"""Rimuove un item da un equipment slot"""
@@ -466,6 +799,29 @@ func _on_character_death():
 	print("[GameState] Character died!")
 	combat_active = false
 
+# -------- LEVEL UP CALLBACKS --------
+
+func _on_combat_level_up(new_level: int):
+	"""Called when player levels up (combat)"""
+	print("[GameState] 🎉 LEVEL UP! New level: %d" % new_level)
+
+	# Award +1 passive point for "main" category
+	passive_points_by_category["main"] += 1
+	print("[GameState] +1 passive point for 'main' category (total: %d)" % passive_points_by_category["main"])
+
+	# Update legacy passive_points too
+	passive_points += 1
+
+func _on_gathering_skill_level_up(skill_name: String, new_level: int):
+	"""Called when a gathering skill levels up"""
+	print("[GameState] 🎉 %s LEVEL UP! New level: %d" % [skill_name.capitalize(), new_level])
+
+	# Award +1 passive point for the skill's category
+	if passive_points_by_category.has(skill_name):
+		passive_points_by_category[skill_name] += 1
+		print("[GameState] +1 passive point for '%s' category (total: %d)" %
+			[skill_name, passive_points_by_category[skill_name]])
+
 # -------- Data loading --------
 func _read_json_array(path: String) -> Array:
 	var f := FileAccess.open(path, FileAccess.READ)
@@ -515,110 +871,278 @@ func _load_default_data() -> void:
 
 # -------- Save/Load --------
 func save_game() -> void:
-	var data_save = {
-		"resources": resources,
-		"inventory": inventory,  # Old format (kept for compatibility)
-		"inventory_items": inventory_items,  # NEW: Grid-based inventory
-		"skills": {},
-		"craft_queue": craft_queue,
-		"combat": {
-			"current_area": current_area,
-			"current_mob": current_mob,
-			"enemy_hp": enemy_hp,
-			"kills": kills,
-			"combat_active": combat_active
-		},
-		"action": {
-			"id": current_action_id,
-			"left": action_time_left,
-			"total": action_time_total
-		},
-		"bonuses": {"dps_add": bonus_dps_add, "dps_mult": bonus_dps_mult},
+	# CRITICAL: Prevent concurrent saves
+	if _is_saving:
+		print("[GameState] ⚠️ Save already in progress, skipping...")
+		return
 
-		# NUOVO: Salva character stats
-		"character_stats": character_stats.to_dict() if character_stats else {},
-		"equipped_items": {},
-		"equipped_bags": equipped_bags  # NEW: Save equipped bags
-	}
+	_is_saving = true
+	print("[GameState] 💾 Saving game with store_var()...")
 
-	# NUOVO: Salva equipped items
-	for slot in equipped_items.keys():
-		if equipped_items[slot] != null:
-			data_save.equipped_items[slot] = equipped_items[slot].get("id", "")
-	
+	# Prepare skills dict
+	var skills_data = {}
 	for k in skills.keys():
 		var s: Skill = skills[k]
-		data_save.skills[k] = {
-			"level": s.level, "xp": s.xp, "grade": s.grade
-		}
-	
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	file.store_string(JSON.stringify(data_save))
-	file.flush()
-	print("[GameState] Game saved with stats")
+		skills_data[k] = {"level": s.level, "xp": s.xp, "grade": s.grade}
+
+	# Get quest data from QuestSystem
+	var quest_data = {}
+	if has_node("/root/QuestSystem"):
+		var quest_system = get_node("/root/QuestSystem")
+		quest_data = quest_system.to_dict()
+
+	# Single dictionary with ALL game state
+	var save_data = {
+		"version": 1,  # Save format version
+		"resources": resources,
+		"inventory": inventory,
+		"inventory_items": inventory_items,  # NATIVE support for Array/Dict/Vector2i!
+		"equipped_items": equipped_items,    # NATIVE support - bonuses included automatically!
+		"equipped_bags": equipped_bags,
+		"passive_points": passive_points,
+		"activated_passives": activated_passives,
+		"passive_points_by_category": passive_points_by_category,
+		"activated_passives_by_category": activated_passives_by_category,
+		"skills": skills_data,
+		"craft_queue": craft_queue,
+		"current_area": current_area,
+		"current_mob": current_mob,
+		"enemy_hp": enemy_hp,
+		"kills": kills,
+		"combat_active": combat_active,
+		"current_action_id": current_action_id,
+		"action_time_left": action_time_left,
+		"action_time_total": action_time_total,
+		"bonus_dps_add": bonus_dps_add,
+		"bonus_dps_mult": bonus_dps_mult,
+		"character_stats": character_stats.to_dict() if character_stats else {},
+		"gathering_skills": gathering_skills.to_dict() if gathering_skills else {},
+		"quests": quest_data
+	}
+
+	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if not file:
+		push_error("[GameState] ❌ Failed to open save file: %s" % SAVE_PATH)
+		_is_saving = false
+		return
+
+	# MAGIC: store_var() handles EVERYTHING automatically!
+	# Vector2i, Arrays, Dictionaries, nested structures - all native!
+	file.store_var(save_data)
+	file.close()
+
+	# Count only non-null equipped items
+	var equipped_count = 0
+	for slot in equipped_items.keys():
+		if equipped_items[slot] != null:
+			equipped_count += 1
+
+	print("[GameState] ✅ Game saved successfully!")
+	print("  → %d inventory items" % inventory_items.size())
+	print("  → %d equipped items" % equipped_count)
+
+	# DEBUG: Print equipped items details
+	if equipped_count > 0:
+		print("[GameState] 🔍 DEBUG - Equipped items:")
+		for slot in equipped_items.keys():
+			if equipped_items[slot] != null:
+				var item = equipped_items[slot]
+				print("  → %s: %s (id: %s)" % [slot, item.get("name", "?"), item.get("id", "?")])
+
+	# DEBUG: Check if equipped items are ALSO in inventory_items (using instance_id)
+	for slot in equipped_items.keys():
+		if equipped_items[slot] != null:
+			var equipped_instance_id = equipped_items[slot].get("instance_id", "")
+			var equipped_id = equipped_items[slot].get("id")
+
+			# Only check if we have an instance_id (new system)
+			if equipped_instance_id != "":
+				for inv_item in inventory_items:
+					var inv_instance_id = inv_item.get("instance_id", "")
+					# Compare by instance_id - if the SAME instance is in both places, warn
+					if inv_instance_id != "" and inv_instance_id == equipped_instance_id:
+						var pos_str = "unknown"
+						if inv_item.has("pos"):
+							var pos_dict = inv_item["pos"]
+							var pos = Vector2i(pos_dict.get("x", -1), pos_dict.get("y", -1))
+							pos_str = str(pos)
+						print("[GameState] ⚠️ WARNING: Same item instance '%s' (instance_id: %s) is BOTH equipped in slot '%s' AND in inventory at %s!" % [equipped_id, equipped_instance_id, slot, pos_str])
+
+	_is_saving = false
 
 func load_game() -> void:
-	if not FileAccess.file_exists(SAVE_PATH): return
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
-	var txt := file.get_as_text()
-	var parsed = JSON.parse_string(txt)
-	if typeof(parsed) != TYPE_DICTIONARY: return
-	
-	resources = parsed.get("resources", resources)
-	inventory = parsed.get("inventory", inventory)  # Old format
+	print("[GameState] 📂 Loading game with get_var()...")
 
-	# NEW: Load grid-based inventory
-	if parsed.has("inventory_items"):
-		inventory_items = parsed.get("inventory_items", [])
-		print("[GameState] Loaded %d items from grid inventory" % inventory_items.size())
+	if not FileAccess.file_exists(SAVE_PATH):
+		print("[GameState] ⚠️ No save file found, starting fresh")
+		return
 
-	# NEW: Load equipped bags
-	if parsed.has("equipped_bags"):
-		equipped_bags = parsed.get("equipped_bags", [])
-		print("[GameState] Loaded %d equipped bags" % equipped_bags.size())
+	var file = FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if not file:
+		push_error("[GameState] ❌ Failed to open save file!")
+		return
 
-	var saved_skills = parsed.get("skills", {})
+	# MAGIC: get_var() loads EVERYTHING with native types restored!
+	var data = file.get_var()
+	file.close()
+
+	if typeof(data) != TYPE_DICTIONARY:
+		push_error("[GameState] ❌ Invalid save data!")
+		return
+
+	# Direct assignment - no conversion needed!
+	resources = data.get("resources", resources)
+	inventory = data.get("inventory", inventory)
+	inventory_items = data.get("inventory_items", [])  # Vector2i positions restored automatically!
+	equipped_items = data.get("equipped_items", {})    # Bonuses included automatically!
+	equipped_bags = data.get("equipped_bags", [])
+	passive_points = data.get("passive_points", 0)  # Changed: now earned by leveling
+	activated_passives = data.get("activated_passives", [])
+	passive_points_by_category = data.get("passive_points_by_category", {
+		"main": 0,  # Changed: now earned by leveling
+		"mining": 0,
+		"herbalism": 0,
+		"fishing": 0
+	})
+	activated_passives_by_category = data.get("activated_passives_by_category", {
+		"main": [],
+		"mining": [],
+		"herbalism": [],
+		"fishing": []
+	})
+	craft_queue = data.get("craft_queue", [])
+	current_area = data.get("current_area", current_area)
+	current_mob = data.get("current_mob", current_mob)
+	enemy_hp = data.get("enemy_hp", 0.0)
+	kills = data.get("kills", 0)
+	combat_active = data.get("combat_active", false)
+	current_action_id = data.get("current_action_id", "")
+	action_time_left = data.get("action_time_left", 0.0)
+	action_time_total = data.get("action_time_total", 0.0)
+	bonus_dps_add = data.get("bonus_dps_add", 0.0)
+	bonus_dps_mult = data.get("bonus_dps_mult", 0.0)
+
+	# Load character stats
+	if data.has("character_stats") and character_stats:
+		character_stats.from_dict(data.character_stats)
+
+		# CRITICAL FIX: Clear equipment bonuses to prevent double-apply bug
+		# The save file contains equipment_bonuses from when it was saved,
+		# but we need to recalculate them from currently equipped items
+		for stat in character_stats.equipment_bonuses.keys():
+			character_stats.equipment_bonuses[stat] = 0 if typeof(character_stats.base_stats[stat]) == TYPE_INT else 0.0
+
+		if GameLogger.ENABLED:
+			print("[GameState] Cleared equipment bonuses (will be recalculated)")
+
+	# Load gathering skills
+	if data.has("gathering_skills") and gathering_skills:
+		gathering_skills.from_dict(data.gathering_skills)
+
+	# Load quests
+	if data.has("quests") and has_node("/root/QuestSystem"):
+		var quest_system = get_node("/root/QuestSystem")
+		quest_system.from_dict(data.quests)
+
+	# Load skills
+	var saved_skills = data.get("skills", {})
 	for k in saved_skills.keys():
 		if skills.has(k):
 			var s: Skill = skills[k]
 			var d = saved_skills[k]
-			s.level = int(d.get("level", s.level))
-			s.xp = float(d.get("xp", s.xp))
-			s.grade = String(d.get("grade", s.grade))
-	
-	craft_queue = parsed.get("craft_queue", [])
-	
-	var c = parsed.get("combat", {})
-	current_area = c.get("current_area", current_area)
-	current_mob = c.get("current_mob", current_mob)
-	enemy_hp = float(c.get("enemy_hp", 0.0))
-	kills = int(c.get("kills", 0))
-	combat_active = bool(c.get("combat_active", false))
-	
-	var a = parsed.get("action", {})
-	current_action_id = String(a.get("id",""))
-	action_time_left = float(a.get("left",0.0))
-	action_time_total = float(a.get("total",0.0))
-	
-	var b = parsed.get("bonuses", {})
-	bonus_dps_add = float(b.get("dps_add", 0.0))
-	bonus_dps_mult = float(b.get("dps_mult", 0.0))
-	
-	# NUOVO: Carica character stats
-	if parsed.has("character_stats") and character_stats:
-		character_stats.from_dict(parsed.character_stats)
-	
-	# NUOVO: Carica equipped items
-	if parsed.has("equipped_items"):
-		for slot in parsed.equipped_items.keys():
-			var item_id = parsed.equipped_items[slot]
-			if item_id != "" and data.items.has(item_id):
-				equipped_items[slot] = data.items[item_id]
-				# Riapplica stats
-				if equipped_items[slot].has("stats"):
-					character_stats.apply_equipment_stats(equipped_items[slot].stats)
-	
-	print("[GameState] Game loaded with stats")
+			s.level = d.get("level", s.level)
+			s.xp = d.get("xp", s.xp)
+			s.grade = d.get("grade", s.grade)
+
+	# Re-apply equipment stats from currently equipped items
+	var equipment_count = 0
+	for slot in equipped_items.keys():
+		if equipped_items[slot] != null and equipped_items[slot].has("stats"):
+			character_stats.apply_equipment_stats(equipped_items[slot].stats)
+			equipment_count += 1
+			if GameLogger.ENABLED:
+				print("[GameState] Re-applied stats from %s: %s" % [slot, equipped_items[slot].get("name", "Unknown")])
+
+	if GameLogger.ENABLED:
+		print("[GameState] Re-applied %d equipped items" % equipment_count)
+
+	# Count only non-null equipped items
+	var equipped_count = 0
+	for slot in equipped_items.keys():
+		if equipped_items[slot] != null:
+			equipped_count += 1
+
+	print("[GameState] ✅ Game loaded successfully!")
+	print("  → %d inventory items" % inventory_items.size())
+	print("  → %d equipped items" % equipped_count)
+
+	# DEBUG: Print loaded equipped items
+	if equipped_count > 0:
+		print("[GameState] 🔍 DEBUG - Loaded equipped items:")
+		for slot in equipped_items.keys():
+			if equipped_items[slot] != null:
+				var item = equipped_items[slot]
+				print("  → %s: %s (id: %s)" % [slot, item.get("name", "?"), item.get("id", "?")])
+
+	# DEBUG: Check if equipped items are ALSO in loaded inventory_items
+	for slot in equipped_items.keys():
+		if equipped_items[slot] != null:
+			var equipped_id = equipped_items[slot].get("id")
+			for inv_item in inventory_items:
+				if inv_item.get("item_id") == equipped_id or inv_item.get("id") == equipped_id:
+					print("[GameState] ⚠️ WARNING: Loaded equipped item '%s' is ALSO in inventory_items!" % equipped_id)
+					print("[GameState]   This means the item was NOT removed from inventory when equipped!")
+
+	# IMPORTANT: Don't emit signals here - UI isn't ready yet!
+	# CharacterDisplay will call refresh_equipped_items() when it connects
+
+func refresh_equipped_items() -> void:
+	"""Emit on_item_equipped signals for all equipped items
+	Called by CharacterDisplay when it connects to signals after load"""
+	print("[GameState] 🔄 Refreshing equipped items UI...")
+
+	var signals_emitted = 0
+	for slot in equipped_items.keys():
+		if equipped_items[slot] != null:
+			print("[GameState] 📢 Emitting on_item_equipped for %s: %s" % [slot, equipped_items[slot].get("name", "Unknown")])
+			on_item_equipped.emit(slot, equipped_items[slot])
+			signals_emitted += 1
+
+	print("[GameState] ✅ Refreshed %d equipped items" % signals_emitted)
+
+func fix_equipment_bonuses() -> void:
+	"""Emergency fix: Recalculate equipment bonuses from scratch"""
+	if not character_stats:
+		return
+
+	print("\n[GameState] 🔧 FIXING EQUIPMENT BONUSES...")
+
+	# Clear all bonuses
+	for stat in character_stats.equipment_bonuses.keys():
+		character_stats.equipment_bonuses[stat] = 0 if typeof(character_stats.base_stats[stat]) == TYPE_INT else 0.0
+
+	print("  ✓ Cleared all equipment bonuses")
+
+	# Re-apply from equipped items
+	var count = 0
+	for slot in equipped_items.keys():
+		if equipped_items[slot] != null and equipped_items[slot].has("stats"):
+			character_stats.apply_equipment_stats(equipped_items[slot].stats)
+			count += 1
+			print("  ✓ Re-applied: %s (%s)" % [slot, equipped_items[slot].get("name", "Unknown")])
+
+	print("  ✓ Total items re-applied: %d" % count)
+	print("\n[GameState] ✅ FIX COMPLETE!")
+	print("  New Attack: %.1f" % get_total_attack())
+	print("  New Defense: %.1f" % get_total_defense())
+	print("  Strength: %d (base: %d + equip: %d)" % [
+		character_stats.get_stat("strength"),
+		character_stats.base_stats["strength"],
+		character_stats.equipment_bonuses["strength"]
+	])
+
+	# Emit signal to update UI
+	on_stats_changed.emit()
 
 func reset_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):

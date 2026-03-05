@@ -1,0 +1,102 @@
+[gd_scene load_steps=2 format=3 uid="uid://battlefield_base"]
+
+[ext_resource type="Texture2D" uid="uid://c43h45ys4c7w2" path="res://Item_Texture/Backgrounds/M1/Z1/m1_z1_1.png" id="1"]
+
+[node name="Battlefield" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="BackgroundTexture" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("1")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="SpawnPoints" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 0
+mouse_filter = 2
+
+[node name="BossSpawn" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 1.0
+metadata/_edit_use_anchors_ = true
+
+[node name="Spawn1" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 1.0
+
+[node name="Spawn2" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 1.0
+
+[node name="Spawn3" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 1.0
+
+[node name="Spawn4" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 1.0
+
+[node name="Spawn5" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 1.0
+
+[node name="Spawn6" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 1.0
+
+[node name="Spawn7" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 1.0
+
+[node name="Spawn8" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 1.0
+
+[node name="Spawn9" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 1.0
+
+[node name="Spawn10" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 1.0
+
+[node name="Spawn11" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 1.0

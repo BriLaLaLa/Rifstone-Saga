@@ -1,8 +1,11 @@
-[gd_scene load_steps=4 format=3 uid="uid://ff3lstbvirq6"]
+[gd_scene load_steps=7 format=3 uid="uid://ff3lstbvirq6"]
 
 [ext_resource type="Script" uid="uid://b1g1wh4xanohj" path="res://scripts/battle/BattleTab.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://hqnxf26wkwpv" path="res://scenes/battle/CharacterDisplay.tscn" id="2"]
 [ext_resource type="Script" uid="uid://cidmfpqx0eyif" path="res://scripts/battle/BattleArea.gd" id="3"]
+[ext_resource type="PackedScene" uid="uid://cworldmap2h8dkya" path="res://scenes/battle/WorldMapView.tscn" id="4"]
+[ext_resource type="PackedScene" uid="uid://cregionzoom2h8dkyb" path="res://scenes/battle/RegionZoomView.tscn" id="5"]
+[ext_resource type="Script" path="res://scripts/ui/StatsScrollPanel.gd" id="6"]
 
 [node name="BattleTab" type="Control"]
 layout_mode = 3
@@ -11,6 +14,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 1
 script = ExtResource("1")
 
 [node name="HSplit" type="HSplitContainer" parent="."]
@@ -20,34 +24,86 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 1
 dragger_visibility = 1
 
 [node name="LeftPanel" type="VBoxContainer" parent="HSplit"]
-custom_minimum_size = Vector2(400, 0)
+custom_minimum_size = Vector2(350, 0)
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 5
 
 [node name="CharacterDisplay" parent="HSplit/LeftPanel" instance=ExtResource("2")]
 layout_mode = 2
+main_equipment_slots_path = NodePath("/root/Main/Margin/VBox/Tabs/Inventory/InvSplit/Right/EquipmentPanel/EquipmentSlots")
+
+[node name="GatheringSkillDisplay" type="PanelContainer" parent="HSplit/LeftPanel"]
+visible = false
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="HSplit/LeftPanel/GatheringSkillDisplay"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="SkillNameLabel" type="Label" parent="HSplit/LeftPanel/GatheringSkillDisplay/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Mining Node"
+horizontal_alignment = 1
+
+[node name="SkillLevelLabel" type="Label" parent="HSplit/LeftPanel/GatheringSkillDisplay/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.8, 1)
+theme_override_font_sizes/font_size = 16
+text = "Mining Level 5"
+horizontal_alignment = 1
+
+[node name="SkillExpBar" type="ProgressBar" parent="HSplit/LeftPanel/GatheringSkillDisplay/VBox"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="SkillExpLabel" type="Label" parent="HSplit/LeftPanel/GatheringSkillDisplay/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "450 / 500 EXP"
+horizontal_alignment = 1
 
 [node name="InventoryButton" type="Button" parent="HSplit/LeftPanel"]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 text = "📦 Open Inventory"
+
+[node name="StatsScrollPanel" type="ScrollContainer" parent="HSplit/LeftPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("6")
 
 [node name="RightPanel" type="VBoxContainer" parent="HSplit"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 10
 
+[node name="WorldMapView" parent="HSplit/RightPanel" instance=ExtResource("4")]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RegionZoomView" parent="HSplit/RightPanel" instance=ExtResource("5")]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
 [node name="BattleArea" type="Control" parent="HSplit/RightPanel"]
-custom_minimum_size = Vector2(0, 500)
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("3")
 
 [node name="BattleAreaBG" type="ColorRect" parent="HSplit/RightPanel/BattleArea"]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -56,6 +112,17 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0.15, 0.15, 0.2, 1)
+
+[node name="BackgroundTexture" type="TextureRect" parent="HSplit/RightPanel/BattleArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 2
+stretch_mode = 1
 
 [node name="SpawnPoints" type="Control" parent="HSplit/RightPanel/BattleArea"]
 layout_mode = 1
@@ -127,11 +194,18 @@ grow_vertical = 2
 theme_override_font_sizes/font_size = 24
 text = "⚔️ Start Battle"
 
-[node name="ActionBar" type="Control" parent="HSplit/RightPanel"]
+[node name="ActionBar" type="Control" parent="HSplit/RightPanel/BattleArea"]
 custom_minimum_size = Vector2(0, 100)
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -100.0
+grow_horizontal = 2
+grow_vertical = 0
 
-[node name="ActionBarBG" type="Panel" parent="HSplit/RightPanel/ActionBar"]
+[node name="ActionBarBG" type="Panel" parent="HSplit/RightPanel/BattleArea/ActionBar"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -139,7 +213,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="SkillsContainer" type="HBoxContainer" parent="HSplit/RightPanel/ActionBar"]
+[node name="SkillsContainer" type="HBoxContainer" parent="HSplit/RightPanel/BattleArea/ActionBar"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -155,32 +229,34 @@ grow_vertical = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Skill1Button" type="Button" parent="HSplit/RightPanel/ActionBar/SkillsContainer"]
+[node name="Skill1Button" type="Button" parent="HSplit/RightPanel/BattleArea/ActionBar/SkillsContainer"]
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 text = "🗡️
 ATK"
 
-[node name="Skill2Button" type="Button" parent="HSplit/RightPanel/ActionBar/SkillsContainer"]
+[node name="Skill2Button" type="Button" parent="HSplit/RightPanel/BattleArea/ActionBar/SkillsContainer"]
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 text = "🛡️
 DEF"
 
-[node name="Skill3Button" type="Button" parent="HSplit/RightPanel/ActionBar/SkillsContainer"]
+[node name="Skill3Button" type="Button" parent="HSplit/RightPanel/BattleArea/ActionBar/SkillsContainer"]
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 text = "⚡
 SKILL"
 
-[node name="Skill4Button" type="Button" parent="HSplit/RightPanel/ActionBar/SkillsContainer"]
+[node name="Skill4Button" type="Button" parent="HSplit/RightPanel/BattleArea/ActionBar/SkillsContainer"]
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 text = "💊
 HEAL"
 
-[node name="Skill5Button" type="Button" parent="HSplit/RightPanel/ActionBar/SkillsContainer"]
+[node name="Skill5Button" type="Button" parent="HSplit/RightPanel/BattleArea/ActionBar/SkillsContainer"]
 custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 text = "🔥
 ULTI"
+
+[connection signal="visibility_changed" from="." to="." method="_on_battle_tab_visibility_changed"]

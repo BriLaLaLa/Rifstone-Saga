@@ -31,9 +31,9 @@
 	"pos": { "x": 0.49, "y": 0.83 },
 	"portrait": "", "actions": [ {"id":"quest1","label":"Gare di pesca"} ]
   },
-  { "id": "forge", "name": "Forge Zone",
+  { "id": "forge", "name": "Fabbro",
 	"pos": { "x": 0.50, "y": 0.52 },
-	"portrait": "", "actions": [ {"id":"shop","label":"Forgia"} ]
+	"portrait": "", "actions": [ {"id":"upgrade","label":"Potenziamento"} ]
   },
   { "id": "commercial", "name": "Commercial Zone",
 	"pos": { "x": 0.20, "y": 0.45 },

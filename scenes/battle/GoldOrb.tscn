@@ -1,0 +1,144 @@
+[gd_scene load_steps=29 format=3 uid="uid://goldorb_scene"]
+
+[ext_resource type="Script" path="res://scripts/battle/GoldOrb.gd" id="1_goldorb"]
+
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_000.png" id="2_frame0"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_001.png" id="2_frame1"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_002.png" id="2_frame2"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_003.png" id="2_frame3"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_004.png" id="2_frame4"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_005.png" id="2_frame5"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_006.png" id="2_frame6"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_007.png" id="2_frame7"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_008.png" id="2_frame8"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_009.png" id="2_frame9"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_010.png" id="2_frame10"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_011.png" id="2_frame11"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_012.png" id="2_frame12"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_013.png" id="2_frame13"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_014.png" id="2_frame14"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_015.png" id="2_frame15"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_016.png" id="2_frame16"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_017.png" id="2_frame17"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_018.png" id="2_frame18"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_019.png" id="2_frame19"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_020.png" id="2_frame20"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_021.png" id="2_frame21"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_022.png" id="2_frame22"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_023.png" id="2_frame23"]
+[ext_resource type="Texture2D" path="res://Item_Texture/GIF/frames/gold_coin/frame_024.png" id="2_frame24"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_gold"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_frame0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame9")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame10")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame11")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame12")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame13")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame14")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame15")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame16")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame17")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame18")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame19")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame20")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame21")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame22")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame23")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_frame24")
+}],
+"loop": true,
+"name": &"spin",
+"speed": 25.0
+}]
+
+[sub_resource type="Gradient" id="Gradient_gold"]
+colors = PackedColorArray(1, 0.843, 0, 1, 1, 0.843, 0, 0)
+
+[node name="GoldOrb" type="Node2D"]
+script = ExtResource("1_goldorb")
+
+[node name="CoinSprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_gold")
+animation = &"spin"
+autoplay = "spin"
+
+[node name="TrailParticles" type="CPUParticles2D" parent="."]
+emitting = false
+amount = 15
+lifetime = 0.8
+one_shot = false
+explosiveness = 0.1
+randomness = 0.4
+emission_shape = 1
+emission_sphere_radius = 8.0
+direction = Vector2(0, 1)
+spread = 30.0
+gravity = Vector2(0, 20)
+initial_velocity_min = 20.0
+initial_velocity_max = 40.0
+angular_velocity_min = -30.0
+angular_velocity_max = 30.0
+scale_amount_min = 0.4
+scale_amount_max = 1.0
+color = Color(1, 0.843, 0, 0.8)
+color_ramp = SubResource("Gradient_gold")

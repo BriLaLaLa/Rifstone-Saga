@@ -107,6 +107,16 @@ func _spawn_markers() -> void:
 			(marker as BaseButton).pressed.connect(func() -> void:
 				emit_signal("npc_clicked", str((npc as Dictionary)["id"]))
 			)
+
+		# Add quest indicator above the marker
+		var quest_indicator = NPCQuestIndicator.new()
+		quest_indicator.npc_id = str((npc as Dictionary)["id"])
+		quest_indicator.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		quest_indicator.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		quest_indicator.add_theme_font_size_override("font_size", 24)
+		quest_indicator.position = Vector2(-12, -32)  # Position above the button
+		marker.add_child(quest_indicator)
+
 		_layer.add_child(marker)
 
 	_reposition_markers()

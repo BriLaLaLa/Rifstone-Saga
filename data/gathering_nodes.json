@@ -1,0 +1,138 @@
+{
+  "nodes": {
+	"mining_node": {
+	  "id": "mining_node",
+	  "name": "Mining Node",
+	  "type": "mining",
+	  "icon": "res://Item_Texture/Jobs/Mining/Mining_Node.png",
+	  "base_attempts": 5,
+	  "attempt_duration": 3.0,
+	  "base_yield_min": 1,
+	  "base_yield_max": 3,
+	  "possible_drops": [
+		{
+		  "item_id": "iron_ore",
+		  "weight": 40,
+		  "min_amount": 1,
+		  "max_amount": 3
+		},
+		{
+		  "item_id": "copper_ore",
+		  "weight": 35,
+		  "min_amount": 1,
+		  "max_amount": 2
+		},
+		{
+		  "item_id": "gold_ore",
+		  "weight": 15,
+		  "min_amount": 1,
+		  "max_amount": 1
+		},
+		{
+		  "item_id": "diamond",
+		  "weight": 5,
+		  "min_amount": 1,
+		  "max_amount": 1
+		},
+		{
+		  "item_id": "stone",
+		  "weight": 5,
+		  "min_amount": 2,
+		  "max_amount": 5
+		}
+	  ]
+	},
+	"gathering_node": {
+	  "id": "gathering_node",
+	  "name": "Gathering Node",
+	  "type": "gathering",
+	  "icon": "res://Item_Texture/Jobs/Gathering/Gathering_Node.png",
+	  "base_attempts": 5,
+	  "attempt_duration": 3.0,
+	  "base_yield_min": 1,
+	  "base_yield_max": 3,
+	  "possible_drops": [
+		{
+		  "item_id": "herb",
+		  "weight": 35,
+		  "min_amount": 1,
+		  "max_amount": 3
+		},
+		{
+		  "item_id": "flower",
+		  "weight": 30,
+		  "min_amount": 1,
+		  "max_amount": 2
+		},
+		{
+		  "item_id": "mushroom",
+		  "weight": 20,
+		  "min_amount": 1,
+		  "max_amount": 2
+		},
+		{
+		  "item_id": "rare_plant",
+		  "weight": 10,
+		  "min_amount": 1,
+		  "max_amount": 1
+		},
+		{
+		  "item_id": "wood",
+		  "weight": 5,
+		  "min_amount": 2,
+		  "max_amount": 4
+		}
+	  ]
+	},
+	"fishing_pond": {
+	  "id": "fishing_pond",
+	  "name": "Fishing Pond",
+	  "type": "fishing",
+	  "icon": "res://Item_Texture/Jobs/Fishing/Fishing_Pond.png",
+	  "base_attempts": 5,
+	  "attempt_duration": 3.0,
+	  "base_yield_min": 1,
+	  "base_yield_max": 2,
+	  "possible_drops": [
+		{
+		  "item_id": "small_fish",
+		  "weight": 40,
+		  "min_amount": 1,
+		  "max_amount": 3
+		},
+		{
+		  "item_id": "medium_fish",
+		  "weight": 30,
+		  "min_amount": 1,
+		  "max_amount": 2
+		},
+		{
+		  "item_id": "large_fish",
+		  "weight": 15,
+		  "min_amount": 1,
+		  "max_amount": 1
+		},
+		{
+		  "item_id": "rare_fish",
+		  "weight": 10,
+		  "min_amount": 1,
+		  "max_amount": 1
+		},
+		{
+		  "item_id": "pearl",
+		  "weight": 5,
+		  "min_amount": 1,
+		  "max_amount": 1
+		}
+	  ]
+	}
+  },
+  "spawn_rates": {
+	"base_chance": 0.35,
+	"type_weights": {
+	  "mining": 33,
+	  "gathering": 33,
+	  "fishing": 34
+	}
+  }
+}

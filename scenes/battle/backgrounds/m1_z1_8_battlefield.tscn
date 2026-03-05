@@ -1,0 +1,125 @@
+[gd_scene load_steps=2 format=3 uid="uid://battlefield_m1_z1_8"]
+
+[ext_resource type="Texture2D" path="res://Item_Texture/Backgrounds/M1/Z1/m1_z1_8.png" id="1"]
+
+[node name="Battlefield" type="Control"]
+custom_minimum_size = Vector2(1024, 720)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1024.0
+offset_bottom = 720.0
+mouse_filter = 2
+
+[node name="BackgroundTexture" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("1")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="SpawnPoints" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 0
+mouse_filter = 2
+
+[node name="BossSpawn" type="Control" parent="SpawnPoints"]
+modulate = Color(1, 0, 0, 1)
+layout_mode = 0
+anchors_preset = 0
+offset_left = 462.0
+offset_top = 250.0
+offset_right = 463.0
+offset_bottom = 251.0
+
+[node name="Spawn1" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_left = 200.0
+offset_top = 150.0
+offset_right = 201.0
+offset_bottom = 151.0
+
+[node name="Spawn2" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_left = 724.0
+offset_top = 150.0
+offset_right = 725.0
+offset_bottom = 151.0
+
+[node name="Spawn3" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_left = 100.0
+offset_top = 220.0
+offset_right = 101.0
+offset_bottom = 221.0
+
+[node name="Spawn4" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_left = 824.0
+offset_top = 220.0
+offset_right = 825.0
+offset_bottom = 221.0
+
+[node name="Spawn5" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_left = 300.0
+offset_top = 320.0
+offset_right = 301.0
+offset_bottom = 321.0
+
+[node name="Spawn6" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_left = 624.0
+offset_top = 320.0
+offset_right = 625.0
+offset_bottom = 321.0
+
+[node name="Spawn7" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_left = 150.0
+offset_top = 400.0
+offset_right = 151.0
+offset_bottom = 401.0
+
+[node name="Spawn8" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_left = 774.0
+offset_top = 400.0
+offset_right = 775.0
+offset_bottom = 401.0
+
+[node name="Spawn9" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_left = 462.0
+offset_top = 450.0
+offset_right = 463.0
+offset_bottom = 451.0
+
+[node name="Spawn10" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_left = 250.0
+offset_top = 520.0
+offset_right = 251.0
+offset_bottom = 521.0
+
+[node name="Spawn11" type="Control" parent="SpawnPoints"]
+layout_mode = 0
+anchors_preset = 0
+offset_left = 674.0
+offset_top = 520.0
+offset_right = 675.0
+offset_bottom = 521.0

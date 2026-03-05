@@ -4,6 +4,9 @@
 extends Control
 class_name CharacterDisplay
 
+# Item scene for creating equipment visuals with particle effects
+const ITEM_SCENE = preload("res://scripts/ui/Item.tscn")
+
 # ==================== EXPORTED VARIABLES (Inspector) ====================
 # Path to Main Tab's EquipmentSlots container (set in Main.tscn editor)
 # Se non impostato, cercherà automaticamente a runtime
@@ -42,10 +45,14 @@ class_name CharacterDisplay
 # ==================== UI REFERENCES ====================
 @onready var hp_bar: ProgressBar = $StatsPanel/HPBar
 @onready var hp_label: Label = $StatsPanel/HPBar/HPLabel
-@onready var level_label: Label = $StatsPanel/LevelLabel
-@onready var attack_label: Label = $StatsPanel/AttackLabel
-@onready var defense_label: Label = $StatsPanel/DefenseLabel
+# enemy_attack_bar and enemy_attack_label REMOVED - old system
 @onready var character_background: TextureRect = $CharacterBackground
+
+# Level UI
+@onready var level_panel: PanelContainer = $StatsPanel/LevelPanel
+@onready var level_label: Label = $StatsPanel/LevelPanel/VBox/LevelLabel
+@onready var exp_bar: ProgressBar = $StatsPanel/LevelPanel/VBox/ExpBar
+@onready var exp_label: Label = $StatsPanel/LevelPanel/VBox/ExpLabel
 
 # Equipment slots (local display)
 @onready var helmet_slot: Panel = $EquipmentSlots/HelmetSlot
@@ -71,17 +78,21 @@ var equipment_visuals := {}
 # Equipment on character (TextureRect sovrapposti al character sprite)
 var character_equipment_layers := {}
 
-# Custom tooltip for rich text with colors
-var custom_tooltip: Control = null
+# Hovered slot tracking (for tooltip)
 var hovered_slot: Panel = null
 
 func _ready() -> void:
+	print("[CharacterDisplay] 🔧 _ready() called")
 	_setup_equipment_slots()
 	_setup_character_equipment_layers()
 	_connect_to_gamestate()
 	_ensure_character_alive()  # Make sure character has HP
 	_update_all_stats()
-	_refresh_all_equipment()
+	_update_level_display()  # Initialize level display
+	print("[CharacterDisplay] ✅ _ready() completed")
+
+	# DON'T call _refresh_all_equipment() here - it clears equipped_items if slots are empty!
+	# Instead, refresh_equipped_items() is called in _connect_to_gamestate()
 
 	# NOTE: visibility_changed signal connected in CharacterDisplay.tscn
 
@@ -134,8 +145,30 @@ func _setup_equipment_slots() -> void:
 
 		equipment_visuals[slot_panel.name] = texture_rect
 
-		# Setup drag & drop
-		slot_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+		# Setup drag & drop - Forward drop events from Panel to CharacterDisplay
+		slot_panel.mouse_filter = Control.MOUSE_FILTER_STOP  # Stop events at panel
+		print("[CharacterDisplay] 🔧 Setting up drag forwarding for: %s" % slot_panel.name)
+		print("[CharacterDisplay]   → mouse_filter: %s (STOP)" % slot_panel.mouse_filter)
+		print("[CharacterDisplay]   → position: %s, size: %s" % [slot_panel.global_position, slot_panel.size])
+
+		# Forward drag & drop to CharacterDisplay's methods
+		slot_panel.set_drag_forwarding(
+			Callable(),  # No custom drag preview
+			Callable(self, "_can_drop_data"),  # Forward can_drop_data to CharacterDisplay
+			Callable(self, "_drop_data")  # Forward drop_data to CharacterDisplay
+		)
+		print("[CharacterDisplay]   → drag_forwarding set to CharacterDisplay methods")
+
+		# Enable mouse detection for tooltips (even on empty slots)
+		if texture_rect:
+			# Use IGNORE so texture_rect doesn't intercept drop events
+			texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+			# Connect tooltip signals to panel (not texture_rect)
+			if not slot_panel.mouse_entered.is_connected(_on_slot_mouse_entered):
+				slot_panel.mouse_entered.connect(_on_slot_mouse_entered.bind(slot_panel))
+			if not slot_panel.mouse_exited.is_connected(_on_slot_mouse_exited):
+				slot_panel.mouse_exited.connect(_on_slot_mouse_exited.bind(slot_panel))
 
 	if GameLogger.ENABLED:
 		print("[CharacterDisplay] Equipment slots setup complete (%d slots)" % equipment_visuals.size())
@@ -209,6 +242,11 @@ func _connect_to_gamestate() -> void:
 	if gs.has_signal("on_item_equipped"):
 		if not gs.on_item_equipped.is_connected(_on_item_equipped):
 			gs.on_item_equipped.connect(_on_item_equipped)
+			if GameLogger.ENABLED:
+				print("[CharacterDisplay] ✅ Connected to on_item_equipped signal")
+		else:
+			if GameLogger.ENABLED:
+				print("[CharacterDisplay] ⚠️ on_item_equipped already connected")
 	
 	if gs.has_signal("on_item_unequipped"):
 		if not gs.on_item_unequipped.is_connected(_on_item_unequipped):
@@ -223,9 +261,29 @@ func _connect_to_gamestate() -> void:
 		if stats.has_signal("mana_changed"):
 			if not stats.mana_changed.is_connected(_on_mana_changed):
 				stats.mana_changed.connect(_on_mana_changed)
-	
-	if GameLogger.ENABLED:
-		print("[CharacterDisplay] Connected to GameState signals")
+
+		# Connect level signals
+		if stats.has_signal("level_up"):
+			if not stats.level_up.is_connected(_on_player_level_up):
+				stats.level_up.connect(_on_player_level_up)
+				if GameLogger.ENABLED:
+					print("[CharacterDisplay] ✅ Connected to level_up signal")
+		if stats.has_signal("exp_gained"):
+			if not stats.exp_gained.is_connected(_on_player_exp_gained):
+				stats.exp_gained.connect(_on_player_exp_gained)
+				if GameLogger.ENABLED:
+					print("[CharacterDisplay] ✅ Connected to exp_gained signal")
+
+	print("[CharacterDisplay] ✅ Connected to GameState signals")
+
+	# CRITICAL: Request refresh of equipped items after connecting
+	# This ensures equipment loaded from save is displayed
+	if gs.has_method("refresh_equipped_items"):
+		print("[CharacterDisplay] 🔄 Requesting equipment refresh from GameState...")
+		gs.refresh_equipped_items()
+		print("[CharacterDisplay] ✅ Equipment refresh completed")
+	else:
+		print("[CharacterDisplay] ⚠️ GameState doesn't have refresh_equipped_items() method!")
 
 # ============================================
 # UPDATE STATS UI
@@ -251,32 +309,11 @@ func _update_all_stats() -> void:
 
 	# Aggiorna HP
 	_on_hp_changed(stats.current_hp, stats.get_stat("max_hp"))
-	
-	# Aggiorna level (se disponibile)
-	if level_label:
-		var level = 1  # TODO: Prendi dal GameState quando implementerai il leveling
-		level_label.text = "Level: %d" % level
-	
-	# Aggiorna Attack
-	if attack_label:
-		var phys_dmg = stats.get_stat("physical_damage")
-		var strength = stats.get_stat("strength")
-		var total_attack = phys_dmg + (strength * 0.5)
-		attack_label.text = "⚔️ Attack: %d" % int(total_attack)
-	
-	# Aggiorna Defense
-	if defense_label:
-		var phys_def = stats.get_stat("physical_defense")
-		var vitality = stats.get_stat("vitality")
-		var total_defense = phys_def + (vitality * 0.3)
-		defense_label.text = "🛡️ Defense: %d" % int(total_defense)
-	
+
 	if GameLogger.ENABLED:
-		print("[CharacterDisplay] Stats updated - HP: %d/%d, ATK: %d, DEF: %d" % [
-			stats.current_hp, 
-			stats.get_stat("max_hp"),
-			int(stats.get_stat("physical_damage")),
-			int(stats.get_stat("physical_defense"))
+		print("[CharacterDisplay] Stats updated - HP: %d/%d" % [
+			stats.current_hp,
+			stats.get_stat("max_hp")
 		])
 
 func _on_hp_changed(current: float, maximum: float) -> void:
@@ -301,6 +338,44 @@ func _on_mana_changed(current: float, maximum: float) -> void:
 	"""Callback quando il Mana cambia (se hai una barra mana)"""
 	pass  # TODO: Aggiungi mana bar se necessario
 
+func _update_level_display() -> void:
+	"""Update level and EXP bar display"""
+	var gs = get_node_or_null("/root/GameState")
+	if not gs or not gs.character_stats:
+		return
+
+	var level = gs.character_stats.get_level()
+	var current_exp = gs.character_stats.get_current_exp()
+	var exp_to_next = gs.character_stats.get_exp_to_next_level()
+	var progress = gs.character_stats.get_exp_progress()
+
+	if level_label:
+		level_label.text = "Level %d" % level
+
+	if exp_bar:
+		exp_bar.value = progress * 100.0
+
+	if exp_label:
+		exp_label.text = "%d / %d EXP" % [current_exp, exp_to_next]
+
+	if GameLogger.ENABLED:
+		print("[CharacterDisplay] Level display updated: Level %d, EXP %d/%d (%.1f%%)" % [level, current_exp, exp_to_next, progress * 100.0])
+
+func _on_player_level_up(new_level: int) -> void:
+	"""Called when player levels up"""
+	_update_level_display()
+
+	if GameLogger.ENABLED:
+		print("[CharacterDisplay] 🎉 LEVEL UP! New level: %d" % new_level)
+
+func _on_player_exp_gained(amount: int, current_exp: int, exp_to_next: int) -> void:
+	"""Called when player gains EXP"""
+	_update_level_display()
+
+# OLD ENEMY ATTACK TIMER SYSTEM REMOVED
+# update_enemy_attack_timer() and hide_enemy_attack_timer() removed
+# Enemy attacks now shown per-enemy in EnemySlot.gd
+
 # ============================================
 # EQUIPMENT CALLBACKS
 # ============================================
@@ -316,8 +391,7 @@ func _on_item_equipped(slot: String, item_data: Dictionary) -> void:
 
 func _on_item_unequipped(slot: String, item_data: Dictionary) -> void:
 	"""Callback quando un item viene de-equipaggiato"""
-	if GameLogger.ENABLED:
-		print("[CharacterDisplay] 🔔 Item unequipped from %s: %s" % [slot, item_data.get("name", "Unknown")])
+	print("[CharacterDisplay] 🔔 Item unequipped from %s: %s" % [slot, item_data.get("name", "Unknown")])
 
 	# Force re-sync con gli slot reali per assicurarsi che GameState sia aggiornato
 	_refresh_all_equipment()
@@ -325,29 +399,101 @@ func _on_item_unequipped(slot: String, item_data: Dictionary) -> void:
 
 func _update_equipment_visual(slot: String, item_data: Dictionary) -> void:
 	"""Aggiorna la visual di un equipment slot"""
-	if GameLogger.ENABLED:
-		print("[CharacterDisplay] _update_equipment_visual called for slot: %s, item: %s" % [slot, item_data.get("name", "Unknown")])
+	print("[CharacterDisplay] 🔧 _update_equipment_visual called for slot: %s, item: %s, enhancement: %s" % [
+		slot,
+		item_data.get("name", "Unknown"),
+		item_data.get("enhancement_level", 0)
+	])
 
 	var slot_panel_name = _get_slot_panel_name(slot)
-	if slot_panel_name == "":
-		if GameLogger.ENABLED:
-			print("[CharacterDisplay] ⚠️ No panel name found for slot: %s" % slot)
-		return
+	print("[CharacterDisplay] → slot_panel_name: %s" % slot_panel_name)
 
-	if GameLogger.ENABLED:
-		print("[CharacterDisplay] Mapped slot '%s' to panel '%s'" % [slot, slot_panel_name])
+	if slot_panel_name == "":
+		print("[CharacterDisplay] ⚠️ No panel name found for slot: %s" % slot)
+		return
 
 	# Update equipment slot panel icon
 	if equipment_visuals.has(slot_panel_name):
 		var texture_rect: TextureRect = equipment_visuals[slot_panel_name]
 		var slot_panel = _get_slot_panel_by_name(slot_panel_name)
 
+		print("[CharacterDisplay] → equipment_visuals has slot_panel_name: true")
+		print("[CharacterDisplay] → texture_rect: %s" % texture_rect)
+		print("[CharacterDisplay] → slot_panel: %s" % slot_panel)
+
+		# CRITICAL: Clear any existing Item nodes and Labels first (prevents duplicates)
+		if slot_panel:
+			print("[CharacterDisplay] 🧹 Cleaning slot_panel children, count: %d" % slot_panel.get_child_count())
+			for child in slot_panel.get_children():
+				print("[CharacterDisplay] → Child: %s (type: %s)" % [child.name, child.get_class()])
+
+				# Keep ONLY the original ItemIcon TextureRect, remove everything else
+				if child.name == "ItemIcon" and child is TextureRect:
+					# This is the original TextureRect - keep it but clean its children
+					for subchild in child.get_children():
+						print("[CharacterDisplay] → → Subchild of ItemIcon: %s (type: %s)" % [subchild.name, subchild.get_class()])
+						subchild.queue_free()
+						print("[CharacterDisplay] ✅ Removed '%s' from inside ItemIcon" % subchild.name)
+				else:
+					# Remove any other child (Item nodes, Labels, extra TextureRects, etc.)
+					child.queue_free()
+					print("[CharacterDisplay] ✅ Removed %s '%s' from %s" % [child.get_class(), child.name, slot_panel_name])
+
 		# Carica la texture dell'item
 		if item_data.has("icon") and item_data.icon != "":
+			print("[CharacterDisplay] → Loading icon: %s" % item_data.icon)
 			var texture = load(item_data.icon)
 			if texture:
-				texture_rect.texture = texture
-				texture_rect.visible = true
+				print("[CharacterDisplay] → Texture loaded successfully")
+				print("[CharacterDisplay] → Checking enhancement: slot_panel=%s, has_enh=%s, enh_level=%s" % [
+					slot_panel != null,
+					item_data.has("enhancement_level"),
+					item_data.get("enhancement_level", 0)
+				])
+
+				# CRITICAL FIX: Create Item node with particle effects if enhancement level >= 7
+				var has_slot = slot_panel != null
+				var has_enh_key = item_data.has("enhancement_level")
+				var enh_level = item_data.get("enhancement_level", 0)
+				var meets_level = enh_level >= 7
+				print("[CharacterDisplay] → Particle condition check: has_slot=%s, has_enh_key=%s, enh_level=%s, meets_level=%s" % [has_slot, has_enh_key, enh_level, meets_level])
+
+				if slot_panel and item_data.has("enhancement_level") and item_data.enhancement_level >= 7:
+					print("[CharacterDisplay] ✨ ENTERING PARTICLE CREATION BLOCK")
+					var item_node = ITEM_SCENE.instantiate() as Item
+					if item_node:
+						# Setup item with data (this creates particles)
+						item_node.setup_item(item_data.get("id", "unknown"), item_data)
+						item_node.set_enhancement_level(item_data.enhancement_level)
+
+						# Position item to match TextureRect
+						item_node.position = texture_rect.position
+						item_node.custom_minimum_size = texture_rect.custom_minimum_size
+						item_node.size = texture_rect.size
+
+						# CRITICAL: Disable clip_contents to allow particles to be visible
+						item_node.clip_contents = false
+
+						# Make it non-interactive (display only)
+						item_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+						item_node.set_meta("is_draggable", false)
+
+						# CRITICAL: Disable native tooltip on Item node (we use CustomTooltip instead)
+						item_node.tooltip_text = ""
+
+						# Add to slot panel (on top of TextureRect)
+						slot_panel.add_child(item_node)
+
+						# CRITICAL: Hide the TextureRect since Item node will display the texture
+						texture_rect.visible = false
+
+						if GameLogger.ENABLED:
+							print("[CharacterDisplay] ✨ Created Item with +%d enhancement particles for %s" % [item_data.enhancement_level, slot])
+				else:
+					print("[CharacterDisplay] ❌ NOT creating particles - using TextureRect instead")
+					# No particles needed - just show the TextureRect
+					texture_rect.texture = texture
+					texture_rect.visible = true
 
 				# Add tooltip to slot panel
 				if slot_panel:
@@ -390,6 +536,21 @@ func _clear_equipment_visual(slot: String) -> void:
 		texture_rect.texture = null
 		texture_rect.visible = false
 
+	# CRITICAL: Also clear ALL children from the slot panel (labels, items, etc.)
+	var slot_panel = _get_slot_panel_by_name(slot_panel_name)
+	if slot_panel:
+		# CRITICAL FIX: Remove the item_data metadata that causes tooltip to show old item
+		if slot_panel.has_meta("item_data"):
+			slot_panel.remove_meta("item_data")
+			print("[CharacterDisplay] ✅ Removed item_data metadata from %s" % slot_panel_name)
+
+		for child in slot_panel.get_children():
+			# Don't remove the TextureRect itself (it's managed)
+			if child != equipment_visuals.get(slot_panel_name):
+				child.queue_free()
+				if GameLogger.ENABLED:
+					print("[CharacterDisplay] Removed child from %s: %s" % [slot_panel_name, child.name])
+
 	# Clear character equipment layer
 	if character_equipment_layers.has(slot):
 		var layer: TextureRect = character_equipment_layers[slot]
@@ -424,11 +585,16 @@ func _update_slot_tooltip(slot_panel: Panel, item_data: Dictionary) -> void:
 	if not texture_rect:
 		return
 
+	# CRITICAL: Disable native Godot tooltips (we use CustomTooltip instead)
+	slot_panel.tooltip_text = ""
+	texture_rect.tooltip_text = ""
+
 	# Store item_data on the slot for tooltip generation
 	slot_panel.set_meta("item_data", item_data)
 
 	# Enable mouse filter for hover detection
-	texture_rect.mouse_filter = Control.MOUSE_FILTER_STOP
+	# Use PASS instead of STOP to allow drop events to reach the item below
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_PASS
 
 	# Connect mouse signals if not already connected
 	if not texture_rect.mouse_entered.is_connected(_on_slot_mouse_entered):
@@ -458,36 +624,84 @@ func _get_rarity_color(rarity: String) -> Color:
 
 func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 	"""Controlla se possiamo droppare un item su uno slot"""
+	print("[CharacterDisplay] 🔧 _can_drop_data CALLED at position: %s" % at_position)
+	print("[CharacterDisplay] → Mouse global position: %s" % get_viewport().get_mouse_position())
+
 	if typeof(data) != TYPE_DICTIONARY:
+		print("[CharacterDisplay] ❌ Data is not Dictionary: %s" % typeof(data))
 		return false
 
 	if not data.has("type") or data.type != "inventory_item":
+		print("[CharacterDisplay] ❌ Not inventory_item type")
 		return false
 
 	if not data.has("item_id"):
+		print("[CharacterDisplay] ❌ No item_id in data")
 		return false
 
-	# Trova lo slot su cui stiamo droppando
-	var target_slot = _get_slot_at_position(at_position)
-	if target_slot == "":
-		return false
+	print("[CharacterDisplay] → item_id: %s" % data.item_id)
 
-	# Verifica che l'item sia equipaggiabile in questo slot
 	var gs = get_node_or_null("/root/GameState")
 	if gs == null or not ("data" in gs):
+		print("[CharacterDisplay] ❌ GameState not found")
 		return false
-	
+
 	var item_id = data.item_id
 	if not gs.data.items.has(item_id):
+		print("[CharacterDisplay] ❌ Item not in database: %s" % item_id)
 		return false
-	
+
 	var item_data = gs.data.items[item_id]
+	var item_type = item_data.get("type", "")
+	print("[CharacterDisplay] → item_type: %s" % item_type)
+
+	# CASO 1: Gem being dropped - check if slot has equipped weapon/armor
+	if item_type == "Gem":
+		print("[CharacterDisplay] 🔹 CASE 1: Gem detected, checking slot...")
+		var target_slot = _get_slot_at_position(at_position)
+		print("[CharacterDisplay] → target_slot found: '%s'" % target_slot)
+
+		if target_slot == "":
+			print("[CharacterDisplay] ❌ No slot at position %s" % at_position)
+			return false
+
+		# Check if there's an equipped item in this slot
+		var equipped_item = gs.get_equipped_item(target_slot)
+		print("[CharacterDisplay] → equipped_item in slot: %s" % equipped_item.get("name", "None"))
+
+		if equipped_item.is_empty():
+			print("[CharacterDisplay] ❌ Cannot drop gem - slot %s is empty" % target_slot)
+			return false
+
+		# Check if equipped item is a weapon (gems can only go on weapons for now)
+		var equipped_type = equipped_item.get("type", "")
+		print("[CharacterDisplay] → equipped_type: %s" % equipped_type)
+
+		if equipped_type == "Weapon":
+			print("[CharacterDisplay] ✅ Can drop gem %s on weapon in slot %s" % [item_id, target_slot])
+			return true
+
+		print("[CharacterDisplay] ❌ Cannot drop gem - %s is not a weapon (type: %s)" % [target_slot, equipped_type])
+		return false
+
+	# CASO 2: Regular equipment item - check if it can be equipped to this slot
+	print("[CharacterDisplay] 🔹 CASE 2: Regular equipment, checking slot...")
+	var target_slot = _get_slot_at_position(at_position)
+	print("[CharacterDisplay] → target_slot: '%s'" % target_slot)
+
+	if target_slot == "":
+		print("[CharacterDisplay] ❌ No slot at position %s" % at_position)
+		return false
+
 	var item_slot = item_data.get("slot", "none")
-	
+	print("[CharacterDisplay] → item_slot: %s" % item_slot)
+
 	# L'item può essere equipaggiato qui?
 	if item_slot == target_slot or item_slot == "any":
+		print("[CharacterDisplay] ✅ Can equip %s to %s" % [item_id, target_slot])
 		return true
-	
+
+	print("[CharacterDisplay] ❌ Cannot equip - slot mismatch")
 	return false
 
 func _drop_data(at_position: Vector2, data: Variant) -> void:
@@ -503,25 +717,106 @@ func _drop_data(at_position: Vector2, data: Variant) -> void:
 	if target_slot == "":
 		return
 
-	# Equipaggia l'item
 	var gs = get_node_or_null("/root/GameState")
-	if gs:
-			var success = gs.equip_item_to_slot(item_id, target_slot)
-			if success:
-				# Marca il drop come riuscito sull'item
-				if data.has("item") and is_instance_valid(data.item):
-					data.item.mark_drop_success()
-				
-				if GameLogger.ENABLED:
-					print("[CharacterDisplay] Successfully equipped %s to %s" % [item_id, target_slot])
-			else:
-				if GameLogger.ENABLED:
-					print("[CharacterDisplay] Failed to equip %s to %s" % [item_id, target_slot])
+	if not gs:
+		return
+
+	var item_data = gs.data.items.get(item_id, {})
+	var item_type = item_data.get("type", "")
+
+	# CASO 1: Gem being dropped on equipped weapon/armor
+	if item_type == "Gem":
+		var equipped_item = gs.get_equipped_item(target_slot)
+		if equipped_item.is_empty():
+			if GameLogger.ENABLED:
+				print("[CharacterDisplay] Cannot apply gem - slot is empty")
+			return
+
+		# Apply gem using GemCrafting system
+		var gem_crafting = get_node_or_null("/root/GemCrafting")
+		if not gem_crafting:
+			push_error("[CharacterDisplay] GemCrafting system not found!")
+			return
+
+		if GameLogger.ENABLED:
+			print("[CharacterDisplay] Applying gem %s to equipped item in slot %s" % [item_id, target_slot])
+
+		# Apply gem to equipped item
+		var result = gem_crafting.apply_gem_to_item(equipped_item, item_id)
+
+		# Update equipped item in GameState with new bonuses
+		gs.equipped_items[target_slot] = result.item
+
+		if GameLogger.ENABLED:
+			print("[CharacterDisplay] ✅ Gem applied! New bonuses: %d" % result.item.bonuses.size())
+
+		# Refresh visual to show updated item
+		_refresh_all_equipment()
+
+		# If gem was consumed, remove it from inventory
+		if result.gem_consumed:
+			# Remove from inventory count
+			if "inventory" in gs:
+				var inv = gs.get("inventory")
+				if inv.has(item_id):
+					inv[item_id] = max(0, inv[item_id] - 1)
+					if inv[item_id] == 0:
+						inv.erase(item_id)
+
+			# Remove from inventory_items (positions)
+			var gem_item = data.get("item", null)
+			if gem_item:
+				# Find InventoryTab to get gem position
+				var inv_tab = _find_inventory_tab()
+				if inv_tab and inv_tab.has_method("get_item_position"):
+					var gem_pos = inv_tab.get_item_position(gem_item)
+					if gem_pos != Vector2i(-1, -1):
+						# Remove from inventory_items array
+						for i in range(gs.inventory_items.size() - 1, -1, -1):
+							var inv_item = gs.inventory_items[i]
+							var inv_pos = inv_item.get("pos")
+							var pos_vec: Vector2i
+							if inv_pos is Dictionary:
+								pos_vec = Vector2i(inv_pos.get("x", 0), inv_pos.get("y", 0))
+							else:
+								pos_vec = inv_pos
+
+							if inv_item.get("item_id") == item_id and pos_vec == gem_pos:
+								gs.inventory_items.remove_at(i)
+								if GameLogger.ENABLED:
+									print("[CharacterDisplay] 🗑️ Removed gem from inventory_items")
+								break
+
+				# Remove gem visual node
+				if inv_tab and inv_tab.has_method("_remove_item_if_exists"):
+					inv_tab._remove_item_if_exists(gem_item)
+
+				gem_item.queue_free()
+
+			if GameLogger.ENABLED:
+				print("[CharacterDisplay] ✅ Gem consumed and removed from inventory")
+
+		return
+
+	# CASO 2: Regular equipment item being equipped
+	var success = gs.equip_item_to_slot(item_id, target_slot)
+	if success:
+		# Marca il drop come riuscito sull'item
+		if data.has("item") and is_instance_valid(data.item):
+			data.item.mark_drop_success()
+
+		if GameLogger.ENABLED:
+			print("[CharacterDisplay] Successfully equipped %s to %s" % [item_id, target_slot])
+	else:
+		if GameLogger.ENABLED:
+			print("[CharacterDisplay] Failed to equip %s to %s" % [item_id, target_slot])
 
 func _get_slot_at_position(pos: Vector2) -> String:
 	"""Trova quale slot si trova alla posizione specificata"""
+	print("[CharacterDisplay] 🔍 _get_slot_at_position called with pos: %s" % pos)
+
 	var local_pos = pos
-	
+
 	# Controlla ogni slot
 	var slots_to_check = [
 		{"panel": helmet_slot, "name": "helmet"},
@@ -531,16 +826,26 @@ func _get_slot_at_position(pos: Vector2) -> String:
 		{"panel": belt_slot, "name": "belt"},
 		{"panel": boots_slot, "name": "boots"}
 	]
-	
+
 	for slot_info in slots_to_check:
 		var panel = slot_info.panel
 		if panel == null:
+			print("[CharacterDisplay]   → %s: NULL panel" % slot_info.name)
 			continue
-		
+
 		var rect = Rect2(panel.global_position, panel.size)
+		print("[CharacterDisplay]   → %s: pos=%s size=%s contains=%s" % [
+			slot_info.name,
+			panel.global_position,
+			panel.size,
+			rect.has_point(pos)
+		])
+
 		if rect.has_point(pos):
+			print("[CharacterDisplay] ✅ Found slot: %s" % slot_info.name)
 			return slot_info.name
-	
+
+	print("[CharacterDisplay] ❌ No slot found at position %s" % pos)
 	return ""
 
 # ============================================
@@ -563,27 +868,13 @@ func _refresh_all_equipment() -> void:
 		print("[CharacterDisplay] Refreshing all equipment from GameState...")
 		print("[CharacterDisplay] Equipped items: %s" % gs.equipped_items)
 
-	# VERIFICA: Sincronizza GameState con gli EquipmentSlot reali nella Main Tab
-	var real_equipment = _get_real_equipment_from_main_tab()
-	if real_equipment != null:
-		if GameLogger.ENABLED:
-			print("[CharacterDisplay] Verifying equipment with Main Tab slots...")
-
-		# Pulisci equipment in GameState che non è realmente negli slot
-		for slot in gs.equipped_items.keys():
-			var in_gamestate = gs.equipped_items[slot]
-			var in_real_slot = real_equipment.get(slot, null)
-
-			if in_gamestate != null and in_real_slot == null:
-				# GameState dice che c'è equipment ma lo slot è vuoto
-				if GameLogger.ENABLED:
-					print("[CharacterDisplay] ⚠️ Clearing ghost equipment in slot '%s' (not in real slot)" % slot)
-				gs.equipped_items[slot] = null
-			elif in_real_slot != null and in_gamestate == null:
-				# C'è equipment nello slot ma GameState non lo sa
-				if GameLogger.ENABLED:
-					print("[CharacterDisplay] ✅ Adding missing equipment to GameState for slot '%s'" % slot)
-				gs.equipped_items[slot] = in_real_slot
+	# NOTE: We intentionally do NOT sync with real equipment slots here!
+	# During load, the visual slots are empty until we populate them from GameState.
+	# If we clear GameState based on empty slots, we lose the saved equipment.
+	# The sync should only happen during GAMEPLAY when user interacts with slots,
+	# not during initial load.
+	# 
+	# REMOVED: _get_real_equipment_from_main_tab() sync logic that was clearing equipped_items
 
 	# Aggiorna ogni slot
 	for slot in gs.equipped_items.keys():
@@ -695,138 +986,56 @@ func get_equipped_item_in_slot(slot: String) -> Dictionary:
 	return {}
 
 # ============================================
-# CUSTOM TOOLTIP (RichTextLabel with BBCode)
+# TOOLTIP SYSTEM (Using TooltipManager)
 # ============================================
 
 func _on_slot_mouse_entered(slot_panel: Panel) -> void:
-	"""Show custom tooltip when hovering over equipment slot"""
+	"""Show tooltip when hovering over equipment slot"""
+	print("[CharacterDisplay] 🖱️ MOUSE ENTERED: %s" % slot_panel.name)  # FORCED DEBUG
 	hovered_slot = slot_panel
 
 	# Get item data from slot metadata
 	if not slot_panel.has_meta("item_data"):
+		# Empty slot - show generic tooltip
+		print("[CharacterDisplay] → Empty slot, showing generic tooltip")  # FORCED DEBUG
+		var slot_name = slot_panel.name.replace("Slot", "")
+		TooltipManager.show_text_tooltip(
+			"[b]%s Slot[/b]" % slot_name,
+			"[color=#888888]Empty - Drag an item here to equip[/color]",
+			""
+		)
 		return
 
 	var item_data = slot_panel.get_meta("item_data")
-	_show_custom_tooltip(item_data)
+	print("[CharacterDisplay] → Has item_data: %s" % item_data.get("name", "Unknown"))  # FORCED DEBUG
+
+	# Show item tooltip if slot has equipment
+	if not item_data.is_empty():
+		print("[CharacterDisplay] → Showing equipment tooltip")  # FORCED DEBUG
+		TooltipManager.show_equipment_tooltip(item_data)
+	else:
+		print("[CharacterDisplay] → item_data is empty!")  # FORCED DEBUG
 
 func _on_slot_mouse_exited(slot_panel: Panel) -> void:
-	"""Hide custom tooltip when leaving equipment slot"""
+	"""Hide tooltip when leaving equipment slot"""
+	print("[CharacterDisplay] 🖱️ MOUSE EXITED: %s" % slot_panel.name)  # FORCED DEBUG
 	if hovered_slot == slot_panel:
 		hovered_slot = null
-		_hide_custom_tooltip()
+		TooltipManager.hide_item_tooltip()
 
-func _show_custom_tooltip(item_data: Dictionary) -> void:
-	"""Create and show custom tooltip with RichTextLabel (same as CraftableItem)"""
-	_hide_custom_tooltip()  # Hide any existing tooltip
+# ============================================
+# UTILITY FUNCTIONS
+# ============================================
 
-	# Build tooltip text with BBCode
-	var tooltip_lines: Array[String] = []
+func _find_inventory_tab():
+	"""Find the InventoryTab node by navigating up to Main and then down to Inventory"""
+	var main = get_tree().root.get_node_or_null("Main")
+	if main == null:
+		return null
 
-	# 1. NOME (bold)
-	if item_data.has("name"):
-		tooltip_lines.append("[b]%s[/b]" % item_data["name"])
+	var tab_container = main.get_node_or_null("Margin/VBox/Tabs")
+	if tab_container == null:
+		return null
 
-	# 2. TIPO
-	if item_data.has("type"):
-		tooltip_lines.append("Type: %s" % item_data["type"])
-
-	# 3. STATS
-	if item_data.has("stats"):
-		var stats = item_data.stats
-
-		if stats.has("physical_damage") and stats.physical_damage > 0:
-			tooltip_lines.append("Attack: +%d" % stats.physical_damage)
-
-		if stats.has("physical_defense") and stats.physical_defense > 0:
-			tooltip_lines.append("Defense: +%d" % stats.physical_defense)
-
-		if stats.has("max_hp") and stats.max_hp > 0:
-			tooltip_lines.append("HP: +%d" % stats.max_hp)
-
-		if stats.has("vitality") and stats.vitality > 0:
-			tooltip_lines.append("Vitality: +%d" % stats.vitality)
-
-		if stats.has("strength") and stats.strength > 0:
-			tooltip_lines.append("Strength: +%d" % stats.strength)
-
-		if stats.has("block_chance") and stats.block_chance > 0:
-			tooltip_lines.append("Block: +%d%%" % stats.block_chance)
-
-	# 4. BONUSES (con colori!)
-	if item_data.has("bonuses") and item_data.bonuses.size() > 0:
-		tooltip_lines.append("")
-		tooltip_lines.append("[b]--- Bonuses ---[/b]")
-
-		const ItemBonus = preload("res://scripts/crafting/ItemBonus.gd")
-
-		for bonus_dict in item_data.bonuses:
-			var bonus = ItemBonus.new()
-			bonus.from_dict(bonus_dict)
-
-			var bonus_color = bonus.get_color()
-			var bonus_text = bonus.get_display_text()
-			var tier_text = bonus.get_tier_name()
-
-			tooltip_lines.append("[color=%s]%s [%s][/color]" %
-				[bonus_color.to_html(), bonus_text, tier_text])
-
-	# 5. DESCRIZIONE (italic)
-	if item_data.has("description"):
-		tooltip_lines.append("")
-		tooltip_lines.append("[i]%s[/i]" % item_data.description)
-
-	var tooltip_text_full = "\n".join(tooltip_lines)
-
-	# Create tooltip panel
-	custom_tooltip = PanelContainer.new()
-	custom_tooltip.z_index = 1000
-
-	# Style
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.1, 0.1, 0.15, 0.95)
-	style.border_width_left = 2
-	style.border_width_right = 2
-	style.border_width_top = 2
-	style.border_width_bottom = 2
-	style.border_color = Color(0.5, 0.5, 0.6, 1.0)
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 4
-	style.corner_radius_bottom_left = 4
-	style.corner_radius_bottom_right = 4
-	custom_tooltip.add_theme_stylebox_override("panel", style)
-
-	# Margin
-	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_top", 6)
-	margin.add_theme_constant_override("margin_bottom", 6)
-	custom_tooltip.add_child(margin)
-
-	# RichTextLabel for BBCode support
-	var rich_label = RichTextLabel.new()
-	rich_label.bbcode_enabled = true
-	rich_label.fit_content = true
-	rich_label.scroll_active = false
-	rich_label.text = tooltip_text_full
-	rich_label.custom_minimum_size = Vector2(250, 0)
-	margin.add_child(rich_label)
-
-	# Add to scene tree
-	get_tree().root.add_child(custom_tooltip)
-
-	# Position near mouse
-	await get_tree().process_frame
-
-	# Check if tooltip still exists after await
-	if not custom_tooltip or not is_instance_valid(custom_tooltip):
-		return
-
-	var mouse_pos = get_viewport().get_mouse_position()
-	custom_tooltip.global_position = mouse_pos + Vector2(15, -10)
-
-func _hide_custom_tooltip() -> void:
-	"""Remove custom tooltip"""
-	if custom_tooltip:
-		custom_tooltip.queue_free()
-		custom_tooltip = null
+	var inventory_tab = tab_container.get_node_or_null("Inventory")
+	return inventory_tab

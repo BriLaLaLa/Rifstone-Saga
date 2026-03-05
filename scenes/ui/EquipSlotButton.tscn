@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://qx02u7q2ny42"]
+
+[ext_resource type="Script" path="res://scripts/ui/EquipSlotButton.gd" id="1"]
+
+[node name="EquipSlotButton" type="Button"]
+custom_minimum_size = Vector2(60, 30)
+text = "Slot 1"
+script = ExtResource("1")

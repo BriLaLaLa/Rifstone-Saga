@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3 uid="uid://cactionbutton"]
+
+[ext_resource type="Script" path="res://scripts/ui/ActionButton.gd" id="1"]
+
+[node name="ActionButton" type="Button"]
+custom_minimum_size = Vector2(0, 40)
+text = "Action Name"
+script = ExtResource("1")
+
+[node name="LockIcon" type="Label" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_right = 32.0
+grow_vertical = 2
+text = "🔒"
+vertical_alignment = 1

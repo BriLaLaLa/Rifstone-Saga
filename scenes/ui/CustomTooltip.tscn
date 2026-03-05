@@ -1,0 +1,42 @@
+[gd_scene load_steps=2 format=3 uid="uid://djv3m4qxk7y8p"]
+
+[ext_resource type="Script" path="res://scripts/ui/CustomTooltip.gd" id="1_tooltip_script"]
+
+[node name="CustomTooltip" type="PanelContainer"]
+custom_minimum_size = Vector2(250, 0)
+offset_right = 250.0
+offset_bottom = 100.0
+mouse_filter = 2
+script = ExtResource("1_tooltip_script")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="Content" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TitleLabel" type="RichTextLabel" parent="Margin/Content"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="BodyLabel" type="RichTextLabel" parent="Margin/Content"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="FooterLabel" type="RichTextLabel" parent="Margin/Content"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false

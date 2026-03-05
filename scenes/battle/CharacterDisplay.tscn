@@ -1,14 +1,19 @@
-[gd_scene load_steps=3 format=3 uid="uid://hqnxf26wkwpv"]
+[gd_scene load_steps=5 format=3 uid="uid://hqnxf26wkwpv"]
 
 [ext_resource type="Script" uid="uid://dqsvk7btt65e0" path="res://scripts/battle/CharacterDisplay.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://dfq1oqkgjdkny" path="res://scripts/ui/inventoryPg.png" id="2"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_enemy_bar_bg"]
+bg_color = Color(0.2, 0.2, 0.2, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_enemy_bar_fill"]
+bg_color = Color(1, 0.8, 0, 1)
+
 [node name="CharacterDisplay" type="Control"]
-custom_minimum_size = Vector2(400, 768)
+custom_minimum_size = Vector2(350, 450)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 400.0
-offset_bottom = 768.0
+size_flags_vertical = 0
 script = ExtResource("1")
 
 [node name="Background" type="Panel" parent="."]
@@ -21,15 +26,13 @@ grow_vertical = 2
 
 [node name="CharacterBackground" type="TextureRect" parent="."]
 layout_mode = 1
-anchors_preset = 8
+anchors_preset = 5
 anchor_left = 0.5
-anchor_top = 0.5
 anchor_right = 0.5
-anchor_bottom = 0.5
 offset_left = -128.0
-offset_top = -180.0
+offset_top = 10.0
 offset_right = 128.0
-offset_bottom = 332.0
+offset_bottom = 394.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("2")
@@ -38,15 +41,13 @@ stretch_mode = 5
 
 [node name="EquipmentSlots" type="Control" parent="."]
 layout_mode = 1
-anchors_preset = 8
+anchors_preset = 5
 anchor_left = 0.5
-anchor_top = 0.5
 anchor_right = 0.5
-anchor_bottom = 0.5
 offset_left = -128.0
-offset_top = -180.0
+offset_top = 10.0
 offset_right = 128.0
-offset_bottom = 332.0
+offset_bottom = 394.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -54,50 +55,118 @@ mouse_filter = 2
 [node name="HelmetSlot" type="Panel" parent="EquipmentSlots"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 0
-offset_left = 96.0
-offset_top = 35.0
-offset_right = 160.0
-offset_bottom = 99.0
+offset_left = 63.0
+offset_top = 18.0
+offset_right = 127.0
+offset_bottom = 82.0
+
+[node name="ItemIcon" type="TextureRect" parent="EquipmentSlots/HelmetSlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -16.0
+offset_right = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+expand_mode = 1
+stretch_mode = 5
 
 [node name="WeaponSlot" type="Panel" parent="EquipmentSlots"]
 custom_minimum_size = Vector2(64, 128)
 layout_mode = 0
-offset_left = 32.0
-offset_top = 50.0
-offset_right = 96.0
-offset_bottom = 178.0
+offset_left = 6.0
+offset_top = 45.0
+offset_right = 70.0
+offset_bottom = 173.0
+
+[node name="ItemIcon" type="TextureRect" parent="EquipmentSlots/WeaponSlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+expand_mode = 1
+stretch_mode = 5
 
 [node name="ChestSlot" type="Panel" parent="EquipmentSlots"]
 custom_minimum_size = Vector2(64, 128)
 layout_mode = 0
-offset_left = 96.0
-offset_top = 85.0
-offset_right = 160.0
-offset_bottom = 213.0
+offset_left = 65.0
+offset_top = 79.0
+offset_right = 129.0
+offset_bottom = 207.0
+
+[node name="ItemIcon" type="TextureRect" parent="EquipmentSlots/ChestSlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+expand_mode = 1
+stretch_mode = 5
 
 [node name="ShieldSlot" type="Panel" parent="EquipmentSlots"]
 custom_minimum_size = Vector2(64, 128)
 layout_mode = 0
-offset_left = 160.0
-offset_top = 80.0
-offset_right = 224.0
-offset_bottom = 208.0
+offset_left = 129.0
+offset_top = 77.0
+offset_right = 193.0
+offset_bottom = 205.0
+
+[node name="ItemIcon" type="TextureRect" parent="EquipmentSlots/ShieldSlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+expand_mode = 1
+stretch_mode = 5
 
 [node name="BeltSlot" type="Panel" parent="EquipmentSlots"]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 0
-offset_left = 64.0
-offset_top = 198.0
-offset_right = 192.0
-offset_bottom = 262.0
+offset_left = 34.0
+offset_top = 181.0
+offset_right = 162.0
+offset_bottom = 245.0
+
+[node name="ItemIcon" type="TextureRect" parent="EquipmentSlots/BeltSlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+expand_mode = 1
+stretch_mode = 5
 
 [node name="BootsSlot" type="Panel" parent="EquipmentSlots"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 0
-offset_left = 96.0
-offset_top = 260.0
-offset_right = 160.0
-offset_bottom = 324.0
+offset_left = 63.0
+offset_top = 242.0
+offset_right = 127.0
+offset_bottom = 306.0
+
+[node name="ItemIcon" type="TextureRect" parent="EquipmentSlots/BootsSlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+expand_mode = 1
+stretch_mode = 5
 
 [node name="StatsPanel" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -106,16 +175,42 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -150.0
-offset_top = -180.0
-offset_right = 150.0
-offset_bottom = -20.0
+offset_left = -165.0
+offset_top = -110.0
+offset_right = 165.0
+offset_bottom = -5.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_constants/separation = 8
+theme_override_constants/separation = 3
+
+[node name="LevelPanel" type="PanelContainer" parent="StatsPanel"]
+custom_minimum_size = Vector2(0, 35)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="StatsPanel/LevelPanel"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="LevelLabel" type="Label" parent="StatsPanel/LevelPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.843, 0, 1)
+theme_override_font_sizes/font_size = 14
+text = "Level 1"
+horizontal_alignment = 1
+
+[node name="ExpBar" type="ProgressBar" parent="StatsPanel/LevelPanel/VBox"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+show_percentage = false
+
+[node name="ExpLabel" type="Label" parent="StatsPanel/LevelPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "0 / 100 EXP"
+horizontal_alignment = 1
 
 [node name="HPBar" type="ProgressBar" parent="StatsPanel"]
-custom_minimum_size = Vector2(0, 32)
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 value = 100.0
 show_percentage = false
@@ -137,21 +232,33 @@ text = "100 / 100"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="LevelLabel" type="Label" parent="StatsPanel"]
+[node name="EnemyAttackBar" type="ProgressBar" parent="StatsPanel"]
+visible = false
+custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
-text = "Level: 1"
-horizontal_alignment = 1
+theme_override_styles/background = SubResource("StyleBoxFlat_enemy_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_enemy_bar_fill")
+max_value = 1.0
+value = 0.5
+show_percentage = false
 
-[node name="AttackLabel" type="Label" parent="StatsPanel"]
-layout_mode = 2
-text = "⚔️ Attack: 0"
+[node name="EnemyAttackLabel" type="Label" parent="StatsPanel/EnemyAttackBar"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -80.0
+offset_top = -7.0
+offset_right = 80.0
+offset_bottom = 7.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.8, 0, 1)
+theme_override_font_sizes/font_size = 10
+text = "⚠️ Enemy Attack"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="DefenseLabel" type="Label" parent="StatsPanel"]
-layout_mode = 2
-text = "🛡️ Defense: 0"
-horizontal_alignment = 1
-
-[node name="Spacer" type="Control" parent="StatsPanel"]
-custom_minimum_size = Vector2(0, 10)
-layout_mode = 2
+[connection signal="visibility_changed" from="." to="." method="_on_visibility_changed"]

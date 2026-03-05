@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://bmap3area2h8dkxz"]
+
+[ext_resource type="Script" path="res://scripts/battle/MapClickableArea.gd" id="1_clickable"]
+
+[node name="MapClickableArea" type="Control"]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_clickable")

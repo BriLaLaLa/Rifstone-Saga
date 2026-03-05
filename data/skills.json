@@ -70,5 +70,132 @@
 	"icon": "",
 	"actions": ["practice_slashes", "kata_advanced"],
 	"bonuses": []
+  },
+  {
+	"id": "warrior_basic_attack",
+	"name": "Attacco Base",
+	"category": "combat",
+	"level": 1,
+	"xp": 0,
+	"grade": "N",
+	"xp_curve": "combat_std",
+	"icon": "res://Icons/Skills/Attacco_Base.png",
+	"actions": [],
+	"bonuses": [],
+	"skill_data": {
+	  "skill_id": "basic_attack",
+	  "type": "warrior_skill",
+	  "description": "Attacco affidabile. Usato quando tutte le skill sono in cooldown.",
+	  "cooldown": 0,
+	  "mana_cost": 0,
+	  "damage": "15-20"
+	}
+  },
+  {
+	"id": "warrior_hiss",
+	"name": "Sibilare",
+	"category": "combat",
+	"level": 1,
+	"xp": 0,
+	"grade": "N",
+	"xp_curve": "combat_std",
+	"icon": "res://Icons/Skills/Sibilare.png",
+	"actions": [],
+	"bonuses": [],
+	"skill_data": {
+	  "skill_id": "hiss",
+	  "type": "warrior_skill",
+	  "description": "Danno moderato + stordimento breve a singolo nemico.",
+	  "cooldown": 8,
+	  "mana_cost": 15,
+	  "damage": "25-35",
+	  "effect": "Stordisce 1.5s"
+	}
+  },
+  {
+	"id": "warrior_sword_vortex",
+	"name": "Vortice della Spada",
+	"category": "combat",
+	"level": 1,
+	"xp": 0,
+	"grade": "A",
+	"xp_curve": "combat_std",
+	"icon": "res://Icons/Skills/Vortice_della_spada.png",
+	"actions": [],
+	"bonuses": [],
+	"skill_data": {
+	  "skill_id": "sword_vortex",
+	  "type": "warrior_skill",
+	  "description": "Attacco rotante che colpisce tutti i nemici.",
+	  "cooldown": 12,
+	  "mana_cost": 25,
+	  "damage": "20-30",
+	  "effect": "AOE - Tutti i nemici"
+	}
+  },
+  {
+	"id": "warrior_battle_cry",
+	"name": "Grido di Battaglia",
+	"category": "combat",
+	"level": 1,
+	"xp": 0,
+	"grade": "A",
+	"xp_curve": "combat_std",
+	"icon": "res://Icons/Skills/Grido_di_battaglia.png",
+	"actions": [],
+	"bonuses": [],
+	"skill_data": {
+	  "skill_id": "battle_cry",
+	  "type": "warrior_skill",
+	  "description": "Aumenta attacco ma riduce difesa.",
+	  "cooldown": 20,
+	  "mana_cost": 20,
+	  "damage": "0",
+	  "effect": "+40% ATK, -30% DEF (25s)",
+	  "buff_duration": 25
+	}
+  },
+  {
+	"id": "warrior_guard",
+	"name": "Guardia",
+	"category": "combat",
+	"level": 1,
+	"xp": 0,
+	"grade": "A",
+	"xp_curve": "combat_std",
+	"icon": "res://Icons/Skills/Guardia.png",
+	"actions": [],
+	"bonuses": [],
+	"skill_data": {
+	  "skill_id": "guard",
+	  "type": "warrior_skill",
+	  "description": "Riduce il danno in arrivo.",
+	  "cooldown": 20,
+	  "mana_cost": 20,
+	  "damage": "0",
+	  "effect": "-50% danno ricevuto (30s)",
+	  "buff_duration": 30
+	}
+  },
+  {
+	"id": "warrior_three_way_slash",
+	"name": "Taglio a Tre Vie",
+	"category": "combat",
+	"level": 1,
+	"xp": 0,
+	"grade": "M",
+	"xp_curve": "combat_std",
+	"icon": "res://Icons/Skills/Taglio_a_tre_vie.png",
+	"actions": [],
+	"bonuses": [],
+	"skill_data": {
+	  "skill_id": "three_way_slash",
+	  "type": "warrior_skill",
+	  "description": "Danno moderato che ignora la difesa fisica.",
+	  "cooldown": 10,
+	  "mana_cost": 22,
+	  "damage": "30-40",
+	  "effect": "Colpisce 3 nemici, ignora difesa"
+	}
   }
 ]

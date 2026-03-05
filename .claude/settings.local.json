@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File run_test_bag.ps1)",
+      "Bash(powershell.exe:*)",
+      "Bash(\"C:\\\\Users\\\\Davide\\\\Documents\\\\GODOT\\\\Godot_v4.5-stable_win64.exe\" --path . --headless --script addons/gut/gut_cmdln.gd -gtest=tests/test_bag_removal_no_space.gd)",
+      "Bash(taskkill:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(dir /s /b *.tscn)",
+      "Bash(findstr:*)",
+      "Bash(ls:*)"
+    ]
+  }
+}

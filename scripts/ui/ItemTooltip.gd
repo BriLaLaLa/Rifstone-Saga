@@ -1,7 +1,7 @@
 extends Control
 class_name ItemTooltip
 
-const LOG := true
+# const LOG removed - using GameLogger
 
 @onready var background: NinePatchRect = $Background
 @onready var content_container: VBoxContainer = $Background/Margin/Content
@@ -56,7 +56,7 @@ func show_tooltip(item_data: Dictionary, mouse_position: Vector2) -> void:
 	visible = true
 	is_visible = true
 	
-	if LOG:
+	if GameLogger.ENABLED:
 		print("[ItemTooltip] Showing tooltip for: %s" % item_data.get("name", "Unknown"))
 
 func hide_tooltip() -> void:
@@ -64,7 +64,7 @@ func hide_tooltip() -> void:
 	is_visible = false
 	current_item_data.clear()
 	
-	if LOG:
+	if GameLogger.ENABLED:
 		print("[ItemTooltip] Hiding tooltip")
 
 func _populate_tooltip() -> void:
@@ -149,9 +149,9 @@ func _add_stat_line(stat_name: String, value, color: Color, suffix: String = "")
 
 func _get_player_level() -> int:
 	# Ottieni il livello del giocatore dal GameState
-	if Engine.has_singleton("GameState"):
-		var gs = Engine.get_singleton("GameState")
-		if gs and gs.has("player_level"):
+	if has_node("/root/GameState"):
+		var gs = get_node("/root/GameState")
+		if gs and "player_level" in gs:
 			return int(gs.get("player_level"))
 	return 1  # Default level
 

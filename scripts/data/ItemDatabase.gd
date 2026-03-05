@@ -28,6 +28,19 @@ func load_items():
 func get_random_item() -> Dictionary:
 	if items.is_empty():
 		return {}
-	var keys = items.keys()
-	var rand_id = keys[randi() % keys.size()]
+
+	# CRITICAL: Escludi solo la starter bag dal pool random
+	# La starter bag è unica e locked nello slot 0
+	var excluded_items = ["starter_bag"]
+
+	var valid_keys = []
+	for key in items.keys():
+		if not excluded_items.has(key):
+			valid_keys.append(key)
+
+	if valid_keys.is_empty():
+		print("[ItemDatabase] WARNING: No valid items to drop (all excluded)")
+		return {}
+
+	var rand_id = valid_keys[randi() % valid_keys.size()]
 	return { "id": rand_id, "data": items[rand_id] }

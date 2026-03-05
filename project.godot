@@ -11,14 +11,26 @@ config_version=5
 [application]
 
 config/name="IdleAFKStarter"
-run/main_scene="res://scenes/Main.tscn"
+run/main_scene="res://scenes/MainMenu.tscn"
 config/features=PackedStringArray("4.5")
 
 [autoload]
 
+GameLogger="*res://scripts/GameLogger.gd"
 GameState="*res://scripts/GameState.gd"
+BonusDatabase="*res://scripts/crafting/BonusDatabase.gd"
+GemCrafting="*res://scripts/crafting/GemCrafting.gd"
+ItemDropGenerator="*res://scripts/battle/ItemDropGenerator.gd"
 IData="*res://scripts/data/ItemDatabase.gd"
 TooltipManager="*res://scripts/ui/TooltipManager.gd"
+EnemyDatabase="*res://scripts/battle/EnemyDatabase.gd"
+GatheringDatabase="*res://scripts/gathering/GatheringDatabase.gd"
+EnhancementSystem="*res://scripts/systems/EnhancementSystem.gd"
+QuestSystem="*res://scripts/systems/QuestSystem.gd"
+LootOrbManager="*res://scripts/battle/LootOrbManager.gd"
+XpOrbManager="*res://scripts/battle/XpOrbManager.gd"
+GoldOrbManager="*res://scripts/battle/GoldOrbManager.gd"
+LootNotificationManager="*res://scripts/ui/LootNotificationManager.gd"
 
 [gui]
 

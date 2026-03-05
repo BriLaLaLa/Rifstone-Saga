@@ -1,0 +1,130 @@
+{
+  "tools": {
+	"basic_pickaxe": {
+	  "id": "basic_pickaxe",
+	  "name": "Basic Pickaxe",
+	  "type": "mining",
+	  "level": 1,
+	  "icon": "res://Item_Texture/Jobs/Mining/Basic_Pickaxe.png",
+	  "rarity": "common",
+	  "stats": {
+		"mining_power": 10,
+		"yield_bonus": 0,
+		"speed_bonus": 0,
+		"critical_chance": 0.05
+	  }
+	},
+	"iron_pickaxe": {
+	  "id": "iron_pickaxe",
+	  "name": "Iron Pickaxe",
+	  "type": "mining",
+	  "level": 5,
+	  "icon": "res://Item_Texture/Jobs/Mining/Iron_Pickaxe.png",
+	  "rarity": "uncommon",
+	  "stats": {
+		"mining_power": 25,
+		"yield_bonus": 1,
+		"speed_bonus": 0.1,
+		"critical_chance": 0.10
+	  }
+	},
+	"steel_pickaxe": {
+	  "id": "steel_pickaxe",
+	  "name": "Steel Pickaxe",
+	  "type": "mining",
+	  "level": 10,
+	  "icon": "res://Item_Texture/Jobs/Mining/Steel_Pickaxe.png",
+	  "rarity": "rare",
+	  "stats": {
+		"mining_power": 50,
+		"yield_bonus": 2,
+		"speed_bonus": 0.2,
+		"critical_chance": 0.15
+	  }
+	},
+	"basic_knife": {
+	  "id": "basic_knife",
+	  "name": "Basic Gathering Knife",
+	  "type": "gathering",
+	  "level": 1,
+	  "icon": "res://Item_Texture/Jobs/Gathering/Basic_Knife.png",
+	  "rarity": "common",
+	  "stats": {
+		"gathering_power": 10,
+		"yield_bonus": 0,
+		"speed_bonus": 0,
+		"critical_chance": 0.05
+	  }
+	},
+	"sharp_knife": {
+	  "id": "sharp_knife",
+	  "name": "Sharp Gathering Knife",
+	  "type": "gathering",
+	  "level": 5,
+	  "icon": "res://Item_Texture/Jobs/Gathering/Sharp_Knife.png",
+	  "rarity": "uncommon",
+	  "stats": {
+		"gathering_power": 25,
+		"yield_bonus": 1,
+		"speed_bonus": 0.1,
+		"critical_chance": 0.10
+	  }
+	},
+	"master_knife": {
+	  "id": "master_knife",
+	  "name": "Master Gathering Knife",
+	  "type": "gathering",
+	  "level": 10,
+	  "icon": "res://Item_Texture/Jobs/Gathering/Master_Knife.png",
+	  "rarity": "rare",
+	  "stats": {
+		"gathering_power": 50,
+		"yield_bonus": 2,
+		"speed_bonus": 0.2,
+		"critical_chance": 0.15
+	  }
+	},
+	"basic_rod": {
+	  "id": "basic_rod",
+	  "name": "Basic Fishing Rod",
+	  "type": "fishing",
+	  "level": 1,
+	  "icon": "res://Item_Texture/Jobs/Fishing/Basic_Rod.png",
+	  "rarity": "common",
+	  "stats": {
+		"fishing_power": 10,
+		"yield_bonus": 0,
+		"speed_bonus": 0,
+		"critical_chance": 0.05
+	  }
+	},
+	"wooden_rod": {
+	  "id": "wooden_rod",
+	  "name": "Wooden Fishing Rod",
+	  "type": "fishing",
+	  "level": 5,
+	  "icon": "res://Item_Texture/Jobs/Fishing/Wooden_Rod.png",
+	  "rarity": "uncommon",
+	  "stats": {
+		"fishing_power": 25,
+		"yield_bonus": 1,
+		"speed_bonus": 0.1,
+		"critical_chance": 0.10
+	  }
+	},
+	"masterwork_rod": {
+	  "id": "masterwork_rod",
+	  "name": "Masterwork Fishing Rod",
+	  "type": "fishing",
+	  "level": 10,
+	  "icon": "res://Item_Texture/Jobs/Fishing/Masterwork_Rod.png",
+	  "rarity": "rare",
+	  "stats": {
+		"fishing_power": 50,
+		"yield_bonus": 2,
+		"speed_bonus": 0.2,
+		"critical_chance": 0.15
+	  }
+	}
+  }
+}

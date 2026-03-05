@@ -7,7 +7,17 @@ class_name EnemySlot
 # const LOG removed - using GameLogger  # Cambiato a true per debug
 
 # ==================== EXPORTED VARIABLES (Inspector) ====================
+@export_group("Slot Size & Layout")
+@export var slot_width: int = 180  # Width of entire slot
+@export var slot_height: int = 220  # Height of entire slot
+@export var sprite_size: int = 150  # Size of enemy sprite (square)
+@export var sprite_margin_top: int = 35  # Space above sprite for name
+@export var sprite_margin_sides: int = 15  # Space on left/right of sprite
+@export var hp_bar_height: int = 20  # Height of HP bar
+@export var hp_bar_margin_bottom: int = 10  # Space below HP bar
+
 @export_group("Visual Style - Background")
+@export var show_background: bool = false  # Set to true to show background panel
 @export var normal_bg_color: Color = Color(0.2, 0.2, 0.3, 0.95)  # Grigio scuro
 @export var normal_border_color: Color = Color(0.6, 0.6, 0.7)
 @export var boss_bg_color: Color = Color(0.5, 0.1, 0.1, 0.95)  # Rosso scuro
@@ -48,6 +58,7 @@ class_name EnemySlot
 # Enemy data
 var enemy_id: String = ""
 var enemy_name: String = ""
+var enemy_level: int = 1  # Enemy level for XP calculation
 var current_hp: float = 0.0
 var max_hp: float = 100.0
 var is_boss: bool = false
@@ -55,8 +66,11 @@ var is_alive: bool = false
 
 # Attack data
 var attack_damage: float = 10.0
-var attack_speed: float = 2.0  # Attacks every 2 seconds
+var attack_speed: float = 3.0  # Random 2.5-3.5 seconds (set on spawn)
 var attack_timer: float = 0.0
+var attack_duration: float = 3.0  # Current attack interval
+const ATTACK_MIN: float = 2.5
+const ATTACK_MAX: float = 3.5
 
 # Visual references
 @onready var background: Panel = $Background
@@ -65,6 +79,7 @@ var attack_timer: float = 0.0
 @onready var hp_label: Label = $HPBar/HPLabel
 @onready var name_label: Label = $NameLabel
 @onready var damage_label: Label = $DamageLabel
+@onready var attack_bar: ProgressBar = $AttackBar
 
 # State
 var is_targeted: bool = false
@@ -79,7 +94,38 @@ signal enemy_clicked(slot: EnemySlot)
 signal enemy_died(slot: EnemySlot)
 signal metin_spawn_request(spawn_count: int, spawn_types: Array)
 
+func _apply_layout_settings() -> void:
+	"""Apply exported layout settings to slot size and element positions"""
+	# Apply slot size
+	custom_minimum_size = Vector2(slot_width, slot_height)
+	size = custom_minimum_size
+
+	# Apply background visibility
+	if background:
+		background.visible = show_background
+		if show_background:
+			background.size = custom_minimum_size
+
+	# Apply sprite size and position (centered horizontally)
+	if enemy_sprite:
+		enemy_sprite.position = Vector2(sprite_margin_sides, sprite_margin_top)
+		enemy_sprite.size = Vector2(sprite_size, sprite_size)
+
+	# Apply name label position (full width, above sprite)
+	if name_label:
+		name_label.position = Vector2(0, 5)
+		name_label.size = Vector2(slot_width, 25)
+
+	# Apply HP bar position (below sprite, centered)
+	if hp_bar:
+		var hp_bar_y = sprite_margin_top + sprite_size + 5
+		hp_bar.position = Vector2(sprite_margin_sides, hp_bar_y)
+		hp_bar.size = Vector2(sprite_size, hp_bar_height)
+
 func _ready() -> void:
+	# Apply exported layout settings
+	_apply_layout_settings()
+
 	# Setup interattività
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	gui_input.connect(_on_gui_input)
@@ -114,13 +160,18 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	"""Process enemy attacks on player"""
 	if not is_alive:
+		if attack_bar:
+			attack_bar.visible = false
 		return
 
-	# Attack timer
+	# Update attack timer
 	attack_timer += delta
-	if attack_timer >= attack_speed:
-		attack_timer = 0.0
+	_update_attack_bar()
+
+	# Trigger attack when timer reaches duration
+	if attack_timer >= attack_duration:
 		_attack_player()
+		_reset_attack_timer()
 
 func _attack_player() -> void:
 	"""Enemy attacks the player"""
@@ -133,6 +184,34 @@ func _attack_player() -> void:
 
 	if GameLogger.ENABLED:
 		print("[EnemySlot] %s attacked player for %.1f damage" % [enemy_name, attack_damage])
+
+func _update_attack_bar() -> void:
+	"""Update the visual attack timer bar"""
+	if not attack_bar or not is_alive:
+		return
+
+	# Show bar and update value
+	attack_bar.visible = true
+	attack_bar.max_value = attack_duration
+	attack_bar.value = attack_timer
+
+	# Color changes based on progress (yellow → orange → red)
+	var percent = attack_timer / attack_duration
+	if percent < 0.5:
+		attack_bar.modulate = Color(1.0, 0.8, 0.0)  # Yellow
+	elif percent < 0.8:
+		attack_bar.modulate = Color(1.0, 0.5, 0.0)  # Orange
+	else:
+		attack_bar.modulate = Color(1.0, 0.2, 0.0)  # Red
+
+func _reset_attack_timer() -> void:
+	"""Reset attack timer with new random duration"""
+	attack_duration = randf_range(ATTACK_MIN, ATTACK_MAX)
+	attack_timer = 0.0
+	attack_speed = attack_duration  # Keep for compatibility
+
+	if GameLogger.ENABLED:
+		print("[EnemySlot] %s attack timer reset (next attack in %.1fs)" % [enemy_name, attack_duration])
 
 # ==================== SETUP NEMICO ====================
 
@@ -147,10 +226,13 @@ func spawn_enemy(mob_id: String, mob_data: Dictionary) -> void:
 	is_alive = true
 
 	# Setup attack stats (use level-based scaling if no attack specified)
-	var enemy_level = int(mob_data.get("level", 1))
+	enemy_level = int(mob_data.get("level", 1))  # Save to class property for XP calculation
 	attack_damage = float(mob_data.get("attack", enemy_level * 5.0))  # 5 damage per level default
-	attack_speed = float(mob_data.get("attack_speed", 2.0))  # 2s default
+
+	# Randomize attack duration (2.5-3.5 seconds)
+	attack_duration = randf_range(ATTACK_MIN, ATTACK_MAX)
 	attack_timer = 0.0  # Reset attack timer
+	attack_speed = attack_duration  # Keep for compatibility
 
 	# Setup Metin special mechanics
 	special_mechanics = mob_data.get("special_mechanics", {})
@@ -158,20 +240,20 @@ func spawn_enemy(mob_id: String, mob_data: Dictionary) -> void:
 
 	# Enable _process to allow enemy attacks
 	set_process(true)
-	
+
 	# Setup visuals
 	_setup_visuals(mob_data)
 	_update_hp_display()
-	
+
 	# Mostra lo slot
 	visible = true
-	
+
 	# Animazione spawn
 	_play_spawn_animation()
-	
+
 	if GameLogger.ENABLED:
-		print("[EnemySlot] Spawned '%s' (HP: %d) at global: %s, local: %s" % 
-			[enemy_name, max_hp, global_position, position])
+		print("[EnemySlot] Spawned '%s' (HP: %d, Attack: %.1fs) at global: %s, local: %s" %
+			[enemy_name, max_hp, attack_duration, global_position, position])
 
 func _setup_visuals(mob_data: Dictionary) -> void:
 	"""Configura l'aspetto del nemico"""
@@ -320,8 +402,11 @@ func _die() -> void:
 	"""Il nemico muore"""
 	is_alive = false
 
+	# Store death position BEFORE animation (for loot orb spawning)
+	var death_position = global_position + Vector2(slot_width / 2, slot_height / 2)
+
 	if GameLogger.ENABLED:
-		print("[EnemySlot] %s died!" % enemy_name)
+		print("[EnemySlot] %s died at position: %s" % [enemy_name, death_position])
 
 	# Animazione morte
 	_play_death_animation()
@@ -413,17 +498,29 @@ func _on_mouse_exited() -> void:
 # ==================== ANIMATIONS ====================
 
 func _play_spawn_animation() -> void:
-	"""Animazione di spawn (fade-in + scale)"""
+	"""Animazione di spawn epica (fade-in + scale + rotation + bounce)"""
+	# Start invisible, small, and rotated
 	modulate.a = 0.0
-	scale = Vector2(0.5, 0.5)
+	scale = Vector2(0.3, 0.3)
+	rotation = deg_to_rad(360)  # Full rotation
 
+	# Phase 1: Fade in + scale up with rotation (fast)
 	var tween = create_tween()
 	tween.set_parallel(true)
 	tween.set_ease(Tween.EASE_OUT)
 	tween.set_trans(Tween.TRANS_BACK)
 
-	tween.tween_property(self, "modulate:a", 1.0, spawn_duration)
-	tween.tween_property(self, "scale", Vector2.ONE, spawn_duration)
+	tween.tween_property(self, "modulate:a", 1.0, spawn_duration * 0.6)
+	tween.tween_property(self, "scale", Vector2(1.1, 1.1), spawn_duration * 0.6)  # Overshoot
+	tween.tween_property(self, "rotation", 0.0, spawn_duration * 0.6)
+
+	# Phase 2: Bounce back to normal size (sequential)
+	tween.chain().tween_property(self, "scale", Vector2.ONE, spawn_duration * 0.4).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_ELASTIC)
+
+	# Optional: Add a subtle "impact" effect at the end
+	if enemy_sprite:
+		tween.parallel().tween_property(enemy_sprite, "modulate", Color(1.5, 1.5, 1.5), spawn_duration * 0.2)
+		tween.chain().tween_property(enemy_sprite, "modulate", Color.WHITE, spawn_duration * 0.2)
 
 func _play_hit_animation() -> void:
 	"""Animazione quando subisce danno (flash rosso)"""
@@ -518,5 +615,13 @@ func clear() -> void:
 	attack_timer = 0.0
 	set_process(false)
 
+	# Hide attack bar
+	if attack_bar:
+		attack_bar.visible = false
+
 	if GameLogger.ENABLED:
 		print("[EnemySlot] ✅ Slot cleared and _process disabled")
+
+func get_center_position() -> Vector2:
+	"""Get global center position of enemy slot (for loot orb spawning)"""
+	return global_position + Vector2(slot_width / 2, slot_height / 2)

@@ -182,13 +182,18 @@ func _setup_slot_visuals() -> void:
 
 func _connect_to_gamestate() -> void:
 	"""Connetti ai segnali del GameState per sincronizzazione"""
-	if Engine.has_singleton("GameState"):
-		var gs = Engine.get_singleton("GameState")
-		if gs:
-			if gs.has_signal("on_item_equipped") and not gs.on_item_equipped.is_connected(_on_item_equipped_in_gamestate):
-				gs.on_item_equipped.connect(_on_item_equipped_in_gamestate)
-			if gs.has_signal("on_item_unequipped") and not gs.on_item_unequipped.is_connected(_on_item_unequipped_in_gamestate):
-				gs.on_item_unequipped.connect(_on_item_unequipped_in_gamestate)
+	# CRITICAL FIX: Use get_node instead of Engine.get_singleton
+	# Autoloads in Godot 4 are accessed via get_node("/root/GameState")
+	var gs = get_node_or_null("/root/GameState")
+	if gs:
+		if gs.has_signal("on_item_equipped") and not gs.on_item_equipped.is_connected(_on_item_equipped_in_gamestate):
+			gs.on_item_equipped.connect(_on_item_equipped_in_gamestate)
+			print("[EquipDrop] ✅ Connected to on_item_equipped signal")
+		if gs.has_signal("on_item_unequipped") and not gs.on_item_unequipped.is_connected(_on_item_unequipped_in_gamestate):
+			gs.on_item_unequipped.connect(_on_item_unequipped_in_gamestate)
+			print("[EquipDrop] ✅ Connected to on_item_unequipped signal")
+	else:
+		print("[EquipDrop] ⚠️ GameState not found!")
 
 # ==================== SISTEMA NATIVO DI DRAG & DROP ====================
 
@@ -289,11 +294,10 @@ func _drop_data(at_position: Vector2, data: Variant) -> void:
 
 func _equip_item_to_slot(item: Item, slot_name: String) -> bool:
 	"""Equipaggia un item in uno slot specifico tramite GameState"""
-	if not Engine.has_singleton("GameState"):
+	var gs = get_node_or_null("/root/GameState")
+	if not gs:
 		print("[EquipDrop] GameState not found!")
 		return false
-	
-	var gs = Engine.get_singleton("GameState")
 	
 	# Mappa nome slot UI a slot GameState
 	var gamestate_slot = _ui_slot_to_gamestate_slot(slot_name)
@@ -317,10 +321,9 @@ func _equip_item_to_slot(item: Item, slot_name: String) -> bool:
 
 func _unequip_item_from_slot(slot_name: String) -> bool:
 	"""Rimuove un item da uno slot equipment"""
-	if not Engine.has_singleton("GameState"):
+	var gs = get_node_or_null("/root/GameState")
+	if not gs:
 		return false
-	
-	var gs = Engine.get_singleton("GameState")
 	var gamestate_slot = _ui_slot_to_gamestate_slot(slot_name)
 	
 	if gamestate_slot != "":
@@ -343,10 +346,9 @@ func _ui_slot_to_gamestate_slot(ui_slot: String) -> String:
 
 func _get_item_type(item: Item) -> String:
 	"""Determina il tipo di un item dai suoi dati"""
-	if not Engine.has_singleton("GameState"):
+	var gs = get_node_or_null("/root/GameState")
+	if not gs:
 		return "unknown"
-	
-	var gs = Engine.get_singleton("GameState")
 	if gs and gs.has("data") and gs.data.has("items"):
 		var item_data = gs.data.items.get(item.item_id, {})
 		return item_data.get("slot", "unknown")  # Usa 'slot' invece di 'type'
@@ -414,10 +416,7 @@ func _clear_slot_highlights() -> void:
 
 func _refresh_equipped_items() -> void:
 	"""Aggiorna la visualizzazione degli item equipaggiati"""
-	if not Engine.has_singleton("GameState"):
-		return
-	
-	var gs = Engine.get_singleton("GameState")
+	var gs = get_node_or_null("/root/GameState")
 	if not gs:
 		return
 	

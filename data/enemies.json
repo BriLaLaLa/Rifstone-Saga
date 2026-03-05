@@ -1,0 +1,79 @@
+{
+  "enemies": {
+    "lupo": {
+      "id": "lupo",
+      "name": "Lupo",
+      "type": "normal",
+      "base_hp": 100,
+      "base_attack": 2,
+      "attack_speed": 2.0,
+      "icon": "res://Item_Texture/Dump/Lupo.png",
+      "drops": {
+        "gold_min": 5,
+        "gold_max": 15,
+        "xp_min": 20,
+        "xp_max": 40,
+        "item_drop_chance": 0.15,
+        "rare_item_multiplier": 1.0
+      }
+    },
+    "cinghiale": {
+      "id": "cinghiale",
+      "name": "Cinghiale",
+      "type": "normal",
+      "base_hp": 300,
+      "base_attack": 3,
+      "attack_speed": 2.5,
+      "icon": "res://Item_Texture/Dump/Chinghiale.png",
+      "drops": {
+        "gold_min": 10,
+        "gold_max": 25,
+        "xp_min": 40,
+        "xp_max": 80,
+        "item_drop_chance": 0.18,
+        "rare_item_multiplier": 1.2
+      }
+    },
+    "scrofa": {
+      "id": "scrofa",
+      "name": "Scrofa Boss",
+      "type": "boss",
+      "base_hp": 800,
+      "base_attack": 8,
+      "attack_speed": 2.0,
+      "icon": "res://Item_Texture/Dump/Scrofa.png",
+      "drops": {
+        "gold_min": 50,
+        "gold_max": 150,
+        "xp_min": 200,
+        "xp_max": 400,
+        "item_drop_chance": 0.60,
+        "rare_item_multiplier": 2.5
+      }
+    },
+    "metin": {
+      "id": "metin",
+      "name": "Metin Stone",
+      "type": "metin",
+      "base_hp": 4000,
+      "base_attack": 1,
+      "attack_speed": 3.0,
+      "icon": "res://Item_Texture/Dump/Metin.png",
+      "special_mechanics": {
+        "spawn_adds": true,
+        "spawn_thresholds": [0.75, 0.50, 0.25],
+        "spawn_count_min": 1,
+        "spawn_count_max": 8,
+        "spawn_types": ["lupo", "cinghiale"]
+      },
+      "drops": {
+        "gold_min": 200,
+        "gold_max": 500,
+        "xp_min": 800,
+        "xp_max": 1500,
+        "item_drop_chance": 0.80,
+        "rare_item_multiplier": 4.0
+      }
+    }
+  }
+}

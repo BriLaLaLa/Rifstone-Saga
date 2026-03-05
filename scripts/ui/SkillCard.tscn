@@ -1,0 +1,49 @@
+[gd_scene load_steps=2 format=3 uid="uid://b7xvq3y2h8dkxp"]
+
+[ext_resource type="Script" path="res://scripts/ui/SkillCard.gd" id="1_skill_card"]
+
+[node name="SkillCard" type="Panel"]
+custom_minimum_size = Vector2(120, 160)
+script = ExtResource("1_skill_card")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SkillIcon" type="TextureRect" parent="VBoxContainer"]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Skill Name"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="InfoContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="LevelLabel" type="Label" parent="VBoxContainer/InfoContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Lv. 1"
+horizontal_alignment = 1
+
+[node name="GradeLabel" type="Label" parent="VBoxContainer/InfoContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "N"
+horizontal_alignment = 1
+
+[node name="XPBar" type="ProgressBar" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+max_value = 100.0
+show_percentage = false

@@ -1,0 +1,176 @@
+[gd_scene load_steps=3 format=3 uid="uid://bl3hx8cesx3ra"]
+
+[ext_resource type="Script" path="res://scripts/ui/SkillsTab.gd" id="1_skills_tab"]
+[ext_resource type="Script" path="res://scripts/ui/SkillDetailsPanel.gd" id="2_details_panel"]
+
+[node name="SkillsTab" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_skills_tab")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LoadoutPanel" type="Panel" parent="HBoxContainer"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/LoadoutPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleLabel" type="Label" parent="HBoxContainer/LoadoutPanel/VBoxContainer"]
+layout_mode = 2
+text = "Azioni Attive"
+horizontal_alignment = 1
+
+[node name="Separator" type="HSeparator" parent="HBoxContainer/LoadoutPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HBoxContainer/LoadoutPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ActiveActionsContainer" type="VBoxContainer" parent="HBoxContainer/LoadoutPanel/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="LibraryPanel" type="Panel" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/LibraryPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TopBar" type="HBoxContainer" parent="HBoxContainer/LibraryPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="SearchBar" type="LineEdit" parent="HBoxContainer/LibraryPanel/VBoxContainer/TopBar"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Cerca skill..."
+
+[node name="CategoryFilter" type="OptionButton" parent="HBoxContainer/LibraryPanel/VBoxContainer/TopBar"]
+layout_mode = 2
+text = "Categorie"
+
+[node name="GradeFilter" type="OptionButton" parent="HBoxContainer/LibraryPanel/VBoxContainer/TopBar"]
+layout_mode = 2
+text = "Gradi"
+
+[node name="Separator" type="HSeparator" parent="HBoxContainer/LibraryPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HBoxContainer/LibraryPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SkillsGrid" type="GridContainer" parent="HBoxContainer/LibraryPanel/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 3
+
+[node name="DetailsPanel" type="Panel" parent="HBoxContainer"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.4
+script = ExtResource("2_details_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/DetailsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SkillNameLabel" type="Label" parent="HBoxContainer/DetailsPanel/VBoxContainer"]
+layout_mode = 2
+text = "Seleziona una Skill"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Separator" type="HSeparator" parent="HBoxContainer/DetailsPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HBoxContainer/DetailsPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DetailsContent" type="VBoxContainer" parent="HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="LevelLabel" type="Label" parent="HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer/DetailsContent"]
+layout_mode = 2
+text = "Livello: 1"
+
+[node name="GradeLabel" type="Label" parent="HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer/DetailsContent"]
+layout_mode = 2
+text = "Grado: N (Normale)"
+
+[node name="XPProgressBar" type="ProgressBar" parent="HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer/DetailsContent"]
+layout_mode = 2
+max_value = 100.0
+value = 50.0
+show_percentage = false
+
+[node name="XPLabel" type="Label" parent="HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer/DetailsContent"]
+layout_mode = 2
+text = "0 / 100 XP"
+
+[node name="CategoryLabel" type="Label" parent="HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer/DetailsContent"]
+layout_mode = 2
+text = "Categoria: Sconosciuta"
+
+[node name="DescriptionLabel" type="Label" parent="HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer/DetailsContent"]
+layout_mode = 2
+text = "Descrizione skill"
+autowrap_mode = 3
+
+[node name="Separator2" type="HSeparator" parent="HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer/DetailsContent"]
+layout_mode = 2
+
+[node name="ActionsSection" type="VBoxContainer" parent="HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer/DetailsContent"]
+layout_mode = 2
+
+[node name="ActionsLabel" type="Label" parent="HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer/DetailsContent/ActionsSection"]
+layout_mode = 2
+text = "Azioni / Skills:"
+
+[node name="ActionsListContainer" type="VBoxContainer" parent="HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer/DetailsContent/ActionsSection"]
+layout_mode = 2
+
+[node name="Separator3" type="HSeparator" parent="HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer/DetailsContent"]
+layout_mode = 2
+
+[node name="PromotionButton" type="Button" parent="HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer/DetailsContent"]
+layout_mode = 2
+text = "Promuovi Skill"

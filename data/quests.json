@@ -1,0 +1,152 @@
+{
+  "quests": [
+    {
+      "id": "quest_wolf_hunt",
+      "title": "Wolf Pack Threat",
+      "description": "The wolves near the village have become aggressive. Help protect the villagers by hunting down some of them.",
+      "giver_npc": "bounty",
+      "objectives": [
+        {
+          "type": "kill",
+          "target": "lupo",
+          "count": 10,
+          "description": "Kill 10 Lupo"
+        }
+      ],
+      "reward_gold": 100,
+      "reward_xp": 50,
+      "reward_items": ["Small_Potion"]
+    },
+    {
+      "id": "quest_wolf_samples",
+      "title": "Wolf Tail Collection",
+      "description": "I need wolf tails for my research on local wildlife. Bring me some samples from your hunts.",
+      "giver_npc": "biologist",
+      "objectives": [
+        {
+          "type": "collect",
+          "target": "Wolf_Tail",
+          "count": 5,
+          "description": "Collect 5 Wolf Tail"
+        }
+      ],
+      "reward_gold": 75,
+      "reward_xp": 30,
+      "reward_items": ["force_gem"]
+    },
+    {
+      "id": "quest_gem_collection",
+      "title": "Mystical Gems",
+      "description": "I require mystical Force Gems for an important alchemical experiment. Can you help me acquire some?",
+      "giver_npc": "alchemist",
+      "objectives": [
+        {
+          "type": "collect",
+          "target": "force_gem",
+          "count": 3,
+          "description": "Collect 3 Force Gems"
+        }
+      ],
+      "reward_gold": 150,
+      "reward_xp": 75,
+      "reward_items": ["Medium_Potion", "gem_of_agility"]
+    },
+    {
+      "id": "quest_wood_gathering",
+      "title": "Quality Lumber",
+      "description": "I need quality lumber for the village construction project. Collect some logs from the forest.",
+      "giver_npc": "woodcutter",
+      "objectives": [
+        {
+          "type": "collect",
+          "target": "log",
+          "count": 10,
+          "description": "Collect 10 Logs"
+        }
+      ],
+      "reward_gold": 80,
+      "reward_xp": 40,
+      "reward_items": []
+    },
+    {
+      "id": "quest_boar_hunt",
+      "title": "Boar Problem",
+      "description": "Wild boars are destroying the farmlands. Hunt them down before they cause more damage!",
+      "giver_npc": "bounty",
+      "objectives": [
+        {
+          "type": "kill",
+          "target": "cinghiale",
+          "count": 5,
+          "description": "Kill 5 Cinghiale"
+        }
+      ],
+      "reward_gold": 200,
+      "reward_xp": 100,
+      "reward_items": ["Medium_Potion"]
+    },
+    {
+      "id": "quest_supply_run",
+      "title": "Warehouse Supply Run",
+      "description": "First, clear out the wolves near the storage area. Then collect boar tusks from the wild boars for inventory.",
+      "giver_npc": "warehouse",
+      "objectives": [
+        {
+          "type": "kill",
+          "target": "lupo",
+          "count": 8,
+          "description": "Kill 8 Lupo"
+        },
+        {
+          "type": "collect",
+          "target": "Boar_Tusks",
+          "count": 5,
+          "description": "Collect 5 Boar Tusks"
+        }
+      ],
+      "reward_gold": 250,
+      "reward_xp": 125,
+      "reward_items": ["gem_of_chaos"]
+    },
+    {
+      "id": "quest_boss_scrofa",
+      "title": "The Scrofa Menace",
+      "description": "A powerful Scrofa boss has appeared and threatens the village. Only a true warrior can defeat this beast!",
+      "giver_npc": "uriel",
+      "objectives": [
+        {
+          "type": "kill",
+          "target": "scrofa",
+          "count": 1,
+          "description": "Kill Scrofa Boss"
+        }
+      ],
+      "reward_gold": 500,
+      "reward_xp": 300,
+      "reward_items": ["Giant_Potion", "gem_of_excellence"]
+    },
+    {
+      "id": "quest_wildlife_study",
+      "title": "Complete Wildlife Study",
+      "description": "For my comprehensive study, I need samples from both wolves and boars. This data will be invaluable!",
+      "giver_npc": "biologist",
+      "objectives": [
+        {
+          "type": "collect",
+          "target": "Wolf_Tail",
+          "count": 3,
+          "description": "Collect 3 Wolf Tail"
+        },
+        {
+          "type": "collect",
+          "target": "Boar_Tusks",
+          "count": 2,
+          "description": "Collect 2 Boar Tusks"
+        }
+      ],
+      "reward_gold": 180,
+      "reward_xp": 90,
+      "reward_items": ["force_gem", "gem_of_agility"]
+    }
+  ]
+}

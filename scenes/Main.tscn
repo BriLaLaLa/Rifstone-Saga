@@ -1,7 +1,11 @@
-[gd_scene load_steps=3 format=3 uid="uid://fu6wa183lggm"]
+[gd_scene load_steps=7 format=3 uid="uid://fu6wa183lggm"]
 
 [ext_resource type="Script" uid="uid://bmfolai807irx" path="res://scenes/Main.gd" id="1"]
-[ext_resource type="PackedScene" uid="uid://cf0io03nov6ww" path="res://scripts/ui/InventoryTab.tscn" id="2"]
+[ext_resource type="PackedScene" uid="uid://ws76uxi0un62" path="res://scripts/ui/InventoryTab.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scripts/ui/PassivesTab.tscn" id="5"]
+[ext_resource type="PackedScene" uid="uid://cnvq3y2h8NEWSKILLS" path="res://scripts/ui/SkillsTab.tscn" id="3"]
+[ext_resource type="PackedScene" uid="uid://ff3lstbvirq6" path="res://scenes/battle/BattleTab.tscn" id="4"]
+[ext_resource type="PackedScene" uid="uid://quest_log_tab" path="res://scripts/ui/QuestLogTab.tscn" id="6"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -29,6 +33,32 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
+[node name="TopBar" type="HBoxContainer" parent="Margin/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 2
+
+[node name="GoldPanel" type="PanelContainer" parent="Margin/VBox/TopBar"]
+custom_minimum_size = Vector2(150, 36)
+layout_mode = 2
+size_flags_horizontal = 10
+
+[node name="HBox" type="HBoxContainer" parent="Margin/VBox/TopBar/GoldPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="GoldIcon" type="Label" parent="Margin/VBox/TopBar/GoldPanel/HBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "💰"
+
+[node name="GoldLabel" type="Label" parent="Margin/VBox/TopBar/GoldPanel/HBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "0"
+
 [node name="Tabs" type="TabContainer" parent="Margin/VBox"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -41,22 +71,27 @@ item_scene = null
 slot_scene = null
 metadata/_tab_index = 0
 
-[node name="Skills" type="Control" parent="Margin/VBox/Tabs"]
+[node name="Passives" parent="Margin/VBox/Tabs" instance=ExtResource("5")]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="Crafting" type="Control" parent="Margin/VBox/Tabs"]
+[node name="Skills" parent="Margin/VBox/Tabs" instance=ExtResource("3")]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 
-[node name="Combat" type="Control" parent="Margin/VBox/Tabs"]
+[node name="QuestLog" parent="Margin/VBox/Tabs" instance=ExtResource("6")]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 3
 
-[node name="Villaggio" type="Control" parent="Margin/VBox/Tabs"]
+[node name="Combat" parent="Margin/VBox/Tabs" instance=ExtResource("4")]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 4
+
+[node name="Villaggio" type="Control" parent="Margin/VBox/Tabs"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 5

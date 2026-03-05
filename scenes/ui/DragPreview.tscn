@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://bx8m2qk5j8tqa"]
+
+[ext_resource type="Script" path="res://scripts/ui/DragPreview.gd" id="1_drag_preview"]
+
+[node name="DragPreview" type="Control"]
+mouse_filter = 2
+script = ExtResource("1_drag_preview")
+
+[node name="PreviewTexture" type="TextureRect" parent="."]
+mouse_filter = 2

@@ -1,0 +1,94 @@
+{
+  "NOTE": "Aggiungi questi item al file items.json esistente",
+
+  "swords": [
+	{
+	  "id": "novice_sword_lvl1",
+	  "name": "Novice Sword",
+	  "type": "Weapon",
+	  "slot": "weapon",
+	  "level": 1,
+	  "size": [1, 2],
+	  "icon": "res://Item_Texture/Equip/Swords/Novice_Sword_LvL1.png",
+	  "stats": {
+		"physical_damage": 10,
+		"strength": 1
+	  },
+	  "bonuses": [],
+	  "description": "A basic training sword for novice warriors."
+	},
+	{
+	  "id": "apprentice_sword_lvl10",
+	  "name": "Apprentice Sword",
+	  "type": "Weapon",
+	  "slot": "weapon",
+	  "level": 10,
+	  "size": [1, 2],
+	  "icon": "res://Item_Texture/Equip/Swords/Apprentice_Sword_LvL10.png",
+	  "stats": {
+		"physical_damage": 25,
+		"strength": 3
+	  },
+	  "bonuses": [],
+	  "description": "A refined blade for apprentice swordsmen."
+	},
+	{
+	  "id": "disciple_sword_lvl15",
+	  "name": "Disciple Sword",
+	  "type": "Weapon",
+	  "slot": "weapon",
+	  "level": 15,
+	  "size": [1, 2],
+	  "icon": "res://Item_Texture/Equip/Swords/Disceple_Sword_LvL15.png",
+	  "stats": {
+		"physical_damage": 40,
+		"strength": 5
+	  },
+	  "bonuses": [],
+	  "description": "A masterwork blade worthy of true disciples."
+	}
+  ],
+
+  "gems": [
+	{
+	  "id": "force_gem",
+	  "name": "ForceGem",
+	  "type": "Gem",
+	  "size": [1, 1],
+	  "icon": "res://Item_Texture/Gems/ForceGem.png",
+	  "description": "Adds 1 Prefix to a weapon (max 2). If already at max, the gem is returned."
+	},
+	{
+	  "id": "gem_of_agility",
+	  "name": "Gem of Agility",
+	  "type": "Gem",
+	  "size": [1, 1],
+	  "icon": "res://Item_Texture/Gems/Gem_of_Agility.png",
+	  "description": "Adds 1 Suffix to a weapon (max 2). If already at max, the gem is returned."
+	},
+	{
+	  "id": "gem_of_chaos",
+	  "name": "Gem of Chaos",
+	  "type": "Gem",
+	  "size": [1, 1],
+	  "icon": "res://Item_Texture/Gems/Gem_of_Chaos.png",
+	  "description": "Rerolls all bonus tiers (T1-T7) and values. Keeps bonus count and categories."
+	},
+	{
+	  "id": "gem_of_excellence",
+	  "name": "Gem of Excellence",
+	  "type": "Gem",
+	  "size": [1, 1],
+	  "icon": "res://Item_Texture/Gems/Gem_of_Excellence.png",
+	  "description": "Adds the 5th bonus (Special) if not present. If already present, gem is returned."
+	},
+	{
+	  "id": "gem_of_renewal",
+	  "name": "Gem of Renewal",
+	  "type": "Gem",
+	  "size": [1, 1],
+	  "icon": "res://Item_Texture/Gems/Gem_of_Renewal.png",
+	  "description": "Replaces 1 random bonus with another of the same category. Tier is maintained."
+	}
+  ]
+}
