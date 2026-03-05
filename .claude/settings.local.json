@@ -10,7 +10,10 @@
       "Bash(dir /s /b *.tscn)",
       "Bash(findstr:*)",
       "Bash(ls:*)",
-      "Bash(\"C:\\\\Users\\\\Davide\\\\Documents\\\\GODOT\\\\Godot_v4.5-stable_win64.exe\" --path . --headless --script addons/gut/gut_cmdln.gd -gtest=tests/test_quest_system.gd)"
+      "Bash(\"C:\\\\Users\\\\Davide\\\\Documents\\\\GODOT\\\\Godot_v4.5-stable_win64.exe\" --path . --headless --script addons/gut/gut_cmdln.gd -gtest=tests/test_quest_system.gd)",
+      "Bash(\"C:\\\\Users\\\\Davide\\\\Documents\\\\GODOT\\\\Godot_v4.5-stable_win64.exe\" --path . --headless --script addons/gut/gut_cmdln.gd -gtest=tests/test_quest_full_flow.gd)",
+      "Bash(del nul)",
+      "Bash(git reset:*)"
     ]
   }
 }

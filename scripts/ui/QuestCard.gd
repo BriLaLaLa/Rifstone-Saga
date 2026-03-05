@@ -59,12 +59,20 @@ func _build_ui() -> void:
 ## Set the quest to display
 func set_quest(q: Quest) -> void:
 	quest = q
+	# Ensure UI is built before updating
+	if title_label == null:
+		_build_ui()
 	_update_display()
 
 
 ## Update the display with current quest data
 func _update_display() -> void:
 	if quest == null:
+		return
+
+	# Safety check - ensure UI elements exist
+	if title_label == null or ready_indicator == null or objectives_vbox == null:
+		push_warning("[QuestCard] UI elements not initialized yet")
 		return
 
 	# Update title
