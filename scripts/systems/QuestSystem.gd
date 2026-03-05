@@ -79,7 +79,11 @@ func _parse_quest_from_json(data: Dictionary) -> Quest:
 	quest.giver_npc_id = data.get("giver_npc", "")
 	quest.reward_gold = data.get("reward_gold", 0)
 	quest.reward_xp = data.get("reward_xp", 0)
-	quest.reward_items = data.get("reward_items", [])
+
+	# Convert regular Array to Array[String] for reward_items
+	var reward_items_array = data.get("reward_items", [])
+	for item_id in reward_items_array:
+		quest.reward_items.append(str(item_id))
 
 	# Parse objectives
 	var objectives_data = data.get("objectives", [])
