@@ -1,110 +1,113 @@
 # File: res://scripts/ui/LootNotificationManager.gd
-# Autoload manager for cascading loot notifications
+# FIFO notification stack: new items appear at the bottom, older ones stack above.
+# When the bottom one fades out, the rest slide smoothly down.
 
 extends CanvasLayer
 
 const LOOT_NOTIFICATION_SCENE = preload("res://scenes/ui/LootNotification.tscn")
 
-# Notification positioning
-const NOTIFICATION_HEIGHT: float = 90.0  # Vertical spacing between notifications
-const BOTTOM_MARGIN: float = 20.0        # Margin from bottom of screen
-const RIGHT_MARGIN: float = 20.0         # Margin from right of screen
+const MAX_VISIBLE: int = 4          # Max simultaneous notifications on screen
+const NOTIFICATION_H: float = 95.0  # Height of one slot (notification height 90 + 5 gap)
+const BOTTOM_MARGIN: float = 20.0
+const RIGHT_MARGIN: float = 20.0
+const SLIDE_DOWN_DURATION: float = 0.25
 
-# Active notifications tracking
-var active_notifications: Array = []  # Array of LootNotification instances
+# FIFO queue: items waiting to be shown
+var _pending: Array = []
+
+# Currently visible notifications, ordered bottom→top (index 0 = bottom/oldest)
+var _active: Array = []
+
 
 func _ready() -> void:
-	# Set canvas layer to 110 (above TooltipManager at 100)
 	layer = 110
 
+
+## Public API — called by game systems to show a loot notification
 func show_notification(item_data: Dictionary) -> void:
-	"""Spawn a new loot notification for the given item"""
-	# Determine rarity from item data
-	var rarity = _get_item_rarity(item_data)
+	if _active.size() < MAX_VISIBLE:
+		_spawn(item_data)
+	else:
+		_pending.append(item_data)
 
-	# Instantiate notification
-	var notification = LOOT_NOTIFICATION_SCENE.instantiate()
-	add_child(notification)
 
-	# Setup notification
-	notification.setup(item_data, rarity)
+# ---------- internal ----------
 
-	# Calculate vertical position (cascade upward from bottom)
-	var y_position = _calculate_notification_y_position()
-	notification.adjust_vertical_position(y_position)
+func _spawn(item_data: Dictionary) -> void:
+	var rarity := _get_rarity(item_data)
 
-	# Track notification
-	active_notifications.append(notification)
+	var notif: LootNotification = LOOT_NOTIFICATION_SCENE.instantiate()
+	add_child(notif)
 
-	# Connect to notification's tree_exiting to remove from tracking
-	notification.tree_exiting.connect(_on_notification_removed.bind(notification))
+	# Position: starts at the TOP of the current stack (highest index = highest on screen)
+	notif.position.y = _y_for_slot(_active.size())
+	_active.append(notif)
 
-	# Reposition all existing notifications to avoid overlap
-	_reposition_all_notifications()
+	notif.setup(item_data, rarity)
 
-	if GameLogger.ENABLED:
-		print("[LootNotificationManager] 📬 Showing notification for: %s (rarity: %s)" % [item_data.get("name", "Unknown"), rarity])
+	# Connect expired BEFORE starting animation (animate_in awaits and then emits)
+	notif.expired.connect(_on_expired.bind(notif), CONNECT_ONE_SHOT)
 
-func _calculate_notification_y_position() -> float:
-	"""Calculate Y position for new notification (cascade upward)"""
-	var viewport_height = get_viewport().get_visible_rect().size.y
+	# Fire-and-forget: animate_in runs async, emits expired when done
+	notif.animate_in()
 
-	# Start from bottom, move up for each active notification
-	var base_y = viewport_height - BOTTOM_MARGIN - 80  # 80 is notification height
-	var offset_y = active_notifications.size() * NOTIFICATION_HEIGHT
 
-	return base_y - offset_y
+func _on_expired(notif: LootNotification) -> void:
+	if not is_instance_valid(notif):
+		_cleanup_invalid()
+		return
 
-func _on_notification_removed(notification: Node) -> void:
-	"""Remove notification from tracking when it's freed"""
-	active_notifications.erase(notification)
+	# Fade out, then remove
+	await notif.animate_out()
 
-	if GameLogger.ENABLED:
-		print("[LootNotificationManager] 🗑️ Notification removed, %d active" % active_notifications.size())
+	if not is_instance_valid(notif):
+		_cleanup_invalid()
+		return
 
-	# Reposition remaining notifications
-	_reposition_notifications()
+	_remove(notif)
 
-func _reposition_notifications() -> void:
-	"""Reposition all active notifications with smooth animation (when one is removed)"""
-	for i in range(active_notifications.size()):
-		var notification = active_notifications[i]
-		if is_instance_valid(notification):
-			var new_y = _calculate_notification_y_position_for_index(i)
 
-			# Animate position change
-			var tween = create_tween()
-			tween.tween_property(notification, "position:y", new_y, 0.2).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+func _remove(notif: LootNotification) -> void:
+	var idx := _active.find(notif)
+	if idx == -1:
+		return
 
-func _reposition_all_notifications() -> void:
-	"""Reposition all active notifications instantly (when new one spawns)"""
-	for i in range(active_notifications.size()):
-		var notification = active_notifications[i]
-		if is_instance_valid(notification):
-			var new_y = _calculate_notification_y_position_for_index(i)
-			notification.position.y = new_y
+	_active.remove_at(idx)
+	notif.queue_free()
 
-func _calculate_notification_y_position_for_index(index: int) -> float:
-	"""Calculate Y position for notification at given index"""
-	var viewport_height = get_viewport().get_visible_rect().size.y
-	var base_y = viewport_height - BOTTOM_MARGIN - 80
-	var offset_y = index * NOTIFICATION_HEIGHT
+	# Slide everything that was ABOVE (higher index) down by one slot
+	for i in range(idx, _active.size()):
+		var n: LootNotification = _active[i]
+		if is_instance_valid(n):
+			var tw := create_tween()
+			tw.tween_property(n, "position:y", _y_for_slot(i), SLIDE_DOWN_DURATION)\
+				.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
-	return base_y - offset_y
+	# Show next pending item if slot freed up
+	if _pending.size() > 0 and _active.size() < MAX_VISIBLE:
+		_spawn(_pending.pop_front())
 
-func _get_item_rarity(item_data: Dictionary) -> String:
-	"""Determine rarity from item bonuses (matches ExplorationCombatController logic)"""
+
+func _cleanup_invalid() -> void:
+	# Remove any dead references (safety net)
+	_active = _active.filter(func(n): return is_instance_valid(n))
+
+
+func _y_for_slot(slot_index: int) -> float:
+	var vp_h: float = get_viewport().get_visible_rect().size.y
+	# slot 0 = closest to bottom, slot N = highest on screen
+	return vp_h - BOTTOM_MARGIN - 90.0 - slot_index * NOTIFICATION_H
+
+
+func _get_rarity(item_data: Dictionary) -> String:
 	if not item_data.has("bonuses"):
 		return "common"
-
-	var bonus_count = item_data.bonuses.size()
-
-	# Map bonus count to rarity
-	if bonus_count == 0:
+	var n: int = item_data["bonuses"].size()
+	if n == 0:
 		return "common"
-	elif bonus_count <= 2:
+	elif n <= 2:
 		return "rare"
-	elif bonus_count <= 4:
+	elif n <= 4:
 		return "epic"
 	else:
 		return "legendary"

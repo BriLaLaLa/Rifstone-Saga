@@ -84,6 +84,10 @@ const ATTACK_MAX: float = 3.5
 # State
 var is_targeted: bool = false
 
+# Hit animation state
+var _hit_tween: Tween = null
+var _base_pos_x: float = 0.0
+
 # Metin spawn mechanic
 var is_metin: bool = false
 var special_mechanics: Dictionary = {}
@@ -250,6 +254,9 @@ func spawn_enemy(mob_id: String, mob_data: Dictionary) -> void:
 
 	# Animazione spawn
 	_play_spawn_animation()
+
+	# Cache base X for hit animation (position is set by SlotManager before spawn_enemy)
+	_base_pos_x = position.x
 
 	if GameLogger.ENABLED:
 		print("[EnemySlot] Spawned '%s' (HP: %d, Attack: %.1fs) at global: %s, local: %s" %
@@ -523,12 +530,26 @@ func _play_spawn_animation() -> void:
 		tween.chain().tween_property(enemy_sprite, "modulate", Color.WHITE, spawn_duration * 0.2)
 
 func _play_hit_animation() -> void:
-	"""Animazione quando subisce danno (flash rosso)"""
-	var original_modulate = modulate
+	"""Animazione quando subisce danno: flash rosso + tick a sinistra."""
+	# Kill any ongoing hit tween to avoid position drift
+	if _hit_tween and _hit_tween.is_valid():
+		_hit_tween.kill()
+		position.x = _base_pos_x  # Snap back before restart
 
-	var tween = create_tween()
-	tween.tween_property(self, "modulate", Color.RED, hit_flash_duration)
-	tween.tween_property(self, "modulate", original_modulate, hit_flash_duration)
+	var orig_mod := modulate
+	var base_x := _base_pos_x
+
+	# --- Red flash (independent tween) ---
+	var flash := create_tween()
+	flash.tween_property(self, "modulate", Color(1.0, 0.25, 0.25, orig_mod.a), 0.05)
+	flash.tween_property(self, "modulate", orig_mod, 0.20)
+
+	# --- Tick to the left then elastic spring back ---
+	_hit_tween = create_tween()
+	_hit_tween.tween_property(self, "position:x", base_x - 13.0, 0.05)\
+		.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	_hit_tween.tween_property(self, "position:x", base_x, 0.22)\
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 func _play_death_animation() -> void:
 	"""Animazione di morte (fade-out + scale down)"""

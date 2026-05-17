@@ -31,6 +31,11 @@ LootOrbManager="*res://scripts/battle/LootOrbManager.gd"
 XpOrbManager="*res://scripts/battle/XpOrbManager.gd"
 GoldOrbManager="*res://scripts/battle/GoldOrbManager.gd"
 LootNotificationManager="*res://scripts/ui/LootNotificationManager.gd"
+_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg", "res://addons/gut/plugin.cfg")
 
 [gui]
 

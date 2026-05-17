@@ -114,7 +114,9 @@ var action_time_total: float = 0.0
 
 var _tick_accum := 0.0
 var _tick_rate := 1.0
-var SAVE_PATH := "user://save.dat"  # Binary format with store_var() - much faster than JSON!
+var current_slot: int = 1
+var play_time: float = 0.0
+var SAVE_PATH: String = "user://save_slot_1.dat"  # Updated by set_active_slot()
 
 # CRITICAL: Prevent concurrent saves
 var _is_saving := false
@@ -127,6 +129,8 @@ const AUTOSAVE_INTERVAL: float = 5.0  # Autosave every 5 seconds
 
 func _ready() -> void:
 	rng.randomize()
+	_migrate_old_save()
+	SAVE_PATH = get_save_path(current_slot)
 	_load_default_data()
 
 	# NUOVO: Inizializza character stats
@@ -154,6 +158,7 @@ func _notification(what: int) -> void:
 		print("[GameState] ✅ Game saved")
 
 func _process(delta: float) -> void:
+	play_time += delta
 	_tick_accum += delta
 	if _tick_accum >= _tick_rate:
 		_tick_accum = 0.0
@@ -894,6 +899,8 @@ func save_game() -> void:
 	# Single dictionary with ALL game state
 	var save_data = {
 		"version": 1,  # Save format version
+		"save_time": int(Time.get_unix_time_from_system()),
+		"play_time": play_time,
 		"resources": resources,
 		"inventory": inventory,
 		"inventory_items": inventory_items,  # NATIVE support for Array/Dict/Vector2i!
@@ -983,48 +990,49 @@ func load_game() -> void:
 		return
 
 	# MAGIC: get_var() loads EVERYTHING with native types restored!
-	var data = file.get_var()
+	var save_data = file.get_var()
 	file.close()
 
-	if typeof(data) != TYPE_DICTIONARY:
+	if typeof(save_data) != TYPE_DICTIONARY:
 		push_error("[GameState] ❌ Invalid save data!")
 		return
 
 	# Direct assignment - no conversion needed!
-	resources = data.get("resources", resources)
-	inventory = data.get("inventory", inventory)
-	inventory_items = data.get("inventory_items", [])  # Vector2i positions restored automatically!
-	equipped_items = data.get("equipped_items", {})    # Bonuses included automatically!
-	equipped_bags = data.get("equipped_bags", [])
-	passive_points = data.get("passive_points", 0)  # Changed: now earned by leveling
-	activated_passives = data.get("activated_passives", [])
-	passive_points_by_category = data.get("passive_points_by_category", {
-		"main": 0,  # Changed: now earned by leveling
+	resources = save_data.get("resources", resources)
+	inventory = save_data.get("inventory", inventory)
+	inventory_items = save_data.get("inventory_items", [])  # Vector2i positions restored automatically!
+	equipped_items = save_data.get("equipped_items", {})    # Bonuses included automatically!
+	equipped_bags = save_data.get("equipped_bags", [])
+	passive_points = save_data.get("passive_points", 0)
+	activated_passives = save_data.get("activated_passives", [])
+	passive_points_by_category = save_data.get("passive_points_by_category", {
+		"main": 0,
 		"mining": 0,
 		"herbalism": 0,
 		"fishing": 0
 	})
-	activated_passives_by_category = data.get("activated_passives_by_category", {
+	activated_passives_by_category = save_data.get("activated_passives_by_category", {
 		"main": [],
 		"mining": [],
 		"herbalism": [],
 		"fishing": []
 	})
-	craft_queue = data.get("craft_queue", [])
-	current_area = data.get("current_area", current_area)
-	current_mob = data.get("current_mob", current_mob)
-	enemy_hp = data.get("enemy_hp", 0.0)
-	kills = data.get("kills", 0)
-	combat_active = data.get("combat_active", false)
-	current_action_id = data.get("current_action_id", "")
-	action_time_left = data.get("action_time_left", 0.0)
-	action_time_total = data.get("action_time_total", 0.0)
-	bonus_dps_add = data.get("bonus_dps_add", 0.0)
-	bonus_dps_mult = data.get("bonus_dps_mult", 0.0)
+	craft_queue = save_data.get("craft_queue", [])
+	current_area = save_data.get("current_area", current_area)
+	current_mob = save_data.get("current_mob", current_mob)
+	enemy_hp = save_data.get("enemy_hp", 0.0)
+	kills = save_data.get("kills", 0)
+	combat_active = save_data.get("combat_active", false)
+	current_action_id = save_data.get("current_action_id", "")
+	action_time_left = save_data.get("action_time_left", 0.0)
+	action_time_total = save_data.get("action_time_total", 0.0)
+	bonus_dps_add = save_data.get("bonus_dps_add", 0.0)
+	bonus_dps_mult = save_data.get("bonus_dps_mult", 0.0)
+	play_time = save_data.get("play_time", 0.0)
 
 	# Load character stats
-	if data.has("character_stats") and character_stats:
-		character_stats.from_dict(data.character_stats)
+	if save_data.has("character_stats") and character_stats:
+		character_stats.from_dict(save_data.character_stats)
 
 		# CRITICAL FIX: Clear equipment bonuses to prevent double-apply bug
 		# The save file contains equipment_bonuses from when it was saved,
@@ -1036,16 +1044,16 @@ func load_game() -> void:
 			print("[GameState] Cleared equipment bonuses (will be recalculated)")
 
 	# Load gathering skills
-	if data.has("gathering_skills") and gathering_skills:
-		gathering_skills.from_dict(data.gathering_skills)
+	if save_data.has("gathering_skills") and gathering_skills:
+		gathering_skills.from_dict(save_data.gathering_skills)
 
 	# Load quests
-	if data.has("quests") and has_node("/root/QuestSystem"):
+	if save_data.has("quests") and has_node("/root/QuestSystem"):
 		var quest_system = get_node("/root/QuestSystem")
-		quest_system.from_dict(data.quests)
+		quest_system.from_dict(save_data.quests)
 
 	# Load skills
-	var saved_skills = data.get("skills", {})
+	var saved_skills = save_data.get("skills", {})
 	for k in saved_skills.keys():
 		if skills.has(k):
 			var s: Skill = skills[k]
@@ -1150,26 +1158,117 @@ func reset_save() -> void:
 		if err != OK:
 			push_warning("Impossibile rimuovere il salvataggio: %s (err %d)" % [SAVE_PATH, err])
 
+	_reset_memory()
 	_load_default_data()
 
-	current_action_id = ""
-	action_time_left = 0.0
-	action_time_total = 0.0
-	craft_queue.clear()
-	
-	# NUOVO: Reset stats
-	if character_stats:
-		character_stats = CharacterStats.new()
-		character_stats.stats_changed.connect(_on_character_stat_changed)
-		character_stats.hp_changed.connect(_on_hp_changed)
-		character_stats.mana_changed.connect(_on_mana_changed)
-	
-	# Reset equipment
-	for slot in equipped_items.keys():
-		equipped_items[slot] = null
-	
 	on_inventory_changed.emit()
 	on_craft_updated.emit()
 	on_stats_changed.emit()
 
 	print("[GameState] Reset eseguito. Skills caricate:", skills.keys())
+
+# ============================================
+# SAVE SLOT SYSTEM
+# ============================================
+
+func get_save_path(slot: int) -> String:
+	return "user://save_slot_%d.dat" % slot
+
+func set_active_slot(slot: int) -> void:
+	current_slot = slot
+	SAVE_PATH = get_save_path(slot)
+
+func start_new_game_slot(slot: int) -> void:
+	"""Avvia una nuova partita nello slot indicato. Chiamato da MainMenu prima del cambio scena."""
+	set_active_slot(slot)
+	if FileAccess.file_exists(SAVE_PATH):
+		DirAccess.remove_absolute(SAVE_PATH)
+	_reset_memory()
+	_load_default_data()
+	print("[GameState] ✅ New game started in slot %d" % slot)
+
+func load_game_slot(slot: int) -> void:
+	"""Carica il gioco dallo slot indicato. Chiamato da MainMenu prima del cambio scena."""
+	set_active_slot(slot)
+	_reset_memory()
+	_load_default_data()
+	load_game()
+	print("[GameState] ✅ Loaded game from slot %d" % slot)
+
+func read_slot_info(slot: int) -> Dictionary:
+	"""Legge le statistiche di un slot senza modificare lo stato corrente. Usato da MainMenu."""
+	var path = get_save_path(slot)
+	if not FileAccess.file_exists(path):
+		return {}
+
+	var file = FileAccess.open(path, FileAccess.READ)
+	if not file:
+		return {}
+
+	var slot_data = file.get_var()
+	file.close()
+
+	if typeof(slot_data) != TYPE_DICTIONARY:
+		return {}
+
+	var char_stats = slot_data.get("character_stats", {})
+	var level_sys = char_stats.get("level_system", {})
+
+	return {
+		"exists": true,
+		"save_time": slot_data.get("save_time", 0),
+		"play_time": slot_data.get("play_time", 0.0),
+		"gold": slot_data.get("resources", {}).get("gold", 0),
+		"kills": slot_data.get("kills", 0),
+		"level": level_sys.get("current_level", 1),
+		"inventory_count": slot_data.get("inventory_items", []).size(),
+	}
+
+func _reset_memory() -> void:
+	"""Azzera tutto lo stato in-memoria. Chiamato da reset_save, start_new_game_slot e load_game_slot."""
+	inventory.clear()
+	inventory_items.clear()
+	resources = {"gold": 0}
+	equipped_bags.clear()
+	for slot in equipped_items.keys():
+		equipped_items[slot] = null
+	passive_points = 0
+	passive_points_by_category = {"main": 0, "mining": 0, "herbalism": 0, "fishing": 0}
+	activated_passives.clear()
+	activated_passives_by_category = {"main": [], "mining": [], "herbalism": [], "fishing": []}
+	kills = 0
+	enemy_hp = 0.0
+	combat_active = false
+	current_area = ""
+	current_mob = ""
+	bonus_dps_add = 0.0
+	bonus_dps_mult = 0.0
+	current_action_id = ""
+	action_time_left = 0.0
+	action_time_total = 0.0
+	craft_queue.clear()
+	play_time = 0.0
+
+	if character_stats:
+		character_stats = CharacterStats.new()
+		character_stats.stats_changed.connect(_on_character_stat_changed)
+		character_stats.hp_changed.connect(_on_hp_changed)
+		character_stats.mana_changed.connect(_on_mana_changed)
+		character_stats.level_up.connect(_on_combat_level_up)
+
+	if gathering_skills:
+		gathering_skills = GatheringSkillsManager.new()
+		gathering_skills.skill_level_up.connect(_on_gathering_skill_level_up)
+
+func _migrate_old_save() -> void:
+	"""Migra il vecchio save.dat al nuovo formato slot (save_slot_1.dat)."""
+	var old_path = "user://save.dat"
+	var new_path = get_save_path(1)
+	if FileAccess.file_exists(old_path) and not FileAccess.file_exists(new_path):
+		var dir = DirAccess.open("user://")
+		if dir:
+			var err = dir.rename("save.dat", "save_slot_1.dat")
+			if err == OK:
+				print("[GameState] ✅ Migrated save.dat → save_slot_1.dat")
+			else:
+				push_warning("[GameState] Could not migrate old save (err %d)" % err)

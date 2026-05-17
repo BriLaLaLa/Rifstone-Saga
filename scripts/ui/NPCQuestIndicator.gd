@@ -1,4 +1,4 @@
-extends Label
+extends Control
 class_name NPCQuestIndicator
 
 ## Visual quest indicator for NPCs
@@ -7,13 +7,15 @@ class_name NPCQuestIndicator
 ## NPC ID this indicator is tracking
 var npc_id: String = ""
 
+@onready var label_exclaim: Label = $LabelExclaim
+@onready var label_question: Label = $LabelQuestion
+
 ## Colors for different quest states
-const COLOR_YELLOW = Color(1.0, 0.9, 0.0)  # Available quest or ready to turn in
-const COLOR_GREY = Color(0.6, 0.6, 0.6)    # Quest in progress
+const COLOR_YELLOW = Color(1.0, 0.9, 0.0)
+const COLOR_GREY = Color(0.6, 0.6, 0.6)
 
 
 func _ready() -> void:
-	# Connect to QuestSystem signals
 	if has_node("/root/QuestSystem"):
 		var quest_system = get_node("/root/QuestSystem")
 		quest_system.quest_accepted.connect(_on_quest_updated)
@@ -22,18 +24,18 @@ func _ready() -> void:
 		quest_system.quest_completed.connect(_on_quest_updated)
 		quest_system.quests_loaded.connect(_on_quests_loaded)
 
-	# Initial update
 	update_indicator()
 
 
 ## Update the indicator based on quest status
 func update_indicator() -> void:
-	if npc_id == "":
-		visible = false
+	if not is_node_ready():
 		return
 
-	if not has_node("/root/QuestSystem"):
-		visible = false
+	label_exclaim.visible = false
+	label_question.visible = false
+
+	if npc_id == "" or not has_node("/root/QuestSystem"):
 		return
 
 	var quest_system = get_node("/root/QuestSystem")
@@ -41,34 +43,25 @@ func update_indicator() -> void:
 
 	match status:
 		"available":
-			text = "!"
-			modulate = COLOR_YELLOW
-			visible = true
-
-		"in_progress":
-			text = "?"
-			modulate = COLOR_GREY
-			visible = true
-
+			label_exclaim.modulate = COLOR_YELLOW
+			label_exclaim.visible = true
 		"ready":
-			text = "?"
-			modulate = COLOR_YELLOW
-			visible = true
+			label_exclaim.modulate = COLOR_YELLOW
+			label_exclaim.visible = true
+		"in_progress":
+			label_question.modulate = COLOR_GREY
+			label_question.visible = true
+		_:
+			pass  # both hidden
 
-		_:  # "none" or any other status
-			visible = false
 
-
-## Called when a quest is accepted, ready, or completed
 func _on_quest_updated(_quest: Quest) -> void:
 	update_indicator()
 
 
-## Called when quest objective progresses
 func _on_quest_objective_progressed(_quest: Quest, _objective: QuestObjective) -> void:
 	update_indicator()
 
 
-## Called when quests are loaded from JSON
 func _on_quests_loaded() -> void:
 	update_indicator()

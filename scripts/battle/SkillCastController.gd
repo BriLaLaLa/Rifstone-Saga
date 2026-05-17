@@ -88,6 +88,11 @@ func start_combat() -> void:
 			print("[SkillCastController] WARNING: Combat already active!")
 		return
 
+	# Reset all skill cooldowns so they don't persist from previous battle
+	for i in range(6):
+		if loadout[i] != null:
+			loadout[i].current_cooldown = 0.0
+
 	combat_active = true
 	set_process(true)
 	cast_check_timer = 0.0
@@ -360,6 +365,17 @@ func _get_skill_targets(skill: WarriorSkill) -> Array:
 func _apply_skill_effects(skill: WarriorSkill, targets: Array) -> void:
 	"""Apply skill effects to targets"""
 
+	# SWORD VORTEX: play visual, damage fires mid-animation via callback
+	if skill.id == "sword_vortex":
+		_play_sword_vortex_visual(skill, targets)
+		# Stun/buffs still fall through below if ever added to vortex in future
+		return
+
+	# HISS (SIBILARE): dash + slash visual, damage+stun fire on impact via callback
+	if skill.id == "hiss":
+		_play_sibilare_visual(skill, targets)
+		return
+
 	# DAMAGE EFFECTS
 	if skill.damage_max > 0:
 		_apply_damage(skill, targets)
@@ -381,6 +397,10 @@ func _apply_damage(skill: WarriorSkill, targets: Array) -> void:
 	var ignore_defense = skill.has_effect("defense_pierce")
 
 	for target in targets:
+		# Target may have been freed between delayed hits (e.g. sword vortex 3-hit)
+		if not is_instance_valid(target):
+			continue
+
 		var damage = skill.roll_damage()
 
 		# Apply player attack bonus
@@ -409,6 +429,8 @@ func _apply_stun(skill: WarriorSkill, targets: Array) -> void:
 	var stun_duration = skill.get_effect_value("stun_duration", 1.5)
 
 	for target in targets:
+		if not is_instance_valid(target):
+			continue
 		if target.has_method("stun"):
 			target.stun(stun_duration)
 
@@ -546,6 +568,114 @@ func set_skill_on_cooldown(skill_id: String, cooldown: float) -> void:
 		if skill and skill.id == skill_id:
 			skill.current_cooldown = cooldown
 			return
+
+# ==================== SWORD VORTEX VISUAL ====================
+
+func _play_sword_vortex_visual(skill: WarriorSkill, targets: Array) -> void:
+	"""Spawn the spinning sword vortex effect; damage fires mid-animation."""
+	var parent_node = battle_area
+	if not parent_node:
+		# No visual parent – apply damage immediately as fallback
+		_apply_damage(skill, targets)
+		return
+
+	# Load effect script
+	var effect_script = load("res://scripts/battle/effects/SwordVortexEffect.gd")
+	if not effect_script:
+		_apply_damage(skill, targets)
+		return
+
+	# Load sword texture
+	const SWORD_TEX_PATH := "res://Item_Texture/Skills/Vortice della spada/ChatGPT Image 8 mar 2026, 12_12_10.png"
+	var tex: Texture2D = null
+	if ResourceLoader.exists(SWORD_TEX_PATH):
+		tex = ResourceLoader.load(SWORD_TEX_PATH)
+
+	# Create effect node and add to battle_area
+	var effect := Node2D.new()
+	effect.set_script(effect_script)
+	parent_node.add_child(effect)
+
+	# Position at center of battle area (Control uses global_position + size/2)
+	if parent_node is Control:
+		effect.global_position = parent_node.global_position + parent_node.size * 0.5
+	else:
+		effect.global_position = parent_node.global_position
+
+	# Capture skill + targets for the callback closure
+	var captured_skill := skill
+	var captured_targets := targets.duplicate()
+
+	effect.initialize(
+		tex,
+		# Called once per completed rotation (3 hits total = 3× full AOE damage)
+		func(): _apply_damage(captured_skill, captured_targets),
+		Callable()
+	)
+
+	if GameLogger.ENABLED:
+		print("[SkillCastController] Sword Vortex spawned — 3 rotations, 3 damage hits")
+
+# ==================== SIBILARE (HISS) VISUAL ====================
+
+func _play_sibilare_visual(skill: WarriorSkill, targets: Array) -> void:
+	"""Spawn the dash-slash Sibilare effect; damage and stun fire on impact."""
+	var parent_node = battle_area
+	if not parent_node or targets.is_empty():
+		# Fallback: apply immediately without visual
+		_apply_damage(skill, targets)
+		_apply_stun(skill, targets)
+		return
+
+	var effect_script = load("res://scripts/battle/effects/SibilareEffect.gd")
+	if not effect_script:
+		_apply_damage(skill, targets)
+		_apply_stun(skill, targets)
+		return
+
+	# Determine target position in battle_area local space
+	var target = targets[0]
+	var target_global: Vector2
+	if target.has_method("get_center_position"):
+		target_global = target.get_center_position()
+	elif target is Node2D:
+		target_global = target.global_position
+	elif target is Control:
+		target_global = target.global_position + target.size * 0.5
+	else:
+		target_global = parent_node.global_position + parent_node.size * 0.5
+
+	# Convert to battle_area local space
+	var target_local: Vector2
+	if parent_node is Control:
+		target_local = target_global - parent_node.global_position
+	else:
+		target_local = parent_node.to_local(target_global)
+
+	# Start position: left edge of battle_area at the target's Y height, with margin
+	var start_local: Vector2
+	if parent_node is Control:
+		start_local = Vector2(40.0, target_local.y)
+	else:
+		start_local = Vector2(40.0, target_local.y)
+
+	# Spawn effect as child of battle_area
+	var effect := Node2D.new()
+	effect.set_script(effect_script)
+	parent_node.add_child(effect)
+
+	var captured_skill    := skill
+	var captured_targets  := targets.duplicate()
+
+	effect.initialize(
+		start_local,
+		target_local,
+		func(): _apply_damage(captured_skill, captured_targets),
+		func(): _apply_stun(captured_skill, captured_targets)
+	)
+
+	if GameLogger.ENABLED:
+		print("[SkillCastController] Sibilare spawned — dash from %s to %s" % [start_local, target_local])
 
 # ==================== SETTERS ====================
 

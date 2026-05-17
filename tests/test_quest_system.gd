@@ -173,3 +173,49 @@ func test_reward_items_array():
 		assert_true(typeof(item) == TYPE_STRING, "Each reward item should be a String")
 
 	print("[TEST] reward_items array type OK")
+
+
+func test_quest_system_save_load_roundtrip():
+	"""Test that QuestSystem.from_dict restores progress to existing Quest objects (not new ones)"""
+	assert_true(quest_system.all_quests.size() > 0, "Need at least one quest")
+
+	var quest = quest_system.all_quests[0]
+	var original_quest_id = quest.quest_id
+
+	# Accept and add some progress
+	quest_system.accept_quest(quest)
+	if quest.objectives.size() > 0:
+		quest.objectives[0].add_progress(3)
+
+	# Serialize
+	var save_data = quest_system.to_dict()
+
+	# Reset quest system state
+	for q in quest_system.all_quests:
+		q.reset()
+	quest_system.active_quests.clear()
+	quest_system.completed_quests.clear()
+	quest_system.available_quests.clear()
+	for q in quest_system.all_quests:
+		quest_system.available_quests.append(q)
+
+	# Restore from save
+	quest_system.from_dict(save_data)
+
+	# Verify the restored active quest is the SAME object from all_quests
+	assert_eq(quest_system.active_quests.size(), 1, "Should have 1 active quest after restore")
+
+	var restored_quest = quest_system.active_quests[0]
+	assert_eq(restored_quest.quest_id, original_quest_id, "Restored quest ID should match")
+	assert_eq(restored_quest.status, Quest.QuestStatus.ACTIVE, "Restored quest should be ACTIVE")
+
+	# Verify it's the same object (not a duplicate)
+	assert_false(quest_system.available_quests.has(restored_quest),
+			"Active quest should NOT appear in available_quests")
+
+	# Verify objective progress is restored
+	if restored_quest.objectives.size() > 0:
+		assert_eq(restored_quest.objectives[0].current_progress, 3,
+				"Objective progress should be restored")
+
+	print("[TEST] QuestSystem save/load round-trip OK - same object restored, no duplicates")

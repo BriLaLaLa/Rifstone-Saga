@@ -21,7 +21,7 @@ func _ready() -> void:
 	_setup_inventory_tab()
 	_mount_battle_tab()  # ← NUOVA FUNZIONE
 	_connect_skills_to_battle()  # Connect SkillsTab to BattleTab
-	_set_current_tab_by_name("Inventory")
+	_set_current_tab_by_name("Villaggio")
 
 func _set_current_tab_by_name(tab_name: String) -> void:
 	for i in range(tabs.get_tab_count()):

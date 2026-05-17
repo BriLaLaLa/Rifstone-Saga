@@ -52,11 +52,23 @@ func _ready() -> void:
 	_create_slots()
 	_connect_to_gamestate()
 	_setup_starter_bag()
-	_refresh_from_gamestate()
 
 	# CRITICAL: Listen for children removed from ItemsLayer
 	if items_layer:
 		items_layer.child_exiting_tree.connect(_on_item_removed_from_layer)
+
+	# Refresh when tab becomes visible — necessary because the tab starts hidden
+	# (Villaggio is now the first tab). Without this, items are placed while the
+	# Control has no computed size, resulting in wrong positions.
+	visibility_changed.connect(_on_tab_visibility_changed)
+
+	# Initial refresh only if already visible (e.g. direct scene launch from editor)
+	if is_visible_in_tree():
+		_refresh_from_gamestate()
+
+func _on_tab_visibility_changed() -> void:
+	if is_visible_in_tree():
+		_refresh_from_gamestate()
 
 func _initialize_grid(clear_items: bool = true) -> void:
 	grid_occupied.clear()
@@ -301,9 +313,14 @@ func _load_from_inventory_items(inventory_items: Array) -> void:
 		else:
 			pos = Vector2i(0, 0)
 
+		# Apply stack_count from saved data BEFORE placing (gems/stackables)
+		if item_entry.has("stack_count") and item.is_stackable:
+			item.stack_count = item_entry.stack_count
+			item._update_stack_label()
+
 		# Place item at saved position
 		if _place_item_internal(item, pos):
-			print("[InventoryTab] ✅ Loaded %s at (%d, %d)" % [item_id, pos.x, pos.y])
+			print("[InventoryTab] ✅ Loaded %s x%d at (%d, %d)" % [item_id, item.stack_count, pos.x, pos.y])
 			loaded_count += 1
 		else:
 			print("[InventoryTab] ❌ Failed to place %s at (%d, %d)" % [item_id, pos.x, pos.y])
@@ -731,8 +748,8 @@ func _sync_to_gamestate() -> void:
 				"instance_id": item.get_meta("instance_id", "")  # CRITICAL: Unique identifier
 			}
 
-			# CRITICAL: Save stack_count for stackable items
-			if "stack_count" in item and item.stack_count > 1:
+			# CRITICAL: Save stack_count for ALL stackable items (even count=1, so stacking logic can find them)
+			if "stack_count" in item and item.is_stackable:
 				item_entry["stack_count"] = item.stack_count
 
 			# Include bonuses and upgrade_level if item has them (CraftableItem)

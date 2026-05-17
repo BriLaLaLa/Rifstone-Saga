@@ -1,134 +1,91 @@
 # File: res://scripts/ui/LootNotification.gd
-# Individual loot notification panel with slide-in animation
+# Individual loot notification — display only, lifecycle driven by LootNotificationManager
 
 extends PanelContainer
+class_name LootNotification
 
-# References to child nodes
+## Emitted after DISPLAY_DURATION: tells the manager it's time to fade this out
+signal expired
+
 @onready var item_icon: TextureRect = $MarginContainer/HBoxContainer/IconContainer/ItemIcon
 @onready var item_name_label: RichTextLabel = $MarginContainer/HBoxContainer/VBoxContainer/ItemName
 @onready var item_stats_label: Label = $MarginContainer/HBoxContainer/VBoxContainer/ItemStats
 
-# Notification data
-var item_data: Dictionary = {}
-var rarity: String = "common"
-
-# Timing
+const DISPLAY_DURATION: float = 4.0
 const SLIDE_DURATION: float = 0.3
-const DISPLAY_DURATION: float = 5.0
-const FADE_DURATION: float = 0.4
+const FADE_DURATION: float = 0.3
 
-# Rarity colors (matches CustomTooltip)
 const RARITY_COLORS = {
-	"common": Color.WHITE,
-	"rare": Color.BLUE,
-	"epic": Color.PURPLE,
-	"legendary": Color.ORANGE
+	"common":    Color(1.0, 1.0, 1.0),
+	"rare":      Color(0.3, 0.6, 1.0),
+	"epic":      Color(0.8, 0.3, 1.0),
+	"legendary": Color(1.0, 0.6, 0.0),
 }
 
-func setup(p_item_data: Dictionary, p_rarity: String) -> void:
-	"""Initialize notification with item data and rarity"""
-	item_data = p_item_data
-	rarity = p_rarity
 
-	# Set item icon
-	var icon_path = item_data.get("icon", "")
+## Called by manager after add_child — sets content, no animation yet
+func setup(item_data: Dictionary, rarity: String) -> void:
+	var rarity_color: Color = RARITY_COLORS.get(rarity, Color.WHITE)
 
-	if GameLogger.ENABLED:
-		print("[LootNotification] 🖼️ Icon path: '%s'" % icon_path)
-		print("[LootNotification] 📦 Item data keys: %s" % item_data.keys())
-
-	if not icon_path.is_empty():
-		if ResourceLoader.exists(icon_path):
-			item_icon.texture = load(icon_path)
-			item_icon.visible = true
-			if GameLogger.ENABLED:
-				print("[LootNotification] ✅ Icon loaded successfully")
-		else:
-			# Icon path exists but file not found
-			if GameLogger.ENABLED:
-				print("[LootNotification] ⚠️ Icon file not found: %s" % icon_path)
-			item_icon.visible = false
+	# Icon
+	var icon_path: String = item_data.get("icon", "")
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		item_icon.texture = load(icon_path)
+		item_icon.visible = true
 	else:
-		# No icon path provided
-		if GameLogger.ENABLED:
-			print("[LootNotification] ⚠️ No icon path in item_data")
+		item_icon.texture = null
 		item_icon.visible = false
 
-	# Set item name with rarity color
-	var rarity_color = RARITY_COLORS.get(rarity, Color.WHITE)
-	var color_hex = rarity_color.to_html(false)
-	var item_name_text = item_data.get("name", "Unknown Item")
-	item_name_label.text = "[color=#%s]%s[/color]" % [color_hex, item_name_text]
+	# Name with rarity color
+	item_name_label.text = "[color=#%s]%s[/color]" % [
+		rarity_color.to_html(false),
+		item_data.get("name", "?")
+	]
 
-	# Set item stats (bonuses)
-	var stats_text = _build_stats_text()
-	if stats_text.is_empty():
-		item_stats_label.visible = false
-	else:
-		item_stats_label.text = stats_text
+	# Stats (first 2 bonuses, no wrap)
+	var stats := _build_stats_text(item_data)
+	item_stats_label.text = stats
+	item_stats_label.visible = stats != ""
 
-	# Set panel modulate based on rarity (subtle background tint)
-	modulate = rarity_color.lerp(Color.WHITE, 0.85)
+	# Subtle rarity tint on the panel background
+	modulate = rarity_color.lerp(Color.WHITE, 0.82)
+	modulate.a = 0.0  # start invisible; animate_in will reveal it
 
-	# Start lifecycle
-	_start_lifecycle()
 
-func _build_stats_text() -> String:
-	"""Build compact stats text from item bonuses"""
-	if not item_data.has("bonuses") or item_data.bonuses.is_empty():
-		return ""
+## Slide in from the right, then wait and emit expired
+func animate_in() -> void:
+	var vp_w: float = get_viewport_rect().size.x
+	var end_x: float = vp_w - custom_minimum_size.x - 20.0
+	position.x = vp_w  # start off-screen right
 
-	var stats_parts = []
-	for bonus in item_data.bonuses:
-		if bonus.has("text"):
-			stats_parts.append(bonus.text)
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(self, "position:x", end_x, SLIDE_DURATION)\
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(self, "modulate:a", 1.0, SLIDE_DURATION * 0.6)\
+		.set_trans(Tween.TRANS_LINEAR)
+	await tw.finished
 
-	# Limit to first 2 bonuses to avoid overflow
-	if stats_parts.size() > 2:
-		return ", ".join(stats_parts.slice(0, 2)) + "..."
-	else:
-		return ", ".join(stats_parts)
-
-func _start_lifecycle() -> void:
-	"""Run notification lifecycle: slide in → wait → fade out"""
-	await slide_in()
 	await get_tree().create_timer(DISPLAY_DURATION).timeout
-	await fade_out()
-	queue_free()
+	expired.emit()
 
-func slide_in() -> void:
-	"""Slide in from right side of screen"""
-	# Start position: off-screen to the right
-	var screen_width = get_viewport_rect().size.x
-	var start_x = screen_width
-	var end_x = screen_width - custom_minimum_size.x - 20  # 20px margin from right
 
-	position.x = start_x
-	modulate.a = 0.0
+## Fade out (awaitable by manager)
+func animate_out() -> void:
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(self, "modulate:a", 0.0, FADE_DURATION)\
+		.set_trans(Tween.TRANS_LINEAR)
+	tw.tween_property(self, "position:x", position.x + 30.0, FADE_DURATION)\
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	await tw.finished
 
-	# Create tween for slide
-	var tween = create_tween()
-	tween.set_parallel(true)
-	tween.set_ease(Tween.EASE_OUT)
-	tween.set_trans(Tween.TRANS_CUBIC)
 
-	tween.tween_property(self, "position:x", end_x, SLIDE_DURATION)
-	tween.tween_property(self, "modulate:a", 1.0, SLIDE_DURATION * 0.5)
-
-	await tween.finished
-
-func fade_out() -> void:
-	"""Fade out and slide slightly to the right"""
-	var tween = create_tween()
-	tween.set_parallel(true)
-	tween.set_ease(Tween.EASE_IN)
-	tween.set_trans(Tween.TRANS_CUBIC)
-
-	tween.tween_property(self, "modulate:a", 0.0, FADE_DURATION)
-	tween.tween_property(self, "position:x", position.x + 30, FADE_DURATION)
-
-	await tween.finished
-
-func adjust_vertical_position(y_pos: float) -> void:
-	"""Set vertical position (called by LootNotificationManager for cascading)"""
-	position.y = y_pos
+func _build_stats_text(item_data: Dictionary) -> String:
+	if not item_data.has("bonuses") or item_data["bonuses"].is_empty():
+		return ""
+	var parts: Array = []
+	for bonus in item_data["bonuses"]:
+		if bonus.has("text"):
+			parts.append(bonus["text"])
+	if parts.size() > 2:
+		return ", ".join(parts.slice(0, 2)) + "…"
+	return ", ".join(parts)

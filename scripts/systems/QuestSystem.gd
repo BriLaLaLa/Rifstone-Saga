@@ -276,8 +276,11 @@ func _give_quest_rewards(quest: Quest) -> void:
 
 	# XP reward
 	if quest.reward_xp > 0:
-		# TODO: Add XP system when implemented
-		print("[QuestSystem] Rewarded %d XP (not yet implemented)" % quest.reward_xp)
+		if game_state.character_stats and game_state.character_stats.level_system:
+			game_state.character_stats.level_system.add_exp(quest.reward_xp)
+			print("[QuestSystem] Rewarded %d XP" % quest.reward_xp)
+		else:
+			print("[QuestSystem] ⚠️ CharacterStats not available for XP reward")
 
 	# Item rewards
 	for item_id in quest.reward_items:
@@ -331,11 +334,20 @@ func from_dict(data: Dictionary) -> void:
 			quest.status = Quest.QuestStatus.COMPLETED
 			completed_quests.append(quest)
 
-	# Restore active quests
+	# Restore active quests - reuse existing Quest objects from all_quests to avoid duplicates
 	var active_quests_data = data.get("active_quests", [])
 	for quest_data in active_quests_data:
-		var quest = Quest.from_dict(quest_data)
-		active_quests.append(quest)
+		var quest_id_to_restore = quest_data.get("quest_id", "")
+		var quest = get_quest_by_id(quest_id_to_restore)
+		if quest:
+			# Restore status and objective progress on the existing object
+			quest.status = quest_data.get("status", Quest.QuestStatus.ACTIVE)
+			var saved_objectives = quest_data.get("objectives", [])
+			for i in range(min(quest.objectives.size(), saved_objectives.size())):
+				quest.objectives[i].current_progress = saved_objectives[i].get("current_progress", 0)
+			active_quests.append(quest)
+		else:
+			print("[QuestSystem] ⚠️ Active quest not found in all_quests: %s" % quest_id_to_restore)
 
 	# Rebuild available quests
 	for quest in all_quests:

@@ -74,6 +74,8 @@ var skill_aoe_ready: bool = true
 # Gathering system
 var current_gathering_node: Node = null
 var pending_gathering_node_type: String = ""
+var _pending_drop_animations: int = 0
+var _exploration_setup_done: bool = false
 
 func _ready() -> void:
 	_setup_ui()
@@ -81,7 +83,8 @@ func _ready() -> void:
 	_connect_map_signals()
 	_create_inventory_popup()
 	_setup_skill_system()
-	await _setup_exploration_system()  # NEW: Setup exploration system (await for initialization)
+	# NOTE: _setup_exploration_system() is deferred to first visibility
+	# so BattleArea has time to initialize slots while the tab is actually visible.
 	_create_exit_battle_button()
 
 	# CRITICAL: Register this BattleTab with LootOrbManager so orbs spawn visually
@@ -1076,8 +1079,16 @@ func _on_exploration_zone_exited() -> void:
 # ==================== VISIBILITY HANDLING ====================
 
 func _on_battle_tab_visibility_changed() -> void:
-	"""Refresh CharacterDisplay when BattleTab becomes visible"""
+	"""Refresh CharacterDisplay when BattleTab becomes visible.
+	Also runs exploration system setup on first visit (deferred from _ready so
+	BattleArea can initialize slots while the tab is actually rendered)."""
 	print("[BattleTab] visibility_changed - visible: %s" % visible)
+
+	# First-time exploration setup: now the tab is visible so BattleArea can
+	# compute spawn point positions without timing out.
+	if visible and not _exploration_setup_done:
+		_exploration_setup_done = true
+		await _setup_exploration_system()
 
 	if visible and character_display:
 		print("[BattleTab] Forcing CharacterDisplay refresh...")
@@ -1364,88 +1375,138 @@ func _find_empty_inventory_position(gs, item_size: Vector2i) -> Vector2i:
 	return Vector2i(-1, -1)
 
 func _on_gathering_attempt(items: Array) -> void:
-	"""Called after each gathering attempt"""
-	print("[GATHERING] Attempt complete - Got %d items" % items.size())
-
-func _on_gathering_complete(total_items: Array) -> void:
-	"""Called when all gathering attempts are done"""
-	print("[GATHERING] 🎁 All attempts complete! Total: %d items" % total_items.size())
-
-	# Get gathering node position for orb spawning
-	var spawn_position = Vector2(400, 300)  # Default center
-	if current_gathering_node and is_instance_valid(current_gathering_node):
-		spawn_position = current_gathering_node.global_position + current_gathering_node.size / 2
-
-	# Spawn loot orbs instead of adding directly
+	"""Called after each gathering attempt — launch drop chip animations"""
 	var gs = get_node_or_null("/root/GameState")
-	var loot_orb_manager = get_node_or_null("/root/LootOrbManager")
+	var notif_manager = get_node_or_null("/root/LootNotificationManager")
+	if not gs:
+		return
 
-	if gs and loot_orb_manager:
-		for drop in total_items:
-			var item_id = drop.get("item_id", "")
-			var amount = drop.get("amount", 1)
-			var is_critical = drop.get("critical", false)
+	# Spawn position: center of the gathering node
+	var spawn_pos := Vector2(400, 300)
+	if current_gathering_node and is_instance_valid(current_gathering_node):
+		var n := current_gathering_node as Control
+		spawn_pos = n.global_position + n.size * 0.5
 
-			if item_id != "":
-				# Get full item data from database
-				var item_data = gs.data.items.get(item_id, {}).duplicate(true)
-				if item_data.is_empty():
-					print("[GATHERING] ⚠️ Item not found in database: %s" % item_id)
-					continue
+	for drop in items:
+		var item_id: String = drop.get("item_id", "")
+		var amount: int    = drop.get("amount", 1)
+		if item_id == "":
+			continue
 
-				# Add required fields for loot orb
-				item_data["id"] = item_id
-				if not item_data.has("name"):
-					item_data["name"] = item_id
+		var item_data: Dictionary = gs.data.items.get(item_id, {}).duplicate(true)
+		if item_data.is_empty():
+			print("[GATHERING] ⚠️ Item not found in database: %s" % item_id)
+			continue
+		item_data["id"] = item_id
+		if not item_data.has("name"):
+			item_data["name"] = item_id
 
-				# Spawn loot orbs for each item (respecting amount)
-				for i in range(amount):
-					# Slight offset for each orb
-					var offset = Vector2(randf_range(-20, 20), randf_range(-20, 20))
-					var orb_position = spawn_position + offset
+		# One chip per unit, staggered slightly
+		for i in range(amount):
+			var side   := 1.0 if randf() > 0.5 else -1.0
+			var land_x := side * randf_range(40.0, 80.0)
+			var land_y := randf_range(30.0, 55.0)
+			_spawn_drop_chip(item_data, spawn_pos, Vector2(land_x, land_y),
+				func():
+					gs._add_item_to_visual_inventory(item_id, item_data)
+					if notif_manager:
+						notif_manager.show_notification(item_data)
+			)
+			# Tiny stagger between chips of the same drop
+			await get_tree().create_timer(0.06).timeout
 
-					# Get rarity for this item (default to common for gathering items)
-					var rarity = "common"
-					if item_data.has("bonuses") and item_data.bonuses.size() > 0:
-						var bonus_count = item_data.bonuses.size()
-						if bonus_count <= 2:
-							rarity = "rare"
-						elif bonus_count <= 4:
-							rarity = "epic"
-						else:
-							rarity = "legendary"
 
-					# Spawn loot orb
-					loot_orb_manager.spawn_orb(item_data, orb_position, rarity)
+func _spawn_drop_chip(item_data: Dictionary, from_pos: Vector2,
+		land_offset: Vector2, on_done: Callable) -> void:
+	"""Shoots a small item chip in a parabola arc, bounces on landing, then vanishes."""
+	_pending_drop_animations += 1
 
-					if GameLogger.ENABLED:
-						var crit_text = " [CRITICAL!]" if is_critical else ""
-						print("[GATHERING] ✨ Spawned loot orb: %s%s" % [item_id, crit_text])
+	# --- Build the chip visual ---
+	var chip := Panel.new()
+	chip.custom_minimum_size = Vector2(28, 28)
+	chip.size = Vector2(28, 28)
 
-					# Small delay between spawns for visual effect
-					await get_tree().create_timer(0.05).timeout
+	var style := StyleBoxFlat.new()
+	style.bg_color     = Color(0.9, 0.75, 0.15, 0.95)
+	style.border_color = Color(1.0, 1.0, 0.5, 0.9)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(6)
+	chip.add_theme_stylebox_override("panel", style)
 
-	# Cleanup - REMOVE node from scene
-	print("[GATHERING] Starting cleanup...")
-	if current_gathering_node:
-		print("[GATHERING] Removing gathering node from scene")
-		current_gathering_node.queue_free()  # Remove from scene tree
+	var icon_path: String = item_data.get("icon", "")
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		var tr := TextureRect.new()
+		tr.texture      = load(icon_path)
+		tr.expand_mode  = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+		chip.add_child(tr)
+
+	# Add to BattleTab so it renders above everything
+	add_child(chip)
+	chip.global_position = from_pos - chip.size * 0.5
+
+	# --- Parabola arc ---
+	var start  := chip.global_position
+	var finish := start + land_offset
+	var arc_h  := randf_range(70.0, 110.0)     # peak height in pixels
+
+	var fly_fn := func(t: float) -> void:
+		if not is_instance_valid(chip):
+			return
+		var nx := lerpf(start.x, finish.x, t)
+		var ny := lerpf(start.y, finish.y, t) - arc_h * 4.0 * t * (1.0 - t)
+		chip.global_position = Vector2(nx, ny)
+
+	var fly := create_tween()
+	fly.tween_method(fly_fn, 0.0, 1.0, 0.45).set_trans(Tween.TRANS_LINEAR)
+
+	await fly.finished
+	if not is_instance_valid(chip):
+		_pending_drop_animations -= 1
+		on_done.call()
+		return
+
+	# --- Landing bounce (squash & stretch) ---
+	var bounce := create_tween()
+	bounce.tween_property(chip, "scale", Vector2(1.4, 0.6), 0.07).set_trans(Tween.TRANS_CUBIC)
+	bounce.tween_property(chip, "scale", Vector2(0.85, 1.2), 0.07).set_trans(Tween.TRANS_CUBIC)
+	bounce.tween_property(chip, "scale", Vector2(1.0, 1.0),  0.06).set_trans(Tween.TRANS_CUBIC)
+	await bounce.finished
+
+	# Brief pause on the ground
+	await get_tree().create_timer(0.18).timeout
+
+	# --- Fade out ---
+	var fade := create_tween()
+	fade.tween_property(chip, "modulate:a", 0.0, 0.18).set_trans(Tween.TRANS_LINEAR)
+	await fade.finished
+
+	chip.queue_free()
+	on_done.call()
+	_pending_drop_animations -= 1
+
+
+func _on_gathering_complete(_total_items: Array) -> void:
+	"""Wait for all drop animations, then cleanup and transition."""
+	# Wait until every chip has landed and vanished
+	while _pending_drop_animations > 0:
+		await get_tree().process_frame
+
+	# Brief pause after the last chip disappears
+	await get_tree().create_timer(0.4).timeout
+
+	if current_gathering_node and is_instance_valid(current_gathering_node):
+		current_gathering_node.queue_free()
 		current_gathering_node = null
 
-	# Hide gathering skill display
 	_hide_gathering_skill_display()
-
 	pending_gathering_node_type = ""
-	print("[GATHERING] Cleanup complete")
 
-	# Start transition to next encounter
-	print("[GATHERING] Waiting 1 second before next encounter...")
-	await get_tree().create_timer(1.0).timeout
-	print("[GATHERING] Calling state_manager.on_combat_ended()...")
+	await get_tree().create_timer(0.5).timeout
 	if exploration_controller and exploration_controller.state_manager:
 		exploration_controller.state_manager.on_combat_ended()
-
-	print("[GATHERING] ✅ Gathering complete, starting transition")
+	print("[GATHERING] ✅ Transition to next encounter started")
 
 func _show_gathering_skill_display(node_type: String) -> void:
 	"""Show gathering skill display with current level and EXP"""

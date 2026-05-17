@@ -9,6 +9,7 @@ const VILLAGE_MAP: String = "res://Icons/mappa villaggio.png"
 const NPCS_JSON: String   = "res://data/npcs.json"
 const NPC_MARKER_ICON: String = "res://Icons/marker.png"
 const NPC_MARKER_SIZE_PX: int = 48
+const NPC_QUEST_INDICATOR_SCENE: String = "res://scenes/ui/NPCQuestIndicator.tscn"
 
 var _map_root: Control
 var _layer: Control
@@ -108,14 +109,12 @@ func _spawn_markers() -> void:
 				emit_signal("npc_clicked", str((npc as Dictionary)["id"]))
 			)
 
-		# Add quest indicator above the marker
-		var quest_indicator = NPCQuestIndicator.new()
-		quest_indicator.npc_id = str((npc as Dictionary)["id"])
-		quest_indicator.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		quest_indicator.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		quest_indicator.add_theme_font_size_override("font_size", 24)
-		quest_indicator.position = Vector2(-12, -32)  # Position above the button
-		marker.add_child(quest_indicator)
+		# Add quest indicator above the marker (position is anchor-based in the scene)
+		var indicator_scene = load(NPC_QUEST_INDICATOR_SCENE)
+		if indicator_scene:
+			var quest_indicator = indicator_scene.instantiate()
+			quest_indicator.npc_id = str((npc as Dictionary)["id"])
+			marker.add_child(quest_indicator)
 
 		_layer.add_child(marker)
 
