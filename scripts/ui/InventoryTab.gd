@@ -313,13 +313,13 @@ func _load_from_inventory_items(inventory_items: Array) -> void:
 		else:
 			pos = Vector2i(0, 0)
 
-		# Apply stack_count from saved data BEFORE placing (gems/stackables)
-		if item_entry.has("stack_count") and item.is_stackable:
-			item.stack_count = item_entry.stack_count
-			item._update_stack_label()
-
-		# Place item at saved position
+		# Place item at saved position FIRST (add_child triggers _ready on StackLabel)
 		if _place_item_internal(item, pos):
+			# Apply stack_count AFTER entering the scene tree so StackLabel._ready()
+			# doesn't reset visible=false over the count we set
+			if item_entry.has("stack_count") and item.is_stackable:
+				item.stack_count = item_entry.stack_count
+				item._update_stack_label()
 			print("[InventoryTab] ✅ Loaded %s x%d at (%d, %d)" % [item_id, item.stack_count, pos.x, pos.y])
 			loaded_count += 1
 		else:
