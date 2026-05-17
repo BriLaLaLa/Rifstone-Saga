@@ -11,8 +11,8 @@ signal back_to_world_map()
 # UI References
 @onready var zoom_image: TextureRect = $ZoomImage
 @onready var zone_areas: Control = $ZoneAreas
-@onready var back_button: Button = $BackButton
-@onready var region_title: Label = $RegionTitle
+@onready var back_button: Button = $TopBar/BackButton
+@onready var region_title: Label = $TopBar/RegionTitle
 
 # State
 var current_kingdom_id: String = ""
@@ -93,8 +93,8 @@ func _setup_zoom_image() -> void:
 
 	if ResourceLoader.exists(zoom_map_path):
 		zoom_image.texture = load(zoom_map_path)
-		zoom_image.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-		zoom_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		zoom_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		zoom_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 
 		if GameLogger.ENABLED:
 			print("[RegionZoomController] Loaded zoom image: %s" % zoom_map_path)

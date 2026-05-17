@@ -73,8 +73,8 @@ func _setup_map_image() -> void:
 
 	if ResourceLoader.exists(map_texture_path):
 		map_image.texture = load(map_texture_path)
-		map_image.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-		map_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		map_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		map_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 
 		if GameLogger.ENABLED:
 			print("[WorldMapController] Loaded map image: %s" % map_texture_path)

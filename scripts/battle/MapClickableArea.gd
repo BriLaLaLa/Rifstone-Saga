@@ -25,25 +25,21 @@ var is_hovered: bool = false
 var original_modulate: Color = Color.WHITE
 
 func _ready() -> void:
-	# Setup mouse input
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
 	gui_input.connect(_on_gui_input)
 
-	# Store original appearance
 	original_modulate = modulate
 
-	# Setup tooltip
 	if is_unlocked:
 		tooltip_text = zone_name
 	else:
 		tooltip_text = "🔒 Locked - Level %d Required" % unlock_requirement
 
-	# Create hover overlay
 	_create_hover_overlay()
+	_create_name_label()
 
-	# Create lock overlay if needed
 	if not is_unlocked:
 		_create_lock_overlay()
 
@@ -88,44 +84,51 @@ func setup(data: Dictionary) -> void:
 
 
 func _create_hover_overlay() -> void:
-	"""Create semi-transparent overlay for hover effect"""
 	hover_overlay = ColorRect.new()
 	hover_overlay.name = "HoverOverlay"
-	hover_overlay.color = Color(1.0, 1.0, 1.0, 0.2)  # White glow
+	hover_overlay.color = Color(1.0, 0.85, 0.3, 0.18)  # Warm golden glow
 	hover_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover_overlay.visible = false
-
-	# Fill entire area
 	hover_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-
 	add_child(hover_overlay)
 
+func _create_name_label() -> void:
+	if zone_name.is_empty():
+		return
+	var lbl = Label.new()
+	lbl.name = "ZoneNameLabel"
+	lbl.text = zone_name
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl.add_theme_font_size_override("font_size", 11)
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.95, 0.75))
+	lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.add_theme_constant_override("shadow_outline_size", 2)
+	add_child(lbl)
+
 func _create_lock_overlay() -> void:
-	"""Create dark overlay and lock icon for locked areas"""
-	# Dark overlay
+	# Very subtle dark tint — doesn't hide the map
 	lock_overlay = ColorRect.new()
 	lock_overlay.name = "LockOverlay"
-	lock_overlay.color = Color(0, 0, 0, 0.7)  # Dark grey
+	lock_overlay.color = Color(0, 0, 0, 0.28)
 	lock_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	# Fill entire area
 	lock_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-
 	add_child(lock_overlay)
 
-	# Lock icon
+	# Small centered lock icon only
 	lock_icon = Label.new()
 	lock_icon.name = "LockIcon"
 	lock_icon.text = "🔒"
 	lock_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lock_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lock_icon.add_theme_font_size_override("font_size", 48)
-	lock_icon.add_theme_color_override("font_color", Color.WHITE)
+	lock_icon.add_theme_font_size_override("font_size", 28)
+	lock_icon.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.85))
 	lock_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	# Center icon
 	lock_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-
 	lock_overlay.add_child(lock_icon)
 
 	if GameLogger.ENABLED:
@@ -216,31 +219,19 @@ func _show_locked_feedback() -> void:
 		tween2.tween_property(lock_overlay, "color", Color(0, 0, 0, 0.7), 0.1)
 
 func unlock() -> void:
-	"""Unlock this area"""
 	is_unlocked = true
-
-	# Remove lock overlay
 	if lock_overlay:
 		lock_overlay.queue_free()
 		lock_overlay = null
-
-	# Update tooltip
 	tooltip_text = zone_name
-
 	if GameLogger.ENABLED:
 		print("[MapClickableArea] Unlocked: %s" % zone_name)
 
 func lock() -> void:
-	"""Lock this area"""
 	is_unlocked = false
-
-	# Create lock overlay if not exists
 	if lock_overlay == null:
 		_create_lock_overlay()
-
-	# Update tooltip
 	tooltip_text = "🔒 Locked - Level %d Required" % unlock_requirement
-
 	if GameLogger.ENABLED:
 		print("[MapClickableArea] Locked: %s" % zone_name)
 
