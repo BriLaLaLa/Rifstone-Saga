@@ -33,156 +33,129 @@ mouse_filter = 2
 
 [node name="red_kingdom_lv1_10" type="Control" parent="ZoneAreas"]
 layout_mode = 1
-anchors_preset = 0
-anchor_left = 0.1
-anchor_top = 0.08
-anchor_right = 0.28
-anchor_bottom = 0.23
-offset_right = 0.0
-offset_bottom = 0.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_clickable_area")
 zone_id = "red_kingdom_lv1_10"
-zone_name = "Red Kingdom - Plains"
+zone_name = "Plains  Lv 1–10"
 is_unlocked = true
 unlock_requirement = 1
+polygon_points = PackedVector2Array(0.0, 0.0, 1.0, 0.0, 1.0, 0.35, 0.78, 0.45, 0.60, 0.52, 0.45, 0.56, 0.30, 0.53, 0.15, 0.46, 0.0, 0.35)
 
 [node name="red_kingdom_lv11_30" type="Control" parent="ZoneAreas"]
 layout_mode = 1
-anchors_preset = 0
-anchor_left = 0.4
-anchor_top = 0.1
-anchor_right = 0.6
-anchor_bottom = 0.28
-offset_right = 0.0
-offset_bottom = 0.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_clickable_area")
 zone_id = "red_kingdom_lv11_30"
-zone_name = "Red Kingdom - Mountains"
+zone_name = "Mountains  Lv 11–30"
 is_unlocked = false
 unlock_requirement = 11
+polygon_points = PackedVector2Array(0.60, 0.52, 0.78, 0.45, 1.0, 0.35, 1.0, 1.0, 0.45, 1.0, 0.45, 0.56)
 
 [node name="red_kingdom_lv31_50" type="Control" parent="ZoneAreas"]
 layout_mode = 1
-anchors_preset = 0
-anchor_left = 0.08
-anchor_top = 0.35
-anchor_right = 0.3
-anchor_bottom = 0.51
-offset_right = 0.0
-offset_bottom = 0.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_clickable_area")
 zone_id = "red_kingdom_lv31_50"
-zone_name = "Red Kingdom - Dark Forest"
+zone_name = "Dark Forest  Lv 31–50"
 is_unlocked = false
 unlock_requirement = 31
+polygon_points = PackedVector2Array(0.0, 0.35, 0.15, 0.46, 0.30, 0.53, 0.45, 0.56, 0.45, 1.0, 0.0, 1.0)
 
 [node name="blue_kingdom_lv1_20" type="Control" parent="ZoneAreas"]
 layout_mode = 1
-anchors_preset = 0
-anchor_left = 0.7
-anchor_top = 0.12
-anchor_right = 0.92
-anchor_bottom = 0.3
-offset_right = 0.0
-offset_bottom = 0.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_clickable_area")
 zone_id = "blue_kingdom_lv1_20"
-zone_name = "Blue Kingdom - Coast"
+zone_name = "Coast  Lv 1–20"
 is_unlocked = false
 unlock_requirement = 20
+polygon_points = PackedVector2Array(0.0, 0.0, 1.0, 0.0, 1.0, 0.5, 0.5, 0.5, 0.0, 0.5)
 
 [node name="blue_kingdom_lv21_40" type="Control" parent="ZoneAreas"]
 layout_mode = 1
-anchors_preset = 0
-anchor_left = 0.65
-anchor_top = 0.4
-anchor_right = 0.85
-anchor_bottom = 0.58
-offset_right = 0.0
-offset_bottom = 0.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_clickable_area")
 zone_id = "blue_kingdom_lv21_40"
-zone_name = "Blue Kingdom - Depths"
+zone_name = "Depths  Lv 21–40"
 is_unlocked = false
 unlock_requirement = 40
+polygon_points = PackedVector2Array(0.5, 0.5, 1.0, 0.5, 1.0, 1.0, 0.5, 1.0)
 
 [node name="blue_kingdom_lv41_60" type="Control" parent="ZoneAreas"]
 layout_mode = 1
-anchors_preset = 0
-anchor_left = 0.72
-anchor_top = 0.68
-anchor_right = 0.9
-anchor_bottom = 0.82
-offset_right = 0.0
-offset_bottom = 0.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_clickable_area")
 zone_id = "blue_kingdom_lv41_60"
-zone_name = "Blue Kingdom - Abyss"
+zone_name = "Abyss  Lv 41–60"
 is_unlocked = false
 unlock_requirement = 60
+polygon_points = PackedVector2Array(0.0, 0.5, 0.5, 0.5, 0.5, 1.0, 0.0, 1.0)
 
 [node name="green_kingdom_lv1_25" type="Control" parent="ZoneAreas"]
 layout_mode = 1
-anchors_preset = 0
-anchor_left = 0.35
-anchor_top = 0.65
-anchor_right = 0.55
-anchor_bottom = 0.85
-offset_right = 0.0
-offset_bottom = 0.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_clickable_area")
 zone_id = "green_kingdom_lv1_25"
-zone_name = "Green Kingdom - Grove"
+zone_name = "Grove  Lv 1–25"
 is_unlocked = false
 unlock_requirement = 25
+polygon_points = PackedVector2Array(0.0, 0.0, 1.0, 0.0, 1.0, 0.5, 0.5, 0.5, 0.0, 0.5)
 
 [node name="green_kingdom_lv26_45" type="Control" parent="ZoneAreas"]
 layout_mode = 1
-anchors_preset = 0
-anchor_left = 0.12
-anchor_top = 0.62
-anchor_right = 0.3
-anchor_bottom = 0.78
-offset_right = 0.0
-offset_bottom = 0.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_clickable_area")
 zone_id = "green_kingdom_lv26_45"
-zone_name = "Green Kingdom - Wilds"
+zone_name = "Wilds  Lv 26–45"
 is_unlocked = false
 unlock_requirement = 45
+polygon_points = PackedVector2Array(0.5, 0.5, 1.0, 0.5, 1.0, 1.0, 0.5, 1.0)
 
 [node name="green_kingdom_lv46_65" type="Control" parent="ZoneAreas"]
 layout_mode = 1
-anchors_preset = 0
-anchor_left = 0.08
-anchor_top = 0.82
-anchor_right = 0.26
-anchor_bottom = 0.96
-offset_right = 0.0
-offset_bottom = 0.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_clickable_area")
 zone_id = "green_kingdom_lv46_65"
-zone_name = "Green Kingdom - Heart"
+zone_name = "Heart  Lv 46–65"
 is_unlocked = false
 unlock_requirement = 65
+polygon_points = PackedVector2Array(0.0, 0.5, 0.5, 0.5, 0.5, 1.0, 0.0, 1.0)
 
 [node name="TopBar" type="HBoxContainer" parent="."]
 layout_mode = 1

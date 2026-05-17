@@ -33,13 +33,9 @@ mouse_filter = 2
 
 [node name="red_kingdom" type="Control" parent="ClickableAreas"]
 layout_mode = 1
-anchors_preset = 0
-anchor_left = 0.05
-anchor_top = 0.05
-anchor_right = 0.35
-anchor_bottom = 0.3
-offset_right = 0.0
-offset_bottom = 0.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_clickable_area")
@@ -47,16 +43,13 @@ kingdom_id = "red_kingdom"
 zone_name = "Red Kingdom"
 is_unlocked = true
 unlock_requirement = 1
+polygon_points = PackedVector2Array(0.06, 0.06, 0.26, 0.04, 0.48, 0.06, 0.52, 0.15, 0.50, 0.28, 0.44, 0.38, 0.35, 0.45, 0.22, 0.46, 0.10, 0.42, 0.06, 0.35)
 
 [node name="blue_kingdom" type="Control" parent="ClickableAreas"]
 layout_mode = 1
-anchors_preset = 0
-anchor_left = 0.5
-anchor_top = 0.2
-anchor_right = 0.77
-anchor_bottom = 0.42
-offset_right = 0.0
-offset_bottom = 0.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_clickable_area")
@@ -64,16 +57,13 @@ kingdom_id = "blue_kingdom"
 zone_name = "Blue Kingdom"
 is_unlocked = false
 unlock_requirement = 50
+polygon_points = PackedVector2Array(0.48, 0.06, 0.70, 0.04, 0.92, 0.08, 0.96, 0.25, 0.94, 0.42, 0.80, 0.50, 0.65, 0.50, 0.52, 0.44, 0.50, 0.28, 0.52, 0.15)
 
 [node name="green_kingdom" type="Control" parent="ClickableAreas"]
 layout_mode = 1
-anchors_preset = 0
-anchor_left = 0.2
-anchor_top = 0.4
-anchor_right = 0.45
-anchor_bottom = 0.6
-offset_right = 0.0
-offset_bottom = 0.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_clickable_area")
@@ -81,3 +71,4 @@ kingdom_id = "green_kingdom"
 zone_name = "Green Kingdom"
 is_unlocked = false
 unlock_requirement = 75
+polygon_points = PackedVector2Array(0.06, 0.35, 0.10, 0.42, 0.22, 0.46, 0.35, 0.45, 0.44, 0.38, 0.52, 0.44, 0.65, 0.50, 0.80, 0.50, 0.94, 0.42, 0.94, 0.94, 0.65, 0.96, 0.35, 0.95, 0.06, 0.92)

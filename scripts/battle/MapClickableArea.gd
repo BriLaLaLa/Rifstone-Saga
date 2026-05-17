@@ -1,28 +1,19 @@
-﻿extends Control
+extends Control
 class_name MapClickableArea
-
-# Clickable Area Component for World Map System
-# Handles clicks, hover effects, and lock states for kingdoms/zones
-# NOTE: Areas are now created directly in the scene with proper anchors
 
 signal clicked()
 
-# Data - Can be set in Inspector
 @export var kingdom_id: String = ""
 @export var zone_id: String = ""
 @export var is_unlocked: bool = true
 @export var unlock_requirement: int = 1
 @export var zone_name: String = ""
+@export var polygon_points: PackedVector2Array = PackedVector2Array()
 
-# UI References
-var lock_overlay: ColorRect = null
-var lock_icon: Label = null
-var hover_overlay: ColorRect = null
-var tooltip_label: Label = null
-
-# State
-var is_hovered: bool = false
-var original_modulate: Color = Color.WHITE
+var _lock_icon: Label = null
+var _name_label: Label = null
+var _is_hovered: bool = false
+var _flash: float = 0.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -30,221 +21,179 @@ func _ready() -> void:
 	mouse_exited.connect(_on_mouse_exited)
 	gui_input.connect(_on_gui_input)
 
-	original_modulate = modulate
+	tooltip_text = zone_name if is_unlocked else "🔒 Locked - Level %d Required" % unlock_requirement
 
-	if is_unlocked:
-		tooltip_text = zone_name
-	else:
-		tooltip_text = "🔒 Locked - Level %d Required" % unlock_requirement
+	_build_labels()
+	queue_redraw()
 
-	_create_hover_overlay()
-	_create_name_label()
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		_reposition_labels()
+		queue_redraw()
+
+# ── Labels ────────────────────────────────────────────────────────────────────
+
+func _build_labels() -> void:
+	if not zone_name.is_empty():
+		_name_label = Label.new()
+		_name_label.name = "ZoneNameLabel"
+		_name_label.text = zone_name
+		_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_name_label.layout_mode = 0
+		_name_label.add_theme_font_size_override("font_size", 11)
+		_name_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.75))
+		_name_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.95))
+		_name_label.add_theme_constant_override("shadow_outline_size", 2)
+		add_child(_name_label)
 
 	if not is_unlocked:
-		_create_lock_overlay()
+		_build_lock_icon()
 
-	if GameLogger.ENABLED:
-		print("[MapClickableArea] Ready: %s (Unlocked: %s)" % [zone_name, is_unlocked])
+	_reposition_labels()
 
-func setup(data: Dictionary) -> void:
-	"""Initialize clickable area with kingdom/zone data (for dynamic creation)"""
-	if data.has("id"):
-		# Could be kingdom or zone
-		if data.has("zones"):
-			# It's a kingdom
-			kingdom_id = data["id"]
-			zone_name = data.get("name", kingdom_id)
-		else:
-			# It's a zone
-			zone_id = data["id"]
-			zone_name = data.get("name", zone_id)
-			kingdom_id = ""
+func _build_lock_icon() -> void:
+	_lock_icon = Label.new()
+	_lock_icon.name = "LockIcon"
+	_lock_icon.text = "🔒"
+	_lock_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_lock_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_lock_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_lock_icon.layout_mode = 0
+	_lock_icon.add_theme_font_size_override("font_size", 26)
+	_lock_icon.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
+	add_child(_lock_icon)
 
-	is_unlocked = data.get("unlocked", true)
-	unlock_requirement = data.get("unlock_requirement", 1)
+func _reposition_labels() -> void:
+	var sz = get_size()
+	var c = _centroid()
+	var px = Vector2(c.x * sz.x, c.y * sz.y)
 
-	# Parse clickable area (for dynamic positioning)
-	if data.has("clickable_area"):
-		var area = data["clickable_area"]
+	if _name_label:
+		_name_label.position = px + Vector2(-60, 8)
+		_name_label.size = Vector2(120, 20)
 
-		# Set position and size from data
-		position = Vector2(area.get("x", 0), area.get("y", 0))
-		custom_minimum_size = Vector2(area.get("width", 100), area.get("height", 100))
-		size = custom_minimum_size
+	if _lock_icon:
+		_lock_icon.position = px + Vector2(-15, -22)
+		_lock_icon.size = Vector2(32, 38)
 
-	# Update tooltip
-	if is_unlocked:
-		tooltip_text = zone_name
-	else:
-		tooltip_text = "🔒 Locked - Level %d Required" % unlock_requirement
+func _centroid() -> Vector2:
+	if polygon_points.size() == 0:
+		return Vector2(0.5, 0.5)
+	var s := Vector2.ZERO
+	for p in polygon_points:
+		s += p
+	return s / float(polygon_points.size())
 
-	if GameLogger.ENABLED:
-		print("[MapClickableArea] Setup: %s at %s (Size: %s)" %
-			[zone_name, position, size])
+# ── Rendering ─────────────────────────────────────────────────────────────────
 
-
-func _create_hover_overlay() -> void:
-	hover_overlay = ColorRect.new()
-	hover_overlay.name = "HoverOverlay"
-	hover_overlay.color = Color(1.0, 0.85, 0.3, 0.18)  # Warm golden glow
-	hover_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hover_overlay.visible = false
-	hover_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(hover_overlay)
-
-func _create_name_label() -> void:
-	if zone_name.is_empty():
+func _draw() -> void:
+	if polygon_points.size() < 3:
 		return
-	var lbl = Label.new()
-	lbl.name = "ZoneNameLabel"
-	lbl.text = zone_name
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lbl.add_theme_font_size_override("font_size", 11)
-	lbl.add_theme_color_override("font_color", Color(1.0, 0.95, 0.75))
-	lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
-	lbl.add_theme_constant_override("shadow_offset_x", 1)
-	lbl.add_theme_constant_override("shadow_offset_y", 1)
-	lbl.add_theme_constant_override("shadow_outline_size", 2)
-	add_child(lbl)
+	var sz = get_size()
+	var pts := PackedVector2Array()
+	for p in polygon_points:
+		pts.append(Vector2(p.x * sz.x, p.y * sz.y))
 
-func _create_lock_overlay() -> void:
-	# Very subtle dark tint — doesn't hide the map
-	lock_overlay = ColorRect.new()
-	lock_overlay.name = "LockOverlay"
-	lock_overlay.color = Color(0, 0, 0, 0.28)
-	lock_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lock_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(lock_overlay)
+	if not is_unlocked:
+		draw_colored_polygon(pts, Color(0, 0, 0, 0.30))
 
-	# Small centered lock icon only
-	lock_icon = Label.new()
-	lock_icon.name = "LockIcon"
-	lock_icon.text = "🔒"
-	lock_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lock_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lock_icon.add_theme_font_size_override("font_size", 28)
-	lock_icon.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.85))
-	lock_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lock_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-	lock_overlay.add_child(lock_icon)
+	if _is_hovered:
+		var col := Color(1.0, 0.85, 0.3, 0.22) if is_unlocked else Color(0.8, 0.1, 0.0, 0.18)
+		draw_colored_polygon(pts, col)
 
-	if GameLogger.ENABLED:
-		print("[MapClickableArea] Created lock overlay for: %s" % zone_name)
+	if _flash > 0.0:
+		draw_colored_polygon(pts, Color(1, 1, 1, 0.4 * _flash))
+
+# ── Hit testing ───────────────────────────────────────────────────────────────
+
+func _has_point(point: Vector2) -> bool:
+	if polygon_points.size() < 3:
+		return super._has_point(point)
+	var sz = get_size()
+	if sz.x == 0 or sz.y == 0:
+		return false
+	return Geometry2D.is_point_in_polygon(
+		Vector2(point.x / sz.x, point.y / sz.y),
+		polygon_points
+	)
+
+# ── Input ─────────────────────────────────────────────────────────────────────
 
 func _on_mouse_entered() -> void:
-	"""Handle mouse enter - show hover effect"""
-	is_hovered = true
-
-	if is_unlocked:
-		# Show glow effect
-		modulate = Color(1.2, 1.2, 1.2)  # Brighten
-
-		# Show hover overlay
-		if hover_overlay:
-			hover_overlay.visible = true
-
-		# Change cursor
-		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-
-		if GameLogger.ENABLED:
-			print("[MapClickableArea] Hover: %s" % zone_name)
-	else:
-		# Show "locked" cursor
-		mouse_default_cursor_shape = Control.CURSOR_FORBIDDEN
+	_is_hovered = true
+	queue_redraw()
+	mouse_default_cursor_shape = CURSOR_POINTING_HAND if is_unlocked else CURSOR_FORBIDDEN
 
 func _on_mouse_exited() -> void:
-	"""Handle mouse exit - remove hover effect"""
-	is_hovered = false
-
-	# Restore appearance
-	modulate = original_modulate
-
-	# Hide hover overlay
-	if hover_overlay:
-		hover_overlay.visible = false
-
-	# Reset cursor
-	mouse_default_cursor_shape = Control.CURSOR_ARROW
+	_is_hovered = false
+	queue_redraw()
+	mouse_default_cursor_shape = CURSOR_ARROW
 
 func _on_gui_input(event: InputEvent) -> void:
-	"""Handle click events"""
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			if is_unlocked:
-				_on_clicked()
-			else:
-				# Show "can't click" feedback
-				_show_locked_feedback()
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		if is_unlocked:
+			_do_click()
+		else:
+			_do_locked()
 
-func _on_clicked() -> void:
-	"""Handle click on unlocked area"""
-	if not is_unlocked:
-		return
-
+func _do_click() -> void:
+	_flash = 1.0
+	var tw = create_tween()
+	tw.tween_method(func(v: float) -> void: _flash = v; queue_redraw(), 1.0, 0.0, 0.25)
+	clicked.emit()
 	if GameLogger.ENABLED:
 		print("[MapClickableArea] Clicked: %s" % zone_name)
 
-	# Visual feedback - brief flash
-	_show_click_feedback()
+func _do_locked() -> void:
+	var orig := position
+	var tw = create_tween()
+	tw.tween_property(self, "position", orig + Vector2(5, 0), 0.05)
+	tw.tween_property(self, "position", orig + Vector2(-5, 0), 0.05)
+	tw.tween_property(self, "position", orig, 0.05)
 
-	# Emit signal
-	clicked.emit()
-
-func _show_click_feedback() -> void:
-	"""Show brief flash on click"""
-	# Brief pulse effect
-	var tween = create_tween()
-	tween.tween_property(self, "modulate", Color(1.5, 1.5, 1.5), 0.1)
-	tween.tween_property(self, "modulate", original_modulate, 0.1)
-
-func _show_locked_feedback() -> void:
-	"""Show shake effect when clicking locked area"""
-	if GameLogger.ENABLED:
-		print("[MapClickableArea] Locked area clicked: %s" % zone_name)
-
-	# Shake effect
-	var original_pos = position
-	var tween = create_tween()
-	tween.tween_property(self, "position", original_pos + Vector2(5, 0), 0.05)
-	tween.tween_property(self, "position", original_pos + Vector2(-5, 0), 0.05)
-	tween.tween_property(self, "position", original_pos, 0.05)
-
-	# Brief red flash
-	if lock_overlay:
-		var tween2 = create_tween()
-		tween2.tween_property(lock_overlay, "color", Color(0.5, 0, 0, 0.8), 0.1)
-		tween2.tween_property(lock_overlay, "color", Color(0, 0, 0, 0.7), 0.1)
+# ── State management ──────────────────────────────────────────────────────────
 
 func unlock() -> void:
 	is_unlocked = true
-	if lock_overlay:
-		lock_overlay.queue_free()
-		lock_overlay = null
+	if _lock_icon:
+		_lock_icon.queue_free()
+		_lock_icon = null
 	tooltip_text = zone_name
+	queue_redraw()
 	if GameLogger.ENABLED:
 		print("[MapClickableArea] Unlocked: %s" % zone_name)
 
 func lock() -> void:
 	is_unlocked = false
-	if lock_overlay == null:
-		_create_lock_overlay()
+	if _lock_icon == null:
+		_build_lock_icon()
+		_reposition_labels()
 	tooltip_text = "🔒 Locked - Level %d Required" % unlock_requirement
+	queue_redraw()
 	if GameLogger.ENABLED:
 		print("[MapClickableArea] Locked: %s" % zone_name)
 
+func setup(data: Dictionary) -> void:
+	if data.has("id"):
+		if data.has("zones"):
+			kingdom_id = data["id"]
+			zone_name = data.get("name", kingdom_id)
+		else:
+			zone_id = data["id"]
+			zone_name = data.get("name", zone_id)
+	is_unlocked = data.get("unlocked", true)
+	unlock_requirement = data.get("unlock_requirement", 1)
+	tooltip_text = zone_name if is_unlocked else "🔒 Locked - Level %d Required" % unlock_requirement
+
 func get_kingdom_id() -> String:
-	"""Get kingdom ID"""
 	return kingdom_id
 
 func get_zone_id() -> String:
-	"""Get zone ID"""
 	return zone_id
 
 func check_unlock_status(player_level: int) -> void:
-	"""Check if player level meets requirement and unlock if needed"""
 	if not is_unlocked and player_level >= unlock_requirement:
 		unlock()
 	elif is_unlocked and player_level < unlock_requirement:
