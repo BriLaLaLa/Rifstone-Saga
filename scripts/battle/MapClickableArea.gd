@@ -109,11 +109,11 @@ func _draw() -> void:
 # ── Hit testing ───────────────────────────────────────────────────────────────
 
 func _has_point(point: Vector2) -> bool:
-	if polygon_points.size() < 3:
-		return super._has_point(point)
 	var sz = get_size()
 	if sz.x == 0 or sz.y == 0:
 		return false
+	if polygon_points.size() < 3:
+		return Rect2(Vector2.ZERO, sz).has_point(point)
 	return Geometry2D.is_point_in_polygon(
 		Vector2(point.x / sz.x, point.y / sz.y),
 		polygon_points
