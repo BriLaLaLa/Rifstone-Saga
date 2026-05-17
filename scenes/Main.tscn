@@ -1,5 +1,6 @@
-[gd_scene load_steps=7 format=3 uid="uid://fu6wa183lggm"]
+[gd_scene load_steps=8 format=3 uid="uid://fu6wa183lggm"]
 
+[ext_resource type="Theme" path="res://theme.tres" id="7_darktheme"]
 [ext_resource type="Script" uid="uid://bmfolai807irx" path="res://scenes/Main.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://ws76uxi0un62" path="res://scripts/ui/InventoryTab.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scripts/ui/PassivesTab.tscn" id="5"]
@@ -14,6 +15,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("7_darktheme")
 script = ExtResource("1")
 
 [node name="Margin" type="MarginContainer" parent="."]
