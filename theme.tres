@@ -72,9 +72,6 @@ corner_radius_bottom_left = 3
 [resource]
 default_font_size = 14
 
-Panel/styles/panel = SubResource("StyleBoxTexture_panel")
-PanelContainer/styles/panel = SubResource("StyleBoxTexture_panel")
-
 Button/styles/normal = SubResource("StyleBoxFlat_btn_normal")
 Button/styles/hover = SubResource("StyleBoxFlat_btn_hover")
 Button/styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
