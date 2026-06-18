@@ -199,7 +199,8 @@ func _configure_zone(zone_data: Dictionary) -> void:
 		"level_range": zone_data.get("level_range", [1, 10]),
 		"enemies": zone_data.get("enemies", ["slime"]),
 		"boss_types": zone_data.get("boss_types", []),
-		"metin_types": zone_data.get("metin_types", [])
+		"metin_types": zone_data.get("metin_types", []),
+		"gathering_node_types": zone_data.get("gathering_node_types", [])
 	}
 
 	encounter_generator.set_zone_config(config)
@@ -451,7 +452,6 @@ func _on_all_enemies_cleared() -> void:
 
 	# Check if BattleTab has a gathering node to handle
 	# If yes, let BattleTab handle the transition after gathering completes
-	var battle_tab = get_node_or_null("../../BattleTab")
 	if battle_tab and battle_tab.pending_gathering_node_type != "":
 		print("[ExplorationCombatController] ⏸️ Gathering pending - BattleTab will handle transition")
 		return

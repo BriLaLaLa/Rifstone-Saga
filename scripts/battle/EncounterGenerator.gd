@@ -19,6 +19,7 @@ var zone_level_max: int = 10
 var zone_enemy_pool: Array[String] = []
 var zone_boss_pool: Array[String] = []
 var zone_metin_pool: Array[String] = []
+var zone_gathering_node_types: Array[String] = []
 
 # Encounter composition limits
 const NORMAL_COUNT_MIN: int = 3
@@ -74,6 +75,13 @@ func set_zone_config(config: Dictionary) -> void:
 	else:
 		# Default: Generic metin
 		zone_metin_pool = ["metin"]
+
+	if config.has("gathering_node_types"):
+		zone_gathering_node_types.clear()
+		for node_type in config["gathering_node_types"]:
+			zone_gathering_node_types.append(node_type)
+	else:
+		zone_gathering_node_types.clear()
 
 	if GameLogger.ENABLED:
 		print("[EncounterGenerator] Zone configured: Lv%d-%d, %d enemies, %d bosses, %d metins" %
@@ -133,7 +141,13 @@ func generate_encounter(encounter_type: String) -> Dictionary:
 		var should_spawn = GatheringDatabase.should_spawn_node() if GatheringDatabase else false
 
 		if should_spawn:
-			var node_type = GatheringDatabase.get_random_node_type() if GatheringDatabase else "mining_node"
+			var node_type: String
+			if not zone_gathering_node_types.is_empty():
+				node_type = zone_gathering_node_types.pick_random()
+			elif GatheringDatabase:
+				node_type = GatheringDatabase.get_random_node_type()
+			else:
+				node_type = "mining_node"
 			encounter["gathering_node"] = node_type
 
 			print("[GATHERING] 🌿 Gathering node will spawn: %s" % node_type)
