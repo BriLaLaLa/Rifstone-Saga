@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://clyh5kc70ya4k"]
+[gd_scene load_steps=3 format=3 uid="uid://clyh5kc70ya4k"]
 
 [ext_resource type="TileSet" path="res://assets/TinySwords/tiny_swords_terrain.tres" id="1_kau76"]
+[ext_resource type="TileSet" path="res://assets/TinySwords/tiny_swords_props.tres" id="2_kwi00"]
 
 [node name="PlainsMap" type="Node2D"]
 
@@ -14,6 +15,7 @@ closed = true
 width = 120.0
 default_color = Color(1, 0.85, 0, 0.9)
 
-[node name="Props" type="Node2D" parent="."]
-z_index = 1
+[node name="PropsLayer" type="TileMapLayer" parent="."]
+z_index = 5
 y_sort_enabled = true
+tile_set = ExtResource("2_kwi00")

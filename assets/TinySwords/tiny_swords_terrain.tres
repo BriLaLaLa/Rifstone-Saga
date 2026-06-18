@@ -1,4 +1,4 @@
-[gd_resource type="TileSet" load_steps=3 format=3]
+[gd_resource type="TileSet" load_steps=3 format=3 uid="uid://vf8rmpb3msbn"]
 
 [ext_resource type="Texture2D" uid="uid://b3d2451mbcecl" path="res://assets/TinySwords/Terrain/Tileset/Tilemap_color1.png" id="1_tex"]
 
