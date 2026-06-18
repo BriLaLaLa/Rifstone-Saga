@@ -81,7 +81,10 @@ func _process(delta: float) -> void:
 	if _depleted or not is_visible_in_tree() or not is_instance_valid(_player):
 		return
 
-	var in_range: bool = global_position.distance_to(_player.global_position) <= gather_range
+	# Raccoglie SOLO se il player ha scelto proprio questo nodo come target.
+	# Così, con più nodi vicini, ne è attivo uno solo alla volta.
+	var is_target: bool = _player.has_method("get_gather_target") and _player.get_gather_target() == self
+	var in_range: bool = is_target and global_position.distance_to(_player.global_position) <= gather_range
 
 	if is_instance_valid(progress_bar):
 		progress_bar.visible = in_range

@@ -215,6 +215,9 @@ func try_gather(node: Node2D) -> void:
 func is_gathering() -> bool:
 	return state == PlayerState.GATHERING
 
+func get_gather_target() -> Node2D:
+	return _gather_node
+
 func _tick_gather() -> void:
 	# Nodo sparito (esaurito) → torna alla rotta
 	if not is_instance_valid(_gather_node):
