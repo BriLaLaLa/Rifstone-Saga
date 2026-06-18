@@ -33,7 +33,11 @@ signal combat_ended()
 
 const ENEMY_SCENE := preload("res://scenes/combat/Enemy2D.tscn")
 const RouteManagerScript := preload("res://scripts/combat/RouteManager.gd")
-const GATHERING_NODE_SCENE := preload("res://scenes/gathering/GatheringNode.tscn")
+const GATHERING_NODE2D_SCENE := preload("res://scenes/combat/GatheringNode2D.tscn")
+
+# Gathering: quanti nodi tenere vivi nella zona e cooldown di respawn
+const GATHERING_MAX_NODES := 2
+const GATHERING_RESPAWN_DELAY := 8.0
 
 # Mondo fisso 800×600 — i nemici spawnano dentro questi margini.
 const WORLD_SIZE := Vector2(800.0, 600.0)
@@ -59,8 +63,8 @@ var _available_routes: Array = []
 var _draw_mode: bool = false
 var _draft: Array[Vector2] = []
 
-# Gathering node attivo (overlay UI durante la pausa tra le ondate)
-var _gathering_node = null
+# Nodi di gathering vivi nel mondo
+var _gathering_nodes: Array = []
 
 # ==================== INIT ====================
 
@@ -100,6 +104,7 @@ func setup(zone: Dictionary, route: Dictionary) -> void:
 			_available_routes.size()
 		])
 	_spawn_wave()
+	_populate_gathering_nodes()
 
 # ==================== ROUTE SELECTION ====================
 
@@ -309,6 +314,76 @@ func _get_item_data(item_id: String) -> Dictionary:
 			return copy
 	return {}
 
+# ==================== GATHERING (nodi nel mondo) ====================
+
+func _populate_gathering_nodes() -> void:
+	"""Riempie la zona fino a GATHERING_MAX_NODES nodi di raccolta."""
+	while _gathering_nodes.size() < GATHERING_MAX_NODES:
+		if not _spawn_gathering_node():
+			break
+
+func _spawn_gathering_node() -> bool:
+	"""Spawna un singolo nodo di gathering vicino alla rotta. Ritorna false se non possibile."""
+	var db = get_node_or_null("/root/GatheringDatabase")
+	if db == null:
+		return false
+
+	var node_type := _pick_gathering_node_type(db)
+	if node_type == "":
+		return false
+
+	var node_data: Dictionary = db.get_node_data(node_type)
+	if node_data.is_empty():
+		return false
+
+	var gn = GATHERING_NODE2D_SCENE.instantiate()
+	game_world.add_child(gn)
+	gn.position = _gathering_spawn_pos()
+	gn.setup(node_data, player)
+	gn.depleted.connect(_on_gathering_node_depleted)
+	_gathering_nodes.append(gn)
+
+	if GameLogger.ENABLED:
+		print("[ZoneCombatController] 🌿 Gathering node spawnato: %s @ %s" % [node_type, gn.position])
+	return true
+
+func _pick_gathering_node_type(db) -> String:
+	"""Tipo di nodo: preferisce i tipi configurati per la zona, altrimenti pesi del DB."""
+	var zone_types: Array = zone_data.get("gathering_node_types", [])
+	if not zone_types.is_empty():
+		return str(zone_types.pick_random())
+	return db.get_random_node_type()
+
+func _gathering_spawn_pos() -> Vector2:
+	"""Posizione vicino a un waypoint della rotta (così il player ci passa)."""
+	var path: Array[Vector2] = _route_to_path(current_route)
+	var base: Vector2
+	if path.is_empty():
+		base = WORLD_SIZE * 0.5
+	else:
+		base = path.pick_random()
+	# Offset casuale attorno al waypoint, poi clamp dentro i margini del mondo
+	var offset := Vector2(randf_range(-70.0, 70.0), randf_range(-70.0, 70.0))
+	var pos := base + offset
+	pos.x = clampf(pos.x, SPAWN_MARGIN, WORLD_SIZE.x - SPAWN_MARGIN)
+	pos.y = clampf(pos.y, SPAWN_MARGIN, WORLD_SIZE.y - SPAWN_MARGIN)
+	return pos
+
+func _on_gathering_node_depleted(node) -> void:
+	_gathering_nodes.erase(node)
+	if GameLogger.ENABLED:
+		print("[ZoneCombatController] 🌿 Gathering node esaurito — respawn tra %.0fs" % GATHERING_RESPAWN_DELAY)
+	# Respawn dopo un cooldown
+	await get_tree().create_timer(GATHERING_RESPAWN_DELAY).timeout
+	if is_inside_tree() and visible:
+		_populate_gathering_nodes()
+
+func _clear_gathering_nodes() -> void:
+	for gn in _gathering_nodes:
+		if is_instance_valid(gn):
+			gn.queue_free()
+	_gathering_nodes.clear()
+
 # Converte una posizione del mondo (spazio SubViewport 800×600) in coordinate
 # schermo, tenendo conto dello scaling del SubViewportContainer.
 func _world_to_screen(world_pos: Vector2) -> Vector2:
@@ -352,94 +427,10 @@ func _on_wave_cleared() -> void:
 	combat_ended.emit()
 	if is_instance_valid(player):
 		player.on_all_enemies_dead()
-
-	# Eventuale nodo di gathering al termine dell'ondata
-	var node_type := _roll_gathering_node_type()
-	if node_type != "":
-		await _run_gathering(node_type)
-	else:
-		# Respawn della prossima ondata dopo una breve pausa
-		await get_tree().create_timer(2.0).timeout
-
+	# Respawn della prossima ondata dopo una breve pausa
+	await get_tree().create_timer(2.0).timeout
 	if is_inside_tree() and visible:
 		_spawn_wave()
-
-# ==================== GATHERING ====================
-
-func _roll_gathering_node_type() -> String:
-	"""Decide se (e quale) nodo di gathering spawnare dopo l'ondata."""
-	var db = get_node_or_null("/root/GatheringDatabase")
-	if db == null:
-		return ""
-	if not db.should_spawn_node():
-		return ""
-
-	# Preferisci i tipi configurati per la zona, altrimenti pesi globali del DB
-	var zone_types: Array = zone_data.get("gathering_node_types", [])
-	if not zone_types.is_empty():
-		return str(zone_types.pick_random())
-	return db.get_random_node_type()
-
-func _run_gathering(node_type: String) -> void:
-	"""Istanzia il nodo, lancia i tentativi e attende il completamento."""
-	var db = get_node_or_null("/root/GatheringDatabase")
-	if db == null:
-		await get_tree().create_timer(2.0).timeout
-		return
-
-	var node_data: Dictionary = db.get_node_data(node_type)
-	if node_data.is_empty():
-		push_warning("[ZoneCombatController] Gathering node sconosciuto: %s" % node_type)
-		await get_tree().create_timer(2.0).timeout
-		return
-
-	_gathering_node = GATHERING_NODE_SCENE.instantiate()
-	add_child(_gathering_node)        # è un Control: overlay sopra il combat
-	_gathering_node.z_index = 200
-	_gathering_node.setup_node(node_data)
-
-	# Centra nel viewport
-	var vp_size := get_viewport_rect().size
-	_gathering_node.position = (vp_size - _gathering_node.size) * 0.5
-	_gathering_node.visible = true
-	_gathering_node.modulate.a = 1.0
-	_gathering_node.scale = Vector2.ONE
-
-	_gathering_node.gathering_attempt_complete.connect(_on_gathering_attempt)
-
-	# Avvia la raccolta (il nodo gestisce internamente i tentativi a timer)
-	_gathering_node.is_active = true
-	_gathering_node.start_gathering()
-
-	if GameLogger.ENABLED:
-		print("[ZoneCombatController] 🌿 Gathering avviato: %s" % node_type)
-
-	# Attendi che tutti i tentativi siano finiti (il nodo emette e poi si autodistrugge)
-	await _gathering_node.all_attempts_complete
-	_gathering_node = null
-
-	# Piccola pausa prima della prossima ondata
-	await get_tree().create_timer(0.6).timeout
-
-func _on_gathering_attempt(items: Array) -> void:
-	"""Aggiunge gli item raccolti all'inventario + notifica."""
-	var gs = get_node_or_null("/root/GameState")
-	if gs == null:
-		return
-	var notif = get_node_or_null("/root/LootNotificationManager")
-
-	for drop in items:
-		var item_id: String = str(drop.get("item_id", ""))
-		var amount: int = int(drop.get("amount", 1))
-		if item_id == "":
-			continue
-		var item_data: Dictionary = _get_item_data(item_id)
-		if item_data.is_empty():
-			item_data = {"id": item_id, "name": item_id}
-		for _i in range(amount):
-			gs._add_item_to_visual_inventory(item_id, item_data)
-		if notif and notif.has_method("show_notification"):
-			notif.show_notification(item_data)
 
 func _clear_enemies() -> void:
 	for e in _enemies:
@@ -450,9 +441,7 @@ func _clear_enemies() -> void:
 # Pulizia esterna quando si abbandona la zona (chiamata da BattleTab).
 func clear_combat() -> void:
 	_clear_enemies()
-	if is_instance_valid(_gathering_node):
-		_gathering_node.queue_free()
-	_gathering_node = null
+	_clear_gathering_nodes()
 
 func get_alive_enemies() -> Array:
 	var alive: Array = []
