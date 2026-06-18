@@ -128,7 +128,7 @@
 	}
   },
   "spawn_rates": {
-	"base_chance": 0.35,
+	"base_chance": 1.0,
 	"type_weights": {
 	  "mining": 33,
 	  "gathering": 33,
