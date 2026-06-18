@@ -38,6 +38,8 @@ const GATHERING_NODE2D_SCENE := preload("res://scenes/combat/GatheringNode2D.tsc
 # Gathering: quanti nodi tenere vivi nella zona e cooldown di respawn
 const GATHERING_MAX_NODES := 2
 const GATHERING_RESPAWN_DELAY := 8.0
+# Entro questa distanza dal player, un nodo "attira" il player a raccogliere
+const GATHERING_ATTRACT_RANGE := 170.0
 
 # Mondo fisso 800×600 — i nemici spawnano dentro questi margini.
 const WORLD_SIZE := Vector2(800.0, 600.0)
@@ -67,6 +69,9 @@ var _draft: Array[Vector2] = []
 var _gathering_nodes: Array = []
 
 # ==================== INIT ====================
+
+func _process(_delta: float) -> void:
+	_maybe_attract_to_gathering()
 
 func _ready() -> void:
 	_exit_button.pressed.connect(func(): zone_exited.emit())
@@ -315,6 +320,30 @@ func _get_item_data(item_id: String) -> Dictionary:
 	return {}
 
 # ==================== GATHERING (nodi nel mondo) ====================
+
+func _maybe_attract_to_gathering() -> void:
+	"""Se il player è libero (no nemici) e un nodo è vicino, lo manda a raccogliere.
+	Priorità: i nemici vengono prima (il player non viene attratto se sta combattendo)."""
+	if not visible or not is_instance_valid(player) or _gathering_nodes.is_empty():
+		return
+
+	var st = player.get_state()
+	# Attira solo quando segue la rotta o vi sta tornando (mai durante il combat)
+	if st != PlayerCharacter.PlayerState.FOLLOWING_PATH and st != PlayerCharacter.PlayerState.RETURNING:
+		return
+
+	var nearest = null
+	var best: float = INF
+	for gn in _gathering_nodes:
+		if not is_instance_valid(gn):
+			continue
+		var d: float = gn.global_position.distance_to(player.global_position)
+		if d <= GATHERING_ATTRACT_RANGE and d < best:
+			best = d
+			nearest = gn
+
+	if nearest != null:
+		player.try_gather(nearest)
 
 func _populate_gathering_nodes() -> void:
 	"""Riempie la zona fino a GATHERING_MAX_NODES nodi di raccolta."""

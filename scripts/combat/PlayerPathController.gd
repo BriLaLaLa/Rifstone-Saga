@@ -12,7 +12,8 @@ enum PlayerState {
 	FOLLOWING_PATH,
 	DEVIATING,
 	ENGAGING,
-	RETURNING
+	RETURNING,
+	GATHERING
 }
 
 signal state_changed(new_state: PlayerState)
@@ -23,6 +24,8 @@ signal exited_combat()
 
 @export var move_speed: float          = 150.0
 @export var waypoint_reach_dist: float = 20.0
+# Distanza a cui il player si ferma davanti al nodo per raccogliere
+@export var gather_stop_dist: float    = 60.0
 
 # ==================== NODES (configurati nel .tscn) ====================
 
@@ -47,6 +50,10 @@ var _target: Vector2      = Vector2.ZERO   # waypoint corrente o posizione nemic
 
 var _target_enemy: Node2D = null
 
+# ==================== GATHERING ====================
+
+var _gather_node: Node2D = null
+
 # ==================== INIT ====================
 
 func _ready() -> void:
@@ -62,6 +69,7 @@ func _physics_process(_delta: float) -> void:
 		PlayerState.DEVIATING:      _tick_deviate()
 		PlayerState.ENGAGING:       _tick_engage()
 		PlayerState.RETURNING:      _tick_return()
+		PlayerState.GATHERING:      _tick_gather()
 		_:
 			velocity = Vector2.ZERO
 
@@ -114,6 +122,8 @@ func _on_detect_enter(body: Node2D) -> void:
 		return
 	if state == PlayerState.ENGAGING or state == PlayerState.DEVIATING:
 		return
+	# I nemici hanno priorità: interrompe l'eventuale raccolta in corso
+	_gather_node = null
 	_target_enemy = body
 	# Converti posizione del nemico in LOCAL space (relativo a GameWorld = parent del player)
 	_set_target((get_parent() as Node2D).to_local(body.global_position))
@@ -189,6 +199,39 @@ func _nearest_enemy_in_detection() -> Node2D:
 			best_d = d
 			best = b
 	return best
+
+# ==================== GATHERING ====================
+
+# Chiamato dal controller quando il player è libero e c'è un nodo nelle vicinanze.
+# I nemici hanno priorità: non si raccoglie mentre si combatte.
+func try_gather(node: Node2D) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	if state != PlayerState.FOLLOWING_PATH and state != PlayerState.RETURNING:
+		return
+	_gather_node = node
+	_set_state(PlayerState.GATHERING)
+
+func is_gathering() -> bool:
+	return state == PlayerState.GATHERING
+
+func _tick_gather() -> void:
+	# Nodo sparito (esaurito) → torna alla rotta
+	if not is_instance_valid(_gather_node):
+		_gather_node = null
+		_begin_return()
+		return
+
+	var node_pos: Vector2 = (get_parent() as Node2D).to_local(_gather_node.global_position)
+	var dist: float = position.distance_to(node_pos)
+
+	if dist > gather_stop_dist:
+		# Avvicìnati al nodo
+		_set_target(node_pos)
+		_move_toward_target()
+	else:
+		# Fermo davanti al nodo: il GatheringNode2D raccoglie da solo per prossimità
+		velocity = Vector2.ZERO
 
 # ==================== RETURNING ====================
 
