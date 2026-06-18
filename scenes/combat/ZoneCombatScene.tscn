@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://b0lvs3n0cvqjv"]
 
 [ext_resource type="Script" uid="uid://ddjlrt5kkwtpk" path="res://scripts/combat/ZoneCombatController.gd" id="1_ctrl"]
-[ext_resource type="TileSet" uid="uid://coy6jfwfw14sr" path="res://assets/TinySwords/tiny_swords_terrain.tres" id="2_2umr4"]
+[ext_resource type="PackedScene" uid="uid://clyh5kc70ya4k" path="res://scenes/combat/zones/red_plains_map.tscn" id="2_2umr4"]
 [ext_resource type="Script" uid="uid://c2fcnjxe66klr" path="res://scripts/combat/PlayerPathController.gd" id="2_player"]
 [ext_resource type="Texture2D" uid="uid://djwidmobdw56r" path="res://icon.svg" id="3_icon"]
 
@@ -113,9 +113,8 @@ color = Color(0.1, 0.13, 0.1, 1)
 
 [node name="GameWorld" type="Node2D" parent="SubViewportContainer/SubViewport"]
 
-[node name="TerrainLayer" type="TileMapLayer" parent="SubViewportContainer/SubViewport/GameWorld"]
+[node name="PlainsMap" parent="SubViewportContainer/SubViewport/GameWorld" instance=ExtResource("2_2umr4")]
 z_index = -8
-tile_set = ExtResource("2_2umr4")
 
 [node name="PathDisplay" type="Node2D" parent="SubViewportContainer/SubViewport/GameWorld"]
 z_index = -1
@@ -155,11 +154,6 @@ collision_mask = 4
 
 [node name="CombatRangeShape" type="CollisionShape2D" parent="SubViewportContainer/SubViewport/GameWorld/PlayerCharacter/CombatRangeArea"]
 shape = SubResource("CircleShape2D_combat")
-
-[node name="WorldBounds" type="Line2D" parent="SubViewportContainer/SubViewport/GameWorld"]
-points = PackedVector2Array(0, 0, 12800, 0, 12800, 12800, 0, 12800, 0, 0)
-width = 24.0
-default_color = Color(1, 0.3, 0.3, 0.8)
 
 [node name="DrawOverlay" type="Control" parent="."]
 visible = false

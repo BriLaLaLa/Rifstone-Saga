@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3 uid="uid://clyh5kc70ya4k"]
+
+[ext_resource type="TileSet" uid="uid://coy6jfwfw14sr" path="res://assets/TinySwords/tiny_swords_terrain.tres" id="1_kau76"]
+
+[node name="PlainsMap" type="Node2D"]
+
+[node name="TerrainLayer" type="TileMapLayer" parent="."]
+tile_set = ExtResource("1_kau76")
+
+[node name="WorldBounds" type="Line2D" parent="."]
+z_index = 100
+points = PackedVector2Array(0, 0, 12800, 0, 12800, 12800, 0, 12800)
+closed = true
+width = 120.0
+default_color = Color(1, 0.85, 0, 0.9)
