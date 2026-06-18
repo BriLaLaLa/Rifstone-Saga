@@ -1038,7 +1038,8 @@ func load_game() -> void:
 		# The save file contains equipment_bonuses from when it was saved,
 		# but we need to recalculate them from currently equipped items
 		for stat in character_stats.equipment_bonuses.keys():
-			character_stats.equipment_bonuses[stat] = 0 if typeof(character_stats.base_stats[stat]) == TYPE_INT else 0.0
+			var base_val = character_stats.base_stats.get(stat, 0)
+			character_stats.equipment_bonuses[stat] = 0 if typeof(base_val) == TYPE_INT else 0.0
 
 		if GameLogger.ENABLED:
 			print("[GameState] Cleared equipment bonuses (will be recalculated)")

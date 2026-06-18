@@ -342,10 +342,20 @@ func to_dict() -> Dictionary:
 	return data
 
 func from_dict(data: Dictionary) -> void:
+	# Merge saved values onto current defaults instead of replacing the dicts.
+	# This keeps any stat keys added in code (e.g. new elemental damage types)
+	# even when loading an older save that predates them, preventing key
+	# mismatches between base_stats and equipment_bonuses.
 	if data.has("base_stats"):
-		base_stats = data.base_stats
+		for stat in data.base_stats.keys():
+			base_stats[stat] = data.base_stats[stat]
 	if data.has("equipment_bonuses"):
-		equipment_bonuses = data.equipment_bonuses
+		for stat in data.equipment_bonuses.keys():
+			equipment_bonuses[stat] = data.equipment_bonuses[stat]
+	# Ensure equipment_bonuses always covers every base stat key
+	for stat in base_stats.keys():
+		if not equipment_bonuses.has(stat):
+			equipment_bonuses[stat] = 0 if typeof(base_stats[stat]) == TYPE_INT else 0.0
 	if data.has("current_hp"):
 		current_hp = data.current_hp
 	if data.has("current_mana"):
