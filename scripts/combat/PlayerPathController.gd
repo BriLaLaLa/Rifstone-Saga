@@ -266,12 +266,28 @@ func _reached() -> bool:
 	return position.distance_to(_target) <= waypoint_reach_dist
 
 func _move_toward_target() -> void:
-	# direction in LOCAL space = direction in GLOBAL (GameWorld non ha rotazione/scala)
-	var dir = (_target - position).normalized()
+	# Usa il NavigationAgent2D per girare attorno ad acqua/ostacoli (nav-mesh).
+	# Fallback in linea retta se la nav non è pronta / nessun percorso valido.
+	var dir: Vector2
+	if nav_agent != null and _nav_usable():
+		nav_agent.target_position = (get_parent() as Node2D).to_global(_target)
+		if not nav_agent.is_navigation_finished():
+			var next_g := nav_agent.get_next_path_position()
+			dir = (next_g - global_position).normalized()
+		else:
+			dir = (_target - position).normalized()
+	else:
+		# direction in LOCAL space = GLOBAL (GameWorld non ha rotazione/scala)
+		dir = (_target - position).normalized()
 	velocity = dir * move_speed
 	move_and_slide()
-	if sprite and dir.x != 0:
-		sprite.flip_h = dir.x < 0
+	if sprite and dir.x != 0.0:
+		sprite.flip_h = dir.x < 0.0
+
+func _nav_usable() -> bool:
+	# La nav è utilizzabile se esiste una mappa di navigazione attiva con regioni.
+	var map := nav_agent.get_navigation_map()
+	return map.is_valid() and NavigationServer2D.map_get_iteration_id(map) > 0
 
 # ==================== HELPERS ====================
 

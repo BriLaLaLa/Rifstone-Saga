@@ -192,6 +192,8 @@ func setup(zone: Dictionary, route: Dictionary) -> void:
 		world_size = Vector2(float(ws[0]), float(ws[1]))
 	_build_boundary_walls()
 	_setup_camera()
+	_build_navigation()
+	await get_tree().physics_frame  # sincronizza la nav map prima che il player parta
 
 	# Costruisci la lista route (default della zona + custom salvate)
 	_available_routes = _route_manager.get_routes(zone_id, zone.get("default_routes", []))
@@ -657,6 +659,59 @@ func _draw_world_bounds() -> void:
 	outline.add_point(Vector2(0, world_size.y))
 	outline.add_point(Vector2(0, 0))
 	game_world.add_child(outline)
+
+# ==================== NAVIGAZIONE ====================
+
+# Costruisce a runtime una NavigationRegion2D dalla forma dell'erba dipinta:
+# erba = camminabile, acqua (assenza di tessera) = buco, tronchi/rocce = ostacoli.
+# Così il player (NavigationAgent2D) gira attorno ad acqua e ostacoli invece di
+# attraversarli, e si adatta da solo a qualsiasi mappa dipinta.
+func _build_navigation() -> void:
+	var terrain := get_node_or_null("SubViewportContainer/SubViewport/GameWorld/PlainsMap/TerrainLayer") as TileMapLayer
+	if terrain == null:
+		if GameLogger.ENABLED:
+			print("[ZoneCombatController] ⚠️ Nessun TerrainLayer: navigazione non costruita")
+		return
+
+	var cell := 64.0
+	var src := NavigationMeshSourceGeometryData2D.new()
+
+	# Erba = aree camminabili
+	for c in terrain.get_used_cells():
+		var o := Vector2(c.x * cell, c.y * cell)
+		src.add_traversable_outline(PackedVector2Array([
+			o, o + Vector2(cell, 0.0), o + Vector2(cell, cell), o + Vector2(0.0, cell)
+		]))
+
+	# Props solidi (rocce/ceppi/alberi) = ostacoli ritagliati dalla mesh
+	var props := get_node_or_null("SubViewportContainer/SubViewport/GameWorld/PlainsMap/PropsLayer") as TileMapLayer
+	if props:
+		# source id props: 4-7 rocce, 12-15 ceppi, 16-19 alberi (8-11 rocce-acqua, 0-3 cespugli = calpestabili)
+		var solid := {4: true, 5: true, 6: true, 7: true, 12: true, 13: true, 14: true, 15: true, 16: true, 17: true, 18: true, 19: true}
+		var pad := 10.0
+		for c in props.get_used_cells():
+			if not solid.has(props.get_cell_source_id(c)):
+				continue
+			var o := Vector2(c.x * cell, c.y * cell)
+			src.add_obstruction_outline(PackedVector2Array([
+				o + Vector2(pad, pad), o + Vector2(cell - pad, pad),
+				o + Vector2(cell - pad, cell - pad), o + Vector2(pad, cell - pad)
+			]))
+
+	var np := NavigationPolygon.new()
+	np.agent_radius = 14.0
+	NavigationServer2D.bake_from_source_geometry_data(np, src)
+
+	var existing := game_world.get_node_or_null("NavRegion")
+	if existing:
+		existing.free()
+	var region := NavigationRegion2D.new()
+	region.name = "NavRegion"
+	region.navigation_polygon = np
+	game_world.add_child(region)
+
+	if GameLogger.ENABLED:
+		print("[ZoneCombatController] 🧭 Navigazione costruita: %d celle erba" % terrain.get_used_cells().size())
 
 # ==================== PLAYER ====================
 
