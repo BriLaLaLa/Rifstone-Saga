@@ -20,7 +20,6 @@ signal combat_ended()
 @onready var player: PlayerCharacter    = $SubViewportContainer/SubViewport/GameWorld/PlayerCharacter
 @onready var game_world: Node2D         = $SubViewportContainer/SubViewport/GameWorld
 @onready var camera: Camera2D           = $SubViewportContainer/SubViewport/GameWorld/Camera2D
-@onready var terrain_layer: TileMapLayer = $SubViewportContainer/SubViewport/GameWorld/TerrainLayer
 
 @onready var _exit_button: Button = $HudBar/HudInner/ExitButton
 @onready var _state_label: Label  = $HudBar/HudInner/StateLabel
@@ -49,9 +48,6 @@ const GATHERING_ATTRACT_RANGE := 170.0
 # Dimensione del mondo. Default mappa grande (~Metin2 first map feeling, 200x200 tessere
 # da 64px); sovrascrivibile da zone_data["world_size"].
 var world_size := Vector2(12800.0, 12800.0)
-# Tessera d'erba piena nell'atlante Tiny Swords (Tilemap_color1) + id sorgente del TileSet
-const GRASS_ATLAS_COORDS := Vector2i(1, 1)
-const TERRAIN_SOURCE_ID := 0
 const SPAWN_MARGIN := 80.0
 const WAVE_COUNT_MIN := 3
 const WAVE_COUNT_MAX := 6
@@ -92,23 +88,6 @@ var _panning: bool = false
 func _process(_delta: float) -> void:
 	_maybe_attract_to_gathering()
 	_update_camera_follow()
-
-# ==================== TERRENO ====================
-
-# Riempie di erba tutte le celle VUOTE del TerrainLayer su tutta la mappa.
-# Le celle dipinte a mano nell'editor (strade, acqua, rovine) vengono preservate.
-func _fill_base_grass() -> void:
-	if not is_instance_valid(terrain_layer) or terrain_layer.tile_set == null:
-		return
-	var cols := int(ceil(world_size.x / 64.0))
-	var rows := int(ceil(world_size.y / 64.0))
-	for y in range(rows):
-		for x in range(cols):
-			var coords := Vector2i(x, y)
-			if terrain_layer.get_cell_source_id(coords) == -1:
-				terrain_layer.set_cell(coords, TERRAIN_SOURCE_ID, GRASS_ATLAS_COORDS)
-	if GameLogger.ENABLED:
-		print("[ZoneCombatController] 🌱 Erba di base riempita: %dx%d celle" % [cols, rows])
 
 # ==================== CAMERA ====================
 
@@ -209,7 +188,6 @@ func setup(zone: Dictionary, route: Dictionary) -> void:
 		world_size = Vector2(float(ws[0]), float(ws[1]))
 	_build_boundary_walls()
 	_setup_camera()
-	_fill_base_grass()
 
 	# Costruisci la lista route (default della zona + custom salvate)
 	_available_routes = _route_manager.get_routes(zone_id, zone.get("default_routes", []))
