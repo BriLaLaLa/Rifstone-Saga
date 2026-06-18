@@ -19,6 +19,7 @@ signal combat_ended()
 @onready var active_enemies: Node2D     = $SubViewportContainer/SubViewport/GameWorld/ActiveEnemies
 @onready var player: PlayerCharacter    = $SubViewportContainer/SubViewport/GameWorld/PlayerCharacter
 @onready var game_world: Node2D         = $SubViewportContainer/SubViewport/GameWorld
+@onready var camera: Camera2D           = $SubViewportContainer/SubViewport/GameWorld/Camera2D
 
 @onready var _exit_button: Button = $HudBar/HudInner/ExitButton
 @onready var _state_label: Label  = $HudBar/HudInner/StateLabel
@@ -27,7 +28,10 @@ signal combat_ended()
 @onready var _draw_button: Button = $HudBar/HudInner/DrawButton
 @onready var _save_route_button: Button = $HudBar/HudInner/SaveRouteButton
 @onready var _cancel_route_button: Button = $HudBar/HudInner/CancelRouteButton
+@onready var _follow_check: CheckBox = $HudBar/HudInner/FollowCheck
 @onready var _draw_overlay: Control = $DrawOverlay
+@onready var _sub_viewport: SubViewport = $SubViewportContainer/SubViewport
+@onready var _sub_container: SubViewportContainer = $SubViewportContainer
 
 # ==================== DATA ====================
 
@@ -41,11 +45,17 @@ const GATHERING_RESPAWN_DELAY := 8.0
 # Entro questa distanza dal player, un nodo "attira" il player a raccogliere
 const GATHERING_ATTRACT_RANGE := 170.0
 
-# Mondo fisso 800×600 — i nemici spawnano dentro questi margini.
-const WORLD_SIZE := Vector2(800.0, 600.0)
+# Dimensione del mondo. Default mappa grande; sovrascrivibile da zone_data["world_size"].
+var world_size := Vector2(1600.0, 1200.0)
 const SPAWN_MARGIN := 80.0
 const WAVE_COUNT_MIN := 3
 const WAVE_COUNT_MAX := 6
+# Distanza massima dal player a cui spawnano i nemici (così restano vicini sulla mappa grande)
+const SPAWN_MAX_DIST_FROM_PLAYER := 520.0
+# Camera: limiti di zoom e velocità (zoom>1 = più vicino)
+const CAMERA_ZOOM_MIN := 0.5
+const CAMERA_ZOOM_MAX := 2.5
+const CAMERA_ZOOM_STEP := 0.1
 # Distanza minima dal player allo spawn (per non aggro-are istantaneamente)
 const SPAWN_MIN_DIST_FROM_PLAYER := 200.0
 # Raggio entro cui le skill del player possono colpire (gating: le skill partono
@@ -68,10 +78,92 @@ var _draft: Array[Vector2] = []
 # Nodi di gathering vivi nel mondo
 var _gathering_nodes: Array = []
 
+# Camera
+var _follow_player: bool = true
+var _panning: bool = false
+
 # ==================== INIT ====================
 
 func _process(_delta: float) -> void:
 	_maybe_attract_to_gathering()
+	_update_camera_follow()
+
+# ==================== CAMERA ====================
+
+func _setup_camera() -> void:
+	if not is_instance_valid(camera):
+		return
+	camera.make_current()
+	# Clamp automatico ai bordi del mondo
+	camera.limit_left   = 0
+	camera.limit_top    = 0
+	camera.limit_right  = int(world_size.x)
+	camera.limit_bottom = int(world_size.y)
+	camera.zoom = Vector2.ONE
+	if is_instance_valid(player):
+		camera.position = player.position
+	else:
+		camera.position = world_size * 0.5
+
+func _on_follow_toggled(pressed: bool) -> void:
+	_follow_player = pressed
+
+func _update_camera_follow() -> void:
+	if not _follow_player or _panning:
+		return
+	if is_instance_valid(camera) and is_instance_valid(player):
+		camera.position = player.position
+
+func _input(event: InputEvent) -> void:
+	if not visible or not is_instance_valid(camera):
+		return
+	# Non interferire con la modalità disegno rotta (usa il tasto sinistro sull'overlay)
+	if _draw_mode:
+		return
+
+	# Pan col tasto destro
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		_panning = event.pressed
+		if _panning:
+			# Avviare il pan disattiva il follow (così resti dove sposti)
+			_set_follow(false)
+		get_viewport().set_input_as_handled()
+		return
+
+	if event is InputEventMouseMotion and _panning:
+		# Delta schermo → delta mondo (tiene conto di scaling container e zoom)
+		var scale_v := _viewport_per_screen()
+		var world_delta: Vector2 = event.relative * scale_v / camera.zoom
+		camera.position -= world_delta
+		get_viewport().set_input_as_handled()
+		return
+
+	# Zoom con la rotellina
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_apply_zoom(CAMERA_ZOOM_STEP)
+			get_viewport().set_input_as_handled()
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_apply_zoom(-CAMERA_ZOOM_STEP)
+			get_viewport().set_input_as_handled()
+
+func _apply_zoom(delta: float) -> void:
+	var z: float = clampf(camera.zoom.x + delta, CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX)
+	camera.zoom = Vector2(z, z)
+
+func _set_follow(on: bool) -> void:
+	_follow_player = on
+	if is_instance_valid(_follow_check):
+		_follow_check.set_pressed_no_signal(on)
+
+# Rapporto (pixel viewport / pixel schermo) dato lo scaling del SubViewportContainer.
+func _viewport_per_screen() -> Vector2:
+	if not is_instance_valid(_sub_viewport) or not is_instance_valid(_sub_container):
+		return Vector2.ONE
+	var cont := _sub_container.size
+	if cont.x == 0.0 or cont.y == 0.0:
+		return Vector2.ONE
+	return Vector2(_sub_viewport.size) / cont
 
 func _ready() -> void:
 	_exit_button.pressed.connect(func(): zone_exited.emit())
@@ -80,13 +172,21 @@ func _ready() -> void:
 	_save_route_button.pressed.connect(_save_draft_route)
 	_cancel_route_button.pressed.connect(_cancel_draw)
 	_draw_overlay.gui_input.connect(_on_overlay_input)
-	_build_boundary_walls()
+	_follow_check.toggled.connect(_on_follow_toggled)
+	_follow_player = _follow_check.button_pressed
 
 func setup(zone: Dictionary, route: Dictionary) -> void:
 	zone_data = zone
 	zone_id   = str(zone.get("id", ""))
 	if _zone_label:
 		_zone_label.text = zone.get("name", "")
+
+	# Dimensione mondo (override da zona) + setup camera/limiti
+	var ws: Variant = zone.get("world_size", null)
+	if ws is Array and ws.size() >= 2:
+		world_size = Vector2(float(ws[0]), float(ws[1]))
+	_build_boundary_walls()
+	_setup_camera()
 
 	# Costruisci la lista route (default della zona + custom salvate)
 	_available_routes = _route_manager.get_routes(zone_id, zone.get("default_routes", []))
@@ -220,13 +320,15 @@ func _save_draft_route() -> void:
 	if GameLogger.ENABLED:
 		print("[ZoneCombatController] Rotta custom salvata: '%s' (%d wp)" % [norm["name"], wps.size()])
 
-# Converte una posizione locale dell'overlay (= pixel arena) in coordinate mondo.
+# Converte una posizione locale dell'overlay (= pixel container) in coordinate mondo,
+# tenendo conto dello scaling del container E della camera (pan/zoom).
 func _screen_to_world(local_pos: Vector2) -> Vector2:
-	var svc := get_node_or_null("SubViewportContainer") as Control
-	var sub := get_node_or_null("SubViewportContainer/SubViewport") as SubViewport
-	if svc == null or sub == null or svc.size.x == 0.0 or svc.size.y == 0.0:
+	if not is_instance_valid(_sub_viewport) or not is_instance_valid(_sub_container):
 		return local_pos
-	return local_pos * (Vector2(sub.size) / svc.size)
+	if _sub_container.size.x == 0.0 or _sub_container.size.y == 0.0:
+		return local_pos
+	var vp_coords: Vector2 = local_pos * (Vector2(_sub_viewport.size) / _sub_container.size)
+	return _sub_viewport.get_canvas_transform().affine_inverse() * vp_coords
 
 func _clear_path_display() -> void:
 	if path_display:
@@ -268,16 +370,19 @@ func _spawn_enemy(enemy_id: String, lvl: int) -> void:
 	_enemies.append(enemy)
 
 func _random_spawn_pos() -> Vector2:
-	var player_pos: Vector2 = player.position if is_instance_valid(player) else WORLD_SIZE * 0.5
+	var player_pos: Vector2 = player.position if is_instance_valid(player) else world_size * 0.5
+	# Spawn in un anello attorno al player: tra MIN e MAX distanza, clampato al mondo.
+	# Così sulla mappa grande i nemici restano nei pressi del player (non sparsi ovunque).
 	for _attempt in range(20):
-		var p := Vector2(
-			randf_range(SPAWN_MARGIN, WORLD_SIZE.x - SPAWN_MARGIN),
-			randf_range(SPAWN_MARGIN, WORLD_SIZE.y - SPAWN_MARGIN)
-		)
+		var ang := randf() * TAU
+		var dist := randf_range(SPAWN_MIN_DIST_FROM_PLAYER, SPAWN_MAX_DIST_FROM_PLAYER)
+		var p := player_pos + Vector2(cos(ang), sin(ang)) * dist
+		p.x = clampf(p.x, SPAWN_MARGIN, world_size.x - SPAWN_MARGIN)
+		p.y = clampf(p.y, SPAWN_MARGIN, world_size.y - SPAWN_MARGIN)
 		if p.distance_to(player_pos) >= SPAWN_MIN_DIST_FROM_PLAYER:
 			return p
-	# Fallback: angolo opposto al player
-	return WORLD_SIZE - player_pos
+	# Fallback
+	return player_pos + Vector2(SPAWN_MIN_DIST_FROM_PLAYER, 0.0)
 
 func _on_enemy_died(enemy) -> void:
 	# L'enemy è ancora valido qui (queue_free è differito): leggo dati + posizione.
@@ -388,14 +493,14 @@ func _gathering_spawn_pos() -> Vector2:
 	var path: Array[Vector2] = _route_to_path(current_route)
 	var base: Vector2
 	if path.is_empty():
-		base = WORLD_SIZE * 0.5
+		base = world_size * 0.5
 	else:
 		base = path.pick_random()
 	# Offset casuale attorno al waypoint, poi clamp dentro i margini del mondo
 	var offset := Vector2(randf_range(-70.0, 70.0), randf_range(-70.0, 70.0))
 	var pos := base + offset
-	pos.x = clampf(pos.x, SPAWN_MARGIN, WORLD_SIZE.x - SPAWN_MARGIN)
-	pos.y = clampf(pos.y, SPAWN_MARGIN, WORLD_SIZE.y - SPAWN_MARGIN)
+	pos.x = clampf(pos.x, SPAWN_MARGIN, world_size.x - SPAWN_MARGIN)
+	pos.y = clampf(pos.y, SPAWN_MARGIN, world_size.y - SPAWN_MARGIN)
 	return pos
 
 func _on_gathering_node_depleted(node) -> void:
@@ -413,18 +518,17 @@ func _clear_gathering_nodes() -> void:
 			gn.queue_free()
 	_gathering_nodes.clear()
 
-# Converte una posizione del mondo (spazio SubViewport 800×600) in coordinate
-# schermo, tenendo conto dello scaling del SubViewportContainer.
+# Converte una posizione del mondo in coordinate schermo, tenendo conto della
+# camera (pan/zoom) e dello scaling del SubViewportContainer.
 func _world_to_screen(world_pos: Vector2) -> Vector2:
-	var svc := get_node_or_null("SubViewportContainer") as Control
-	var sub := get_node_or_null("SubViewportContainer/SubViewport") as SubViewport
-	if svc == null or sub == null:
+	if not is_instance_valid(_sub_viewport) or not is_instance_valid(_sub_container):
 		return world_pos
-	var vp_size := Vector2(sub.size)
+	var vp_size := Vector2(_sub_viewport.size)
 	if vp_size.x == 0.0 or vp_size.y == 0.0:
-		return svc.global_position + world_pos
-	var s := svc.size / vp_size
-	return svc.global_position + world_pos * s
+		return _sub_container.global_position + world_pos
+	var vp_coords: Vector2 = _sub_viewport.get_canvas_transform() * world_pos
+	var s := _sub_container.size / vp_size
+	return _sub_container.global_position + vp_coords * s
 
 # ==================== TARGETING (interfaccia per SkillCastController) ====================
 # SkillCastController interroga questi metodi come faceva con SlotManager.
@@ -479,12 +583,17 @@ func get_alive_enemies() -> Array:
 			alive.append(e)
 	return alive
 
-# ==================== BOUNDARY WALLS (fissi 800×600 — costruiti una volta sola) ====================
+# ==================== BOUNDARY WALLS (dimensionati su world_size) ====================
 
 func _build_boundary_walls() -> void:
 	var t    = 20.0
-	var w    = 800.0
-	var h    = 600.0
+	var w    = world_size.x
+	var h    = world_size.y
+
+	# Rimuovi eventuali muri esistenti (setup può ridimensionare il mondo)
+	var existing = game_world.get_node_or_null("BoundaryWalls")
+	if existing:
+		existing.free()
 
 	# [cx, cy, half_w, half_h]
 	var defs = [
@@ -508,6 +617,24 @@ func _build_boundary_walls() -> void:
 		body.add_child(cs)
 
 	game_world.add_child(body)
+	_draw_world_bounds()
+
+# Riquadro placeholder che mostra i confini del mondo (sostituibile con la mappa vera)
+func _draw_world_bounds() -> void:
+	var existing = game_world.get_node_or_null("WorldBounds")
+	if existing:
+		existing.free()
+	var outline := Line2D.new()
+	outline.name = "WorldBounds"
+	outline.width = 3.0
+	outline.default_color = Color(0.4, 0.5, 0.4, 0.5)
+	outline.z_index = -9
+	outline.add_point(Vector2(0, 0))
+	outline.add_point(Vector2(world_size.x, 0))
+	outline.add_point(Vector2(world_size.x, world_size.y))
+	outline.add_point(Vector2(0, world_size.y))
+	outline.add_point(Vector2(0, 0))
+	game_world.add_child(outline)
 
 # ==================== PLAYER ====================
 
