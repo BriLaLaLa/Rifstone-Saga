@@ -1,6 +1,7 @@
-[gd_resource type="TileSet" load_steps=3 format=3 uid="uid://coy6jfwfw14sr"]
+[gd_resource type="TileSet" load_steps=5 format=3]
 
 [ext_resource type="Texture2D" uid="uid://b3d2451mbcecl" path="res://assets/TinySwords/Terrain/Tileset/Tilemap_color1.png" id="1_tex"]
+[ext_resource type="Texture2D" uid="uid://b3q4aio8jknki" path="res://assets/TinySwords/Terrain/Tileset/Water Background color.png" id="2_water"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_grass"]
 texture = ExtResource("1_tex")
@@ -60,6 +61,12 @@ texture_region_size = Vector2i(64, 64)
 7:5/0 = 0
 8:5/0 = 0
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
+texture = ExtResource("2_water")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+
 [resource]
 tile_size = Vector2i(64, 64)
 sources/0 = SubResource("TileSetAtlasSource_grass")
+sources/1 = SubResource("TileSetAtlasSource_water")
