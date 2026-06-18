@@ -79,6 +79,10 @@ var _draft: Array[Vector2] = []
 # Nodi di gathering vivi nel mondo
 var _gathering_nodes: Array = []
 
+# Layer dell'erba (TerrainLayer dentro la mappa istanziata): definisce la "terra"
+# calpestabile. Spawn di nemici e gathering avvengono solo dove c'è una tessera qui.
+var _land_layer: TileMapLayer = null
+
 # Camera
 var _follow_player: bool = true
 var _panning: bool = false
@@ -380,10 +384,28 @@ func _random_spawn_pos() -> Vector2:
 		var p := player_pos + Vector2(cos(ang), sin(ang)) * dist
 		p.x = clampf(p.x, SPAWN_MARGIN, world_size.x - SPAWN_MARGIN)
 		p.y = clampf(p.y, SPAWN_MARGIN, world_size.y - SPAWN_MARGIN)
-		if p.distance_to(player_pos) >= SPAWN_MIN_DIST_FROM_PLAYER:
+		if p.distance_to(player_pos) >= SPAWN_MIN_DIST_FROM_PLAYER and _is_on_land(p):
 			return p
-	# Fallback
+	# Fallback: prova posizioni sull'erba a distanze/angoli vari attorno al player
+	for _a in range(24):
+		var ang2 := randf() * TAU
+		var d2 := randf_range(SPAWN_MARGIN, SPAWN_MAX_DIST_FROM_PLAYER)
+		var p2 := player_pos + Vector2(cos(ang2), sin(ang2)) * d2
+		p2.x = clampf(p2.x, SPAWN_MARGIN, world_size.x - SPAWN_MARGIN)
+		p2.y = clampf(p2.y, SPAWN_MARGIN, world_size.y - SPAWN_MARGIN)
+		if _is_on_land(p2):
+			return p2
+	# Ultimo fallback: vicino al player
 	return player_pos + Vector2(SPAWN_MIN_DIST_FROM_PLAYER, 0.0)
+
+func _is_on_land(world_pos: Vector2) -> bool:
+	"""True se world_pos cade su una tessera dipinta del TerrainLayer (erba)."""
+	if _land_layer == null or not is_instance_valid(_land_layer):
+		_land_layer = get_node_or_null("SubViewportContainer/SubViewport/GameWorld/PlainsMap/TerrainLayer") as TileMapLayer
+	if _land_layer == null:
+		return true  # nessun layer terreno trovato: non filtrare
+	var cell := _land_layer.local_to_map(world_pos)
+	return _land_layer.get_cell_source_id(cell) != -1
 
 func _on_enemy_died(enemy) -> void:
 	# L'enemy è ancora valido qui (queue_free è differito): leggo dati + posizione.
@@ -492,17 +514,16 @@ func _pick_gathering_node_type(db) -> String:
 func _gathering_spawn_pos() -> Vector2:
 	"""Posizione vicino a un waypoint della rotta (così il player ci passa)."""
 	var path: Array[Vector2] = _route_to_path(current_route)
-	var base: Vector2
-	if path.is_empty():
-		base = world_size * 0.5
-	else:
-		base = path.pick_random()
-	# Offset casuale attorno al waypoint, poi clamp dentro i margini del mondo
-	var offset := Vector2(randf_range(-70.0, 70.0), randf_range(-70.0, 70.0))
-	var pos := base + offset
-	pos.x = clampf(pos.x, SPAWN_MARGIN, world_size.x - SPAWN_MARGIN)
-	pos.y = clampf(pos.y, SPAWN_MARGIN, world_size.y - SPAWN_MARGIN)
-	return pos
+	var fallback: Vector2 = (world_size * 0.5) if path.is_empty() else path[0]
+	# Prova vicino ai waypoint della rotta, accettando solo posizioni sull'erba
+	for _i in range(20):
+		var base: Vector2 = (world_size * 0.5) if path.is_empty() else path.pick_random()
+		var pos := base + Vector2(randf_range(-90.0, 90.0), randf_range(-90.0, 90.0))
+		pos.x = clampf(pos.x, SPAWN_MARGIN, world_size.x - SPAWN_MARGIN)
+		pos.y = clampf(pos.y, SPAWN_MARGIN, world_size.y - SPAWN_MARGIN)
+		if _is_on_land(pos):
+			return pos
+	return fallback
 
 func _on_gathering_node_depleted(node) -> void:
 	_gathering_nodes.erase(node)
