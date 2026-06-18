@@ -1,7 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://cnvq3y2h8NEWSKILLS"]
+[gd_scene load_steps=4 format=3 uid="uid://cnvq3y2h8NEWSKILLS"]
 
 [ext_resource type="Script" path="res://scripts/ui/SkillsTab.gd" id="1_skills_tab"]
 [ext_resource type="Script" path="res://scripts/ui/SkillDetailsPanel.gd" id="2_details_panel"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_battle_overlay"]
+bg_color = Color(0, 0, 0, 0.85)
 
 [node name="SkillsTab" type="Control"]
 layout_mode = 3
@@ -145,3 +148,50 @@ layout_mode = 2
 [node name="PromotionButton" type="Button" parent="VBoxContainer/DetailsSection/DetailsPanel/VBoxContainer/ScrollContainer/DetailsContent"]
 layout_mode = 2
 text = "Promuovi Skill"
+
+[node name="BattleOverlay" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+z_index = 999
+theme_override_styles/panel = SubResource("StyleBoxFlat_battle_overlay")
+
+[node name="MainLabel" type="Label" parent="BattleOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 60
+theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+text = "⚔️ BATTAGLIA IN CORSO ⚔️"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SubLabel" type="Label" parent="BattleOverlay"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = 50.0
+offset_right = 300.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1, 0.8, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "Exit the battle to change your loadout"
+horizontal_alignment = 1
+vertical_alignment = 1

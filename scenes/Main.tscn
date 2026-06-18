@@ -1,10 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://fu6wa183lggm"]
+[gd_scene load_steps=6 format=3 uid="uid://fu6wa183lggm"]
 
 [ext_resource type="Script" uid="uid://bmfolai807irx" path="res://scenes/Main.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://ws76uxi0un62" path="res://scripts/ui/InventoryTab.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scripts/ui/PassivesTab.tscn" id="5"]
 [ext_resource type="PackedScene" uid="uid://cnvq3y2h8NEWSKILLS" path="res://scripts/ui/SkillsTab.tscn" id="3"]
-[ext_resource type="PackedScene" uid="uid://ff3lstbvirq6" path="res://scenes/battle/BattleTab.tscn" id="4"]
 [ext_resource type="PackedScene" uid="uid://quest_log_tab" path="res://scripts/ui/QuestLogTab.tscn" id="6"]
 
 [node name="Main" type="Control"]
@@ -91,7 +90,7 @@ visible = false
 layout_mode = 2
 metadata/_tab_index = 4
 
-[node name="Combat" parent="Margin/VBox/Tabs" instance=ExtResource("4")]
+[node name="Combat" type="Control" parent="Margin/VBox/Tabs"]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 5

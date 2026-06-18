@@ -6,21 +6,21 @@ extends Control
 signal item_purchased(item_id: String, qty: int)
 
 const ITEMS_JSON: String = "res://data/items.json"
-const FORGE_UI_SCRIPT = preload("res://scripts/ui/ForgeUI.gd")
+const FORGE_UI_SCENE = preload("res://scenes/ui/ForgeUI.tscn")
 
-var _host: Control                    # map_root
-var _panel: PanelContainer
-var _body: VBoxContainer
-var _title: Label
+var _host: Control
 var _items_catalog: Array = []
-var _forge_ui: Control = null  # ForgeUI instance
+var _forge_ui: Control = null
+
+@onready var _title: Label = $Panel/Margin/VBox/Top/Title
+@onready var _body: VBoxContainer = $Panel/Margin/VBox/Scroll/Body
 
 func _ready() -> void:
+	$Panel/Margin/VBox/Top/CloseButton.pressed.connect(func(): visible = false)
 	_load_catalog()
 
 func attach_to(host: Control) -> void:
 	_host = host
-	_build()
 
 func open_for_npc(npc_id: String) -> void:
 	if _host == null:
@@ -53,67 +53,6 @@ func open_for_npc(npc_id: String) -> void:
 	else:
 		_show_generic(npc)
 	visible = true
-
-# ----- Build -----
-func _build() -> void:
-	for c in get_children():
-		c.queue_free()
-
-	name = "NpcOverlay"
-	set_anchors_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
-	visible = false
-	_host.add_child(self)
-
-	var dim := ColorRect.new()
-	dim.color = Color(0,0,0,0.25)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(dim)
-
-	_panel = PanelContainer.new()
-	_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(_panel)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
-	_panel.add_child(margin)
-
-	var v := VBoxContainer.new()
-	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	v.size_flags_vertical   = Control.SIZE_EXPAND_FILL
-	margin.add_child(v)
-
-	var top := HBoxContainer.new()
-	top.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	v.add_child(top)
-
-	_title = Label.new()
-	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_title.add_theme_font_size_override("font_size", 22)
-	_title.text = "NPC"
-	top.add_child(_title)
-
-	var close_btn := Button.new()
-	close_btn.text = "✕"
-	close_btn.focus_mode = Control.FOCUS_NONE
-	close_btn.pressed.connect(func(): visible = false)
-	top.add_child(close_btn)
-
-	v.add_child(HSeparator.new())
-
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical   = Control.SIZE_EXPAND_FILL
-	v.add_child(scroll)
-
-	_body = VBoxContainer.new()
-	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body.size_flags_vertical   = Control.SIZE_EXPAND_FILL
-	scroll.add_child(_body)
 
 # ----- Screens -----
 func _show_generic(npc: Dictionary) -> void:
@@ -307,7 +246,8 @@ func _open_forge(npc: Dictionary) -> void:
 
 	# Create ForgeUI if not exists
 	if _forge_ui == null:
-		_forge_ui = FORGE_UI_SCRIPT.new()
+		_forge_ui = FORGE_UI_SCENE.instantiate()
+		_host.add_child(_forge_ui)
 		_forge_ui.attach_to(_host)
 
 	# Open forge

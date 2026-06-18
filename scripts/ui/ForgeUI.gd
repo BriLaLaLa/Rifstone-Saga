@@ -19,189 +19,33 @@ const UPGRADE_SUCCESS_RATES = {
 const STAT_BOOST_PER_LEVEL = 0.05  # 5% boost per upgrade level
 
 # ==================== UI NODES ====================
-var _host: Control  # map_root
-var _panel: PanelContainer
-var _inventory_grid: GridContainer
-var _upgrade_slot: Panel
-var _upgrade_btn: Button
-var _info_label: Label
-var _success_label: Label
-var _close_btn: Button
+var _host: Control
+
+@onready var _inventory_grid: GridContainer = $Panel/Margin/VBox/Content/LeftPanel/InvScroll/GridContainer/InventoryGrid
+@onready var _upgrade_slot: Panel = $Panel/Margin/VBox/Content/RightPanel/UpgradeSlot
+@onready var _upgrade_btn: Button = $Panel/Margin/VBox/Content/RightPanel/UpgradeButton
+@onready var _info_label: Label = $Panel/Margin/VBox/Content/RightPanel/InfoLabel
+@onready var _success_label: Label = $Panel/Margin/VBox/Content/RightPanel/SuccessLabel
+@onready var _close_btn: Button = $Panel/Margin/VBox/Header/CloseButton
 
 # ==================== STATE ====================
 var _current_item: Dictionary = {}  # Item currently in upgrade slot
 var _inventory_items: Array = []  # Reference to GameState inventory_items
 
+func _ready() -> void:
+	_close_btn.pressed.connect(_on_close_pressed)
+	_upgrade_btn.pressed.connect(_on_upgrade_pressed)
+
 func attach_to(host: Control) -> void:
 	_host = host
-	_build_ui()
 
 func open_forge() -> void:
 	print("[ForgeUI] ========== OPENING FORGE ==========")
-	if _host == null:
-		print("[ForgeUI] ERROR: _host is null!")
-		return
-	print("[ForgeUI] Host is valid, refreshing inventory...")
 	_refresh_inventory()
 	visible = true
 	print("[ForgeUI] Forge UI now visible")
 
 # ==================== BUILD UI ====================
-func _build_ui() -> void:
-	print("[ForgeUI] Building UI...")
-	for c in get_children():
-		c.queue_free()
-
-	name = "ForgeUI"
-	set_anchors_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
-	visible = false
-	_host.add_child(self)
-	print("[ForgeUI] UI built and added to host")
-
-	# Semi-transparent background
-	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.7)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(dim)
-
-	# Main panel
-	_panel = PanelContainer.new()
-	_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_panel.custom_minimum_size = Vector2(900, 600)
-	_panel.position = Vector2(-450, -300)  # Center it
-	add_child(_panel)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 20)
-	margin.add_theme_constant_override("margin_top", 20)
-	margin.add_theme_constant_override("margin_right", 20)
-	margin.add_theme_constant_override("margin_bottom", 20)
-	_panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 15)
-	margin.add_child(vbox)
-
-	# ===== HEADER =====
-	var header := HBoxContainer.new()
-	vbox.add_child(header)
-
-	var title := Label.new()
-	title.text = "🔨 Fucina del Fabbro"
-	title.add_theme_font_size_override("font_size", 28)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(title)
-
-	_close_btn = Button.new()
-	_close_btn.text = "✖ Chiudi"
-	_close_btn.custom_minimum_size = Vector2(100, 40)
-	_close_btn.pressed.connect(_on_close_pressed)
-	header.add_child(_close_btn)
-
-	var separator1 := HSeparator.new()
-	vbox.add_child(separator1)
-
-	# ===== MAIN CONTENT (HBoxContainer) =====
-	var content := HBoxContainer.new()
-	content.add_theme_constant_override("separation", 30)
-	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_child(content)
-
-	# ===== LEFT SIDE: INVENTORY =====
-	var left_panel := VBoxContainer.new()
-	left_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	content.add_child(left_panel)
-
-	var inv_title := Label.new()
-	inv_title.text = "📦 Inventario"
-	inv_title.add_theme_font_size_override("font_size", 20)
-	left_panel.add_child(inv_title)
-
-	# Scroll container with visible background
-	var inv_scroll := ScrollContainer.new()
-	inv_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	inv_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	inv_scroll.custom_minimum_size = Vector2(500, 400)  # Ensure minimum size
-	left_panel.add_child(inv_scroll)
-
-	# Container for grid (to control layout better)
-	var grid_container := VBoxContainer.new()
-	grid_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	inv_scroll.add_child(grid_container)
-
-	_inventory_grid = GridContainer.new()
-	_inventory_grid.columns = 6  # Reduced to 6 for larger slots
-	_inventory_grid.add_theme_constant_override("h_separation", 12)
-	_inventory_grid.add_theme_constant_override("v_separation", 12)
-	_inventory_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid_container.add_child(_inventory_grid)
-
-	# ===== RIGHT SIDE: UPGRADE STATION =====
-	var right_panel := VBoxContainer.new()
-	right_panel.custom_minimum_size = Vector2(300, 0)
-	right_panel.add_theme_constant_override("separation", 15)
-	content.add_child(right_panel)
-
-	var upgrade_title := Label.new()
-	upgrade_title.text = "⚒️ Potenziamento"
-	upgrade_title.add_theme_font_size_override("font_size", 20)
-	right_panel.add_child(upgrade_title)
-
-	# Upgrade slot (drop zone)
-	_upgrade_slot = Panel.new()
-	_upgrade_slot.custom_minimum_size = Vector2(128, 128)
-	_upgrade_slot.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-
-	# Add styled background for drop zone
-	var drop_style := StyleBoxFlat.new()
-	drop_style.bg_color = Color(0.15, 0.15, 0.2, 0.9)
-	drop_style.border_color = Color(0.5, 0.5, 0.6)
-	drop_style.set_border_width_all(3)
-	drop_style.set_corner_radius_all(8)
-	_upgrade_slot.add_theme_stylebox_override("panel", drop_style)
-
-	right_panel.add_child(_upgrade_slot)
-
-	var slot_label := Label.new()
-	slot_label.name = "PlaceholderLabel"
-	slot_label.text = "Trascina qui\nl'equipaggiamento"
-	slot_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	slot_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	slot_label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	slot_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-	_upgrade_slot.add_child(slot_label)
-
-	# Info labels
-	_info_label = Label.new()
-	_info_label.text = "Nessun item"
-	_info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	right_panel.add_child(_info_label)
-
-	_success_label = Label.new()
-	_success_label.text = ""
-	_success_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_success_label.add_theme_font_size_override("font_size", 18)
-	_success_label.add_theme_color_override("font_color", Color.YELLOW)
-	right_panel.add_child(_success_label)
-
-	# Spacer
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	right_panel.add_child(spacer)
-
-	# Upgrade button
-	_upgrade_btn = Button.new()
-	_upgrade_btn.text = "⚡ POTENZIA"
-	_upgrade_btn.custom_minimum_size = Vector2(0, 60)
-	_upgrade_btn.add_theme_font_size_override("font_size", 22)
-	_upgrade_btn.disabled = true
-	_upgrade_btn.pressed.connect(_on_upgrade_pressed)
-	right_panel.add_child(_upgrade_btn)
-
 # ==================== INVENTORY REFRESH ====================
 func _refresh_inventory() -> void:
 	# Clear grid

@@ -167,15 +167,20 @@ func _check_and_cast_next_skill() -> void:
 			print("[SkillCastController] WARNING: No player set!")
 		return
 
-	if not battle_area:
+	if not slot_manager and not battle_area:
 		if GameLogger.ENABLED:
-			print("[SkillCastController] WARNING: No battle_area set!")
+			print("[SkillCastController] WARNING: No slot_manager or battle_area set!")
 		return
 
-	# Check each loadout slot in order (priority)
+	# Check each loadout slot in order (priority).
+	# L'attacco base NON viene castato qui: è il ripiego (sotto). Altrimenti, essendo
+	# sempre disponibile (no cooldown/mana), vincerebbe la priorità e le vere skill
+	# negli slot inferiori non partirebbero mai.
 	for i in range(6):
 		var skill = loadout[i]
 		if skill == null:
+			continue
+		if skill.id == "basic_attack":
 			continue
 
 		# Can we cast this skill?
@@ -183,7 +188,7 @@ func _check_and_cast_next_skill() -> void:
 			_start_casting(skill)
 			return
 
-	# No skills available - use Basic Attack as fallback
+	# Nessuna skill pronta - usa l'attacco base come ripiego
 	var basic_attack = skill_db.get_skill("basic_attack")
 	if basic_attack and _can_cast_skill(basic_attack):
 		if GameLogger.ENABLED:

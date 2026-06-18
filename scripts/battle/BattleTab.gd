@@ -8,16 +8,15 @@ class_name BattleTab
 
 # Warrior Skills System
 const SkillCastController = preload("res://scripts/battle/SkillCastController.gd")
-const CombatSkillBar = preload("res://scripts/battle/CombatSkillBar.gd")
 var skill_cast_controller: SkillCastController = null
-var combat_skill_bar: CombatSkillBar = null
+@onready var combat_skill_bar: CombatSkillBar = $HSplit/RightPanel/BattleArea/CombatSkillBar
 
 # Exploration System
 const ExplorationCombatController = preload("res://scripts/battle/ExplorationCombatController.gd")
 var exploration_controller: ExplorationCombatController = null
 
 # Navigation states
-enum NavigationState { WORLD_MAP, REGION_ZOOM, BATTLE }
+enum NavigationState { WORLD_MAP, REGION_ZOOM, BATTLE, ZONE_COMBAT }
 
 # Scene references
 @onready var character_display: CharacterDisplay = $HSplit/LeftPanel/CharacterDisplay
@@ -30,14 +29,16 @@ enum NavigationState { WORLD_MAP, REGION_ZOOM, BATTLE }
 @onready var world_map_view: Control = $HSplit/RightPanel/WorldMapView
 @onready var region_zoom_view: Control = $HSplit/RightPanel/RegionZoomView
 @onready var battle_area: BattleArea = $HSplit/RightPanel/BattleArea
+@onready var _zone_combat: ZoneCombatController = $HSplit/RightPanel/ZoneCombatScene
 @onready var action_bar: Control = $HSplit/RightPanel/BattleArea/ActionBar
 @onready var start_battle_button: Button = $HSplit/RightPanel/BattleArea/StartBattleButton
+@onready var exit_battle_button: Button = $HSplit/RightPanel/BattleArea/ExitBattleButton
+@onready var _death_overlay: ColorRect = $DeathOverlay
 
 # Inventory popup reference
 var inventory_popup: InventoryPopup = null
 
-# Exit battle button
-var exit_battle_button: Button = null
+# exit_battle_button è @onready — definito in BattleTab.tscn
 
 # PackedScene per il popup
 const INVENTORY_POPUP_SCENE := "res://scenes/battle/InventoryPopup.tscn"
@@ -50,6 +51,9 @@ var selected_zone: ZoneData = null
 # Battle state
 var is_battle_active: bool = false
 var current_area_id: String = "forest_1"  # Default area
+
+# Nuovo sistema combat top-down
+var zone_combat_instance: Control = null   # Riferimento a _zone_combat quando attivo
 
 # Combat timers
 var player_attack_timer: Timer = null
@@ -85,7 +89,8 @@ func _ready() -> void:
 	_setup_skill_system()
 	# NOTE: _setup_exploration_system() is deferred to first visibility
 	# so BattleArea has time to initialize slots while the tab is actually visible.
-	_create_exit_battle_button()
+	exit_battle_button.pressed.connect(_on_exit_battle_pressed)
+	_zone_combat.zone_exited.connect(_on_zone_combat_exited)
 
 	# CRITICAL: Register this BattleTab with LootOrbManager so orbs spawn visually
 	var loot_orb_manager = get_node_or_null("/root/LootOrbManager")
@@ -175,8 +180,8 @@ func _setup_skill_system() -> void:
 	skill_cast_controller.buff_applied.connect(_on_buff_applied)
 	skill_cast_controller.buff_expired.connect(_on_buff_expired)
 
-	# Create Combat Skill Bar UI
-	_setup_combat_skill_bar()
+	# Connect Combat Skill Bar to skill controller
+	combat_skill_bar.set_skill_controller(skill_cast_controller)
 
 	# Load skills from saved loadout
 	_load_skills_from_loadout()
@@ -280,30 +285,6 @@ func _load_default_skills() -> void:
 	if skill_cast_controller.has_method("clear_loadout"):
 		skill_cast_controller.clear_loadout()
 
-func _setup_combat_skill_bar() -> void:
-	"""Create the combat skill bar UI"""
-	if not battle_area:
-		return
-
-	combat_skill_bar = CombatSkillBar.new()
-	combat_skill_bar.name = "CombatSkillBar"
-
-	# Position at bottom of battle area
-	combat_skill_bar.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	combat_skill_bar.anchor_top = 1.0
-	combat_skill_bar.anchor_bottom = 1.0
-	combat_skill_bar.offset_top = -120  # 120 pixels from bottom
-	combat_skill_bar.offset_bottom = -10  # 10 pixels from bottom
-
-	# Add to battle area
-	battle_area.add_child(combat_skill_bar)
-
-	# Connect to skill controller
-	if skill_cast_controller:
-		combat_skill_bar.set_skill_controller(skill_cast_controller)
-
-	if GameLogger.ENABLED:
-		print("[BattleTab] Combat Skill Bar UI created")
 
 func _setup_exploration_system() -> void:
 	"""Setup exploration combat controller"""
@@ -348,33 +329,6 @@ func _connect_signals() -> void:
 				if not gs.on_tick.is_connected(_on_tick):
 					gs.on_tick.connect(_on_tick)
 
-func _create_exit_battle_button() -> void:
-	"""Create Exit Battle button"""
-	if not battle_area:
-		return
-
-	exit_battle_button = Button.new()
-	exit_battle_button.text = "🚪 Exit Battle"
-	exit_battle_button.custom_minimum_size = Vector2(120, 40)
-
-	# Position at top-right of battle area
-	exit_battle_button.position = Vector2(10, 10)
-	exit_battle_button.z_index = 100  # Above everything
-
-	# Style
-	exit_battle_button.add_theme_font_size_override("font_size", 16)
-
-	# Initially hidden
-	exit_battle_button.visible = false
-
-	# Connect signal
-	exit_battle_button.pressed.connect(_on_exit_battle_pressed)
-
-	# Add to battle area
-	battle_area.add_child(exit_battle_button)
-
-	if GameLogger.ENABLED:
-		print("[BattleTab] Exit Battle button created")
 
 func _on_exit_battle_pressed() -> void:
 	"""Handle Exit Battle button press"""
@@ -599,6 +553,10 @@ func _show_world_map() -> void:
 	battle_area.visible = false
 	action_bar.visible = false
 
+	# Difensivo: se il combat top-down è ancora attivo (es. dopo morte), spegnilo
+	if is_instance_valid(_zone_combat) and _zone_combat.visible:
+		_cleanup_zone_combat()
+
 	# Hide combat skill bar
 	if combat_skill_bar and is_instance_valid(combat_skill_bar):
 		combat_skill_bar.visible = false
@@ -621,6 +579,10 @@ func _show_region_zoom(kingdom_id: String) -> void:
 	region_zoom_view.visible = true
 	battle_area.visible = false
 	action_bar.visible = false
+
+	# Difensivo: spegni il combat top-down se ancora attivo
+	if is_instance_valid(_zone_combat) and _zone_combat.visible:
+		_cleanup_zone_combat()
 
 	# Hide combat skill bar
 	if combat_skill_bar and is_instance_valid(combat_skill_bar):
@@ -650,13 +612,7 @@ func _show_battle(zone_data: ZoneData) -> void:
 	battle_area.visible = true
 	action_bar.visible = true
 
-	print("[BattleTab] Battle view shown - BattleArea size: ", battle_area.size)
-	print("[BattleTab] RightPanel size: ", $HSplit/RightPanel.size)
-
-	# Change background to match zone
-	print("[BattleTab] About to call change_background with key: ", zone_data.background_key)
 	battle_area.change_background(zone_data.background_key)
-	print("[BattleTab] change_background called")
 
 	# Show combat skill bar
 	if combat_skill_bar and is_instance_valid(combat_skill_bar):
@@ -693,27 +649,122 @@ func _on_zone_clicked(zone_data: ZoneData) -> void:
 	if GameLogger.ENABLED:
 		print("[BattleTab] Zone clicked: %s" % zone_data.name)
 
-	# Convert ZoneData to Dictionary for exploration controller
+	# Nuovo sistema top-down: se la zona ha tilemap_scene, usa ZoneCombatController
+	if zone_data.tilemap_scene != "":
+		_show_zone_combat(zone_data)
+		return
+
+	# Legacy: sistema slot-based
 	var zone_dict = {
 		"id": zone_data.id,
 		"name": zone_data.name,
 		"level_range": zone_data.level_range,
 		"enemies": zone_data.enemies,
-		"boss_types": [],  # Will be loaded from zones.json
-		"metin_types": [],  # Will be loaded from zones.json
+		"boss_types": [],
+		"metin_types": [],
 		"gold_min": zone_data.gold_min,
 		"gold_max": zone_data.gold_max,
 		"xp_min": zone_data.xp_min,
 		"xp_max": zone_data.xp_max,
 		"area_id": zone_data.area_id
 	}
-
-	# Enter exploration mode
 	if exploration_controller:
 		exploration_controller.enter_zone(zone_dict)
-
-	# Switch to battle view
 	_show_battle_view()
+
+# ==================== NUOVO SISTEMA COMBAT ====================
+
+func _show_zone_combat(zone_data: ZoneData) -> void:
+	"""Mostra la scena combat top-down (già in scena, toggle visibility)."""
+	if GameLogger.ENABLED:
+		print("[BattleTab] Entrando in ZoneCombat: %s" % zone_data.name)
+
+	world_map_view.visible   = false
+	region_zoom_view.visible = false
+	battle_area.visible      = false
+	_zone_combat.visible     = true
+	zone_combat_instance     = _zone_combat
+
+	current_nav_state = NavigationState.ZONE_COMBAT
+	selected_zone     = zone_data
+
+	var zone_dict = {
+		"id":             zone_data.id,
+		"name":           zone_data.name,
+		"level_range":    zone_data.level_range,
+		"enemies":        zone_data.enemies,
+		"gold_min":       zone_data.gold_min,
+		"gold_max":       zone_data.gold_max,
+		"xp_min":         zone_data.xp_min,
+		"xp_max":         zone_data.xp_max,
+		"default_routes": zone_data.default_routes,
+	}
+
+	var route = _get_default_route(zone_data)
+	await _zone_combat.setup(zone_dict, route)
+
+	# Collega il sistema skill auto-cast al combat top-down.
+	# ZoneCombatController fa da "slot_manager" (espone get_*_alive_enemies).
+	# battle_area=null → niente vecchia area: le skill applicano danno diretto.
+	if skill_cast_controller:
+		skill_cast_controller.set_slot_manager(_zone_combat)
+		skill_cast_controller.set_battle_area(null)
+		skill_cast_controller.start_combat()
+	is_battle_active = true
+	_toggle_skills_tab_overlay(true)
+
+	# Mostra la skill bar nel combat top-down (ri-parentata sulla zona)
+	if combat_skill_bar and is_instance_valid(combat_skill_bar):
+		if combat_skill_bar.get_parent() != _zone_combat:
+			combat_skill_bar.reparent(_zone_combat, false)
+		combat_skill_bar.z_index = 50
+		combat_skill_bar.visible = true
+
+	if GameLogger.ENABLED:
+		print("[BattleTab] ZoneCombat attivo")
+
+func _get_default_route(zone_data: ZoneData) -> Dictionary:
+	"""Ritorna la prima route default della zona, oppure una route hardcodata di test."""
+	if zone_data.default_routes.size() > 0:
+		return zone_data.default_routes[0]
+
+	# Fallback: route di test con 4 waypoint al centro schermo
+	return {
+		"id":        "default_test",
+		"name":      "Test Route",
+		"loop":      true,
+		"waypoints": [
+			Vector2(200, 200),
+			Vector2(600, 200),
+			Vector2(600, 450),
+			Vector2(200, 450),
+		]
+	}
+
+func _on_zone_combat_exited() -> void:
+	"""Player ha premuto 'Esci dalla zona'."""
+	if GameLogger.ENABLED:
+		print("[BattleTab] Uscita da ZoneCombat")
+	_cleanup_zone_combat()
+	_show_region_zoom(selected_kingdom)
+
+func _cleanup_zone_combat() -> void:
+	# Ferma e scollega il sistema skill dal combat top-down
+	if skill_cast_controller:
+		skill_cast_controller.stop_combat()
+		skill_cast_controller.set_slot_manager(null)
+	# Pulisci i nemici della zona (altrimenti restano in memoria)
+	if is_instance_valid(_zone_combat) and _zone_combat.has_method("clear_combat"):
+		_zone_combat.clear_combat()
+	# Riporta la skill bar nella BattleArea e nascondila
+	if combat_skill_bar and is_instance_valid(combat_skill_bar):
+		combat_skill_bar.visible = false
+		if combat_skill_bar.get_parent() != battle_area:
+			combat_skill_bar.reparent(battle_area, false)
+	is_battle_active = false
+	_toggle_skills_tab_overlay(false)
+	_zone_combat.visible = false
+	zone_combat_instance = null
 
 func _show_battle_view() -> void:
 	"""Show battle area (for exploration system)"""
@@ -728,9 +779,6 @@ func _show_battle_view() -> void:
 	# Show battle area
 	if battle_area:
 		battle_area.visible = true
-
-		print("[BattleTab] _show_battle_view() - BattleArea size: ", battle_area.size)
-		print("[BattleTab] RightPanel size: ", $HSplit/RightPanel.size)
 
 		# Background is already loaded in BattleArea._ready()
 		# Only change it if we have a specific zone
@@ -1164,31 +1212,10 @@ func _on_player_died() -> void:
 
 func _show_death_screen() -> void:
 	"""Mostra messaggio 'SEI MORTO'"""
-	# Create death overlay
-	var death_overlay = ColorRect.new()
-	death_overlay.color = Color(0, 0, 0, 0.8)
-	death_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	death_overlay.z_index = 999
-	death_overlay.name = "DeathOverlay"
-
-	# Create death label
-	var death_label = Label.new()
-	death_label.text = "SEI MORTO"
-	death_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	death_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	death_label.set_anchors_preset(Control.PRESET_CENTER)
-
-	# Make text large and red
-	death_label.add_theme_font_size_override("font_size", 72)
-	death_label.add_theme_color_override("font_color", Color.RED)
-
-	death_overlay.add_child(death_label)
-	add_child(death_overlay)
-
-	# Auto-remove after 3 seconds
+	_death_overlay.visible = true
 	await get_tree().create_timer(3.0).timeout
-	if is_instance_valid(death_overlay):
-		death_overlay.queue_free()
+	if is_instance_valid(_death_overlay):
+		_death_overlay.visible = false
 
 func _apply_death_penalty() -> void:
 	"""Toglie 5% XP del livello corrente"""

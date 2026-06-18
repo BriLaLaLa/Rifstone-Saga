@@ -1,0 +1,72 @@
+[gd_scene load_steps=2 format=3 uid="uid://village_overlay_v1"]
+
+[ext_resource type="Script" path="res://scripts/ui/VillageOverlay.gd" id="1_vov"]
+
+[node name="VillageOverlay" type="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+mouse_filter = 1
+script = ExtResource("1_vov")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.25)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Top" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="Panel/Margin/VBox/Top"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+text = "NPC"
+
+[node name="CloseButton" type="Button" parent="Panel/Margin/VBox/Top"]
+layout_mode = 2
+focus_mode = 0
+text = "✕"
+
+[node name="Sep" type="HSeparator" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Body" type="VBoxContainer" parent="Panel/Margin/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3

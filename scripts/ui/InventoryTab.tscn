@@ -1,9 +1,8 @@
-[gd_scene load_steps=11 format=3 uid="uid://ws76uxi0un62"]
+[gd_scene load_steps=10 format=3 uid="uid://ws76uxi0un62"]
 
 [ext_resource type="Script" uid="uid://dgjlui52rxfti" path="res://scripts/ui/InventoryTab.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://dkaue3cv30vgn" path="res://scripts/ui/Item.tscn" id="2_rjnd6"]
 [ext_resource type="PackedScene" uid="uid://bvrmq8k5j8tqa" path="res://scripts/ui/CraftableItem.tscn" id="2_craftable"]
-[ext_resource type="Script" uid="uid://cw68mtn3vj5iq" path="res://scripts/ui/DACANCELLAREbottone.gd" id="3_i2wco"]
 [ext_resource type="PackedScene" uid="uid://ci6nt0nevsu6h" path="res://scripts/ui/InventorySlot.tscn" id="3_s3c4d"]
 [ext_resource type="Script" uid="uid://c4exoc0ywhuiu" path="res://scripts/ui/HighlightLayer.gd" id="5_highlight"]
 [ext_resource type="Texture2D" uid="uid://dfq1oqkgjdkny" path="res://scripts/ui/inventoryPg.png" id="6_equipment"]
@@ -116,10 +115,6 @@ offset_right = 512.0
 offset_bottom = 320.0
 mouse_filter = 2
 script = ExtResource("5_highlight")
-
-[node name="Bottone" type="HBoxContainer" parent="InvSplit/Left"]
-layout_mode = 2
-script = ExtResource("3_i2wco")
 
 [node name="Right" type="Control" parent="InvSplit"]
 custom_minimum_size = Vector2(400, 768)

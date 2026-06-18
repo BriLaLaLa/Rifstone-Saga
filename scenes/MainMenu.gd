@@ -3,22 +3,21 @@
 
 extends Control
 
-const MAIN_SCENE_PATH := "res://scenes/Main.tscn"
-const SLOT_COUNT := 4
+const MAIN_SCENE_PATH         := "res://scenes/Main.tscn"
+const SLOT_OVERLAY_SCENE_PATH := "res://scenes/ui/SlotSelectOverlay.tscn"
+const SLOT_COUNT              := 4
 
-@onready var new_game_btn    := $CenterContainer/MenuPanel/VBox/ButtonsContainer/NewGameButton
-@onready var load_game_btn   := $CenterContainer/MenuPanel/VBox/ButtonsContainer/LoadGameButton
-@onready var settings_btn    := $CenterContainer/MenuPanel/VBox/ButtonsContainer/SettingsButton
-@onready var quit_btn        := $CenterContainer/MenuPanel/VBox/ButtonsContainer/QuitButton
-@onready var confirm_dialog  := $ConfirmDialog
+@onready var new_game_btn   := $CenterContainer/MenuPanel/VBox/ButtonsContainer/NewGameButton
+@onready var load_game_btn  := $CenterContainer/MenuPanel/VBox/ButtonsContainer/LoadGameButton
+@onready var settings_btn   := $CenterContainer/MenuPanel/VBox/ButtonsContainer/SettingsButton
+@onready var quit_btn       := $CenterContainer/MenuPanel/VBox/ButtonsContainer/QuitButton
+@onready var confirm_dialog := $ConfirmDialog
 
-# Slot overlay
-var _slot_overlay:   Control = null
-var _overlay_title:  Label   = null
-var _slot_buttons:   Array   = []
-
-var _mode:           String  = ""   # "new_game" | "load_game"
-var _selected_slot:  int     = -1
+var _slot_overlay:  Control = null
+var _overlay_title: Label   = null
+var _slot_buttons:  Array   = []
+var _mode:          String  = ""
+var _selected_slot: int     = -1
 
 # ============================================================
 func _ready() -> void:
@@ -32,92 +31,31 @@ func _update_buttons_state() -> void:
 		if FileAccess.file_exists(GameState.get_save_path(i)):
 			any_save = true
 			break
-	load_game_btn.disabled = not any_save
+	load_game_btn.disabled     = not any_save
 	load_game_btn.tooltip_text = "Continua la tua avventura" if any_save else "Nessun salvataggio trovato"
 
 # ============================================================
-# BUILD SLOT OVERLAY (fatto interamente via codice)
+# BUILD SLOT OVERLAY — struttura da .tscn, dati dal codice
 # ============================================================
 
 func _build_slot_overlay() -> void:
-	# Contenitore schermo intero (nascosto di default)
-	_slot_overlay = Control.new()
-	_slot_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_slot_overlay.visible = false
+	var packed: PackedScene = load(SLOT_OVERLAY_SCENE_PATH)
+	_slot_overlay = packed.instantiate()
 	add_child(_slot_overlay)
 
-	# Sfondo semitrasparente
-	var bg := ColorRect.new()
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	bg.color = Color(0.0, 0.0, 0.0, 0.78)
-	_slot_overlay.add_child(bg)
+	_overlay_title = _slot_overlay.get_node("Center/Panel/Margin/VBox/Title") as Label
 
-	# Centro
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_slot_overlay.add_child(center)
-
-	# Pannello principale
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(740, 540)
-	center.add_child(panel)
-
-	# Margini interni
-	var margin := MarginContainer.new()
-	for side in ["margin_top", "margin_bottom", "margin_left", "margin_right"]:
-		margin.add_theme_constant_override(side, 24)
-	panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 18)
-	margin.add_child(vbox)
-
-	# Titolo
-	_overlay_title = Label.new()
-	_overlay_title.text = "Seleziona Slot"
-	_overlay_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_overlay_title.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(_overlay_title)
-
-	vbox.add_child(HSeparator.new())
-
-	# Grid 2x2 per i 4 slot
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 14)
-	grid.add_theme_constant_override("v_separation", 14)
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_child(grid)
+	var grid := _slot_overlay.get_node("Center/Panel/Margin/VBox/SlotGrid") as GridContainer
 
 	_slot_buttons.clear()
 	for i in range(SLOT_COUNT):
-		var btn := _create_slot_button(i + 1)
-		grid.add_child(btn)
+		var btn := grid.get_node("Slot%d" % (i + 1)) as Button
+		var slot := i + 1
+		btn.pressed.connect(func(): _on_slot_selected(slot))
 		_slot_buttons.append(btn)
 
-	vbox.add_child(HSeparator.new())
-
-	# Pulsante Annulla
-	var hbox := HBoxContainer.new()
-	hbox.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	vbox.add_child(hbox)
-
-	var cancel_btn := Button.new()
-	cancel_btn.text = "Annulla"
-	cancel_btn.custom_minimum_size = Vector2(180, 40)
+	var cancel_btn := _slot_overlay.get_node("Center/Panel/Margin/VBox/CancelRow/CancelButton") as Button
 	cancel_btn.pressed.connect(_on_slot_cancel)
-	hbox.add_child(cancel_btn)
-
-
-func _create_slot_button(slot: int) -> Button:
-	var btn := Button.new()
-	btn.name = "Slot%d" % slot
-	btn.custom_minimum_size = Vector2(330, 160)
-	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	btn.autowrap_mode = TextServer.AUTOWRAP_OFF
-	btn.clip_text = false
-	btn.pressed.connect(func(): _on_slot_selected(slot))
-	return btn
 
 
 func _refresh_slot_buttons() -> void:

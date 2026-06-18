@@ -381,12 +381,12 @@ func _on_redock() -> void:
 
 
 func _build_margin_container(margin: int = 12) -> MarginContainer:
-	var marginContainer := MarginContainer.new()
-	marginContainer.add_theme_constant_override("margin_left", margin)
-	marginContainer.add_theme_constant_override("margin_right", margin)
-	marginContainer.add_theme_constant_override("margin_top", margin)
-	marginContainer.add_theme_constant_override("margin_bottom", margin)
-	return marginContainer
+	var margin_container := MarginContainer.new()
+	margin_container.add_theme_constant_override("margin_left", margin)
+	margin_container.add_theme_constant_override("margin_right", margin)
+	margin_container.add_theme_constant_override("margin_top", margin)
+	margin_container.add_theme_constant_override("margin_bottom", margin)
+	return margin_container
 
 
 func _build_ui() -> void:
@@ -487,6 +487,12 @@ func _build_ui() -> void:
 	_update_label = Label.new()
 	_update_label.add_theme_font_size_override("font_size", 15)
 	_update_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+	## Wrap long banner text (e.g. the < 4.4 manual-update guidance) instead
+	## of letting a single line stretch the whole dock wide. The dock is a
+	## fixed-width side panel, so constrain horizontally and wrap.
+	_update_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_update_label.size_flags_horizontal = Control.SIZE_FILL
+	_update_label.custom_minimum_size = Vector2(0, 0)
 	_update_banner.add_child(_update_label)
 
 	var update_btn_row := HBoxContainer.new()
@@ -571,7 +577,7 @@ func _build_ui() -> void:
 
 	var clients_open_btn := Button.new()
 	clients_open_btn.text = "Clients & Settings"
-	clients_open_btn.tooltip_text = "Open the MCP settings window — configure AI clients or disable tool domains to fit under a client's hard tool-count cap (e.g. Antigravity's 100)."
+	clients_open_btn.tooltip_text = "Open the MCP settings window — configure AI clients, choose telemetry preferences, or disable tool domains to fit under a client's hard tool-count cap (e.g. Antigravity's 100)."
 	clients_open_btn.pressed.connect(_on_open_clients_window)
 	clients_row.add_child(clients_open_btn)
 
@@ -595,7 +601,8 @@ func _build_ui() -> void:
 
 	_clients_window = Window.new()
 	_clients_window.title = "MCP Clients & Settings"
-	_clients_window.min_size = Vector2i(560, 460) * EditorInterface.get_editor_scale()
+	## `Vector2i * float` yields Vector2; wrap the result back to Vector2i.
+	_clients_window.min_size = Vector2i(Vector2(560, 460) * EditorInterface.get_editor_scale())
 	_clients_window.visible = false
 	_clients_window.close_requested.connect(_on_clients_window_close_requested)
 	add_child(_clients_window)
@@ -778,13 +785,8 @@ func _update_status() -> void:
 		status_text = "Restarting server..."
 		status_color = COLOR_AMBER
 	elif connected:
-		if bool(server_status.get("dev_version_mismatch_allowed", false)):
-			var actual := str(server_status.get("actual_version", ""))
-			status_text = "Connected (dev server v%s)" % actual if not actual.is_empty() else "Connected (dev server)"
-			status_color = COLOR_AMBER
-		else:
-			status_text = "Connected"
-			status_color = Color.GREEN
+		status_text = "Connected"
+		status_color = Color.GREEN
 	elif state == ServerStateScript.CRASHED:
 		var exit_ms: int = server_status.get("exit_ms", 0)
 		status_text = "Server exited after %.1fs" % (exit_ms / 1000.0)
@@ -991,7 +993,7 @@ func _on_log_logging_enabled_changed(enabled: bool) -> void:
 func _on_port_apply_requested(new_port: int) -> void:
 	var es := EditorInterface.get_editor_settings()
 	if es != null:
-		es.set_setting(ClientConfigurator.SETTING_HTTP_PORT, new_port)
+		es.set_setting(McpSettings.SETTING_HTTP_PORT, new_port)
 	## Every saved client config now points at the old port. Re-sweep so the
 	## drift banner appears in the same frame the user committed the change —
 	## the plugin reload below will run a second sweep on its own first paint,
@@ -1015,19 +1017,13 @@ func _refresh_server_label() -> void:
 # --- Telemetry setting persistence ---
 
 
-func _env_truthy(var_name: String) -> bool:
-	var val: String = OS.get_environment(var_name).strip_edges().to_lower()
-	return val in ["1", "true", "yes", "on"]
-
-
 ## Returns true if GODOT_AI_DISABLE_TELEMETRY or DISABLE_TELEMETRY is set
 ## to a truthy value, false if either is set and non-truthy, null if neither
 ## env var is present at all.
 func _is_telemetry_disabled_via_env() -> Variant:
-	var disabled: bool = _env_truthy("GODOT_AI_DISABLE_TELEMETRY") or _env_truthy("DISABLE_TELEMETRY")
-	if OS.has_environment("GODOT_AI_DISABLE_TELEMETRY") or OS.has_environment("DISABLE_TELEMETRY"):
-		return disabled
-	return null
+	if not (OS.has_environment("GODOT_AI_DISABLE_TELEMETRY") or OS.has_environment("DISABLE_TELEMETRY")):
+		return null
+	return McpSettings.env_truthy("GODOT_AI_DISABLE_TELEMETRY") or McpSettings.env_truthy("DISABLE_TELEMETRY")
 
 
 ## Reads the telemetry preference, applying env-var override when present.
@@ -1044,15 +1040,15 @@ func _load_telemetry_setting() -> void:
 		## the env var honour the last-set value.
 		enabled = not bool(env_disabled)
 		if es != null:
-			es.set_setting("godot_ai/telemetry_enabled", enabled)
+			es.set_setting(McpSettings.SETTING_TELEMETRY_ENABLED, enabled)
 	else:
 		## No env var: read (or create) the EditorSettings key.
-		if es != null and es.has_setting("godot_ai/telemetry_enabled"):
-			enabled = bool(es.get_setting("godot_ai/telemetry_enabled"))
+		if es != null and es.has_setting(McpSettings.SETTING_TELEMETRY_ENABLED):
+			enabled = bool(es.get_setting(McpSettings.SETTING_TELEMETRY_ENABLED))
 		else:
 			enabled = true
 			if es != null:
-				es.set_setting("godot_ai/telemetry_enabled", true)
+				es.set_setting(McpSettings.SETTING_TELEMETRY_ENABLED, true)
 
 	_telemetry_pending_enabled = enabled
 	_telemetry_saved_enabled = enabled
@@ -1117,7 +1113,7 @@ func _apply_dev_mode_visibility() -> void:
 # --- Button handlers ---
 
 
-func _do_plugin_reload():
+func _do_plugin_reload() -> void:
 	EditorInterface.set_plugin_enabled("res://addons/godot_ai/plugin.cfg", false)
 	EditorInterface.set_plugin_enabled("res://addons/godot_ai/plugin.cfg", true)
 
@@ -1188,27 +1184,22 @@ func _refresh_server_version_label(server_status: Dictionary = {}) -> void:
 		text = "godot-ai == %s" % server_ver
 		color = Color.GREEN
 	else:
-		var dev_allowed := bool(server_status.get("dev_version_mismatch_allowed", false))
-		if dev_allowed:
-			text = "godot-ai == %s  (plugin %s, dev)" % [server_ver, expected_ver]
-			color = COLOR_AMBER
-		else:
-			text = "godot-ai == %s  (expected %s)" % [server_ver, expected_ver]
-			var is_incompatible: bool = state == ServerStateScript.INCOMPATIBLE
-			color = Color.RED if is_incompatible else COLOR_AMBER
-			var has_managed_proof: bool = (
-				_plugin != null
-				and _plugin.has_method("can_restart_managed_server")
-				and _plugin.can_restart_managed_server()
-			)
-			var can_recover: bool = bool(server_status.get("can_recover_incompatible", false))
-			show_restart = (
-				(not is_incompatible and has_managed_proof)
-				## Recoverable incompatible servers get the primary action in
-				## the top error panel. Duplicating it in Setup made the UI
-				## look like it had multiple restart paths.
-				or (is_incompatible and can_recover and _crash_restart_btn == null)
-			)
+		text = "godot-ai == %s  (expected %s)" % [server_ver, expected_ver]
+		var is_incompatible: bool = state == ServerStateScript.INCOMPATIBLE
+		color = Color.RED if is_incompatible else COLOR_AMBER
+		var has_managed_proof: bool = (
+			_plugin != null
+			and _plugin.has_method("can_restart_managed_server")
+			and _plugin.can_restart_managed_server()
+		)
+		var can_recover: bool = bool(server_status.get("can_recover_incompatible", false))
+		show_restart = (
+			(not is_incompatible and has_managed_proof)
+			## Recoverable incompatible servers get the primary action in
+			## the top error panel. Duplicating it in Setup made the UI
+			## look like it had multiple restart paths.
+			or (is_incompatible and can_recover and _crash_restart_btn == null)
+		)
 	if text == _last_rendered_server_text:
 		_setup_server_label.add_theme_color_override("font_color", color)
 		_update_restart_button(show_restart)
@@ -1920,14 +1911,14 @@ func _on_tools_apply() -> void:
 	var canonical_excluded := ToolCatalog.canonical(_tools_pending_excluded)
 	var es := EditorInterface.get_editor_settings()
 	if es != null:
-		es.set_setting(ClientConfigurator.SETTING_EXCLUDED_DOMAINS, canonical_excluded)
-		es.set_setting("godot_ai/telemetry_enabled", _telemetry_pending_enabled)
+		es.set_setting(McpSettings.SETTING_EXCLUDED_DOMAINS, canonical_excluded)
+		es.set_setting(McpSettings.SETTING_TELEMETRY_ENABLED, _telemetry_pending_enabled)
 	_tools_saved_excluded = _tools_pending_excluded.duplicate()
 	_telemetry_saved_enabled = _telemetry_pending_enabled
 	_refresh_tools_ui_state()
-	## Plugin reload respawns the server with the new `--exclude-domains`
-	## flag (see `plugin.gd::_build_server_flags`). Mirrors the port-change
-	## Apply flow.
+	## Plugin reload respawns the server with the new `--exclude-domains` flag
+	## (see `plugin.gd::_build_server_flags`) and telemetry option. Mirrors the
+	## port-change Apply flow.
 	_on_reload_plugin()
 
 

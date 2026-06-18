@@ -17,8 +17,11 @@ const DEFERRED_TIMEOUT_MS_BY_COMMAND := {
 	"create_script": 4500,
 	"stop_project": 4500,
 	"take_screenshot": 30000,
+	"game_eval": 15000,
+	"game_command": 15000,
 }
 const ErrorCodes := preload("res://addons/godot_ai/utils/error_codes.gd")
+const FuzzySuggestions := preload("res://addons/godot_ai/utils/fuzzy_suggestions.gd")
 
 
 func _init(log_buffer: McpLogBuffer) -> void:
@@ -59,18 +62,7 @@ func has_command(command: String) -> bool:
 ## array if no candidates clear the threshold. Used by batch_execute to surface
 ## "did you mean" suggestions when an unknown command is passed.
 func suggest_similar(cmd_name: String, limit: int = 3, threshold: float = 0.5) -> Array[String]:
-	if cmd_name.is_empty() or _handlers.is_empty():
-		return []
-	var scored: Array = []
-	for name in _handlers.keys():
-		var score: float = cmd_name.similarity(name)
-		if score >= threshold:
-			scored.append([score, name])
-	scored.sort_custom(func(a, b): return a[0] > b[0])
-	var result: Array[String] = []
-	for i in range(min(limit, scored.size())):
-		result.append(scored[i][1])
-	return result
+	return FuzzySuggestions.rank(cmd_name, _handlers.keys(), limit, threshold, 0.0, 0.0)
 
 
 ## Enqueue a raw command dict received from the WebSocket.
@@ -266,8 +258,12 @@ func _collect_deferred_timeouts() -> Array[Dictionary]:
 
 
 static func _capture_compact_backtrace(max_frames: int = 8) -> String:
+	# Use Engine.call() instead of a direct Engine.capture_script_backtraces()
+	# reference: the method is Godot 4.4+, and 4.3's GDScript parser type-checks
+	# the static call against GDScriptNativeClass at parse time and rejects the
+	# whole script even when guarded by has_method() at runtime.
 	if Engine.has_method("capture_script_backtraces"):
-		var traces: Array = Engine.capture_script_backtraces(false)
+		var traces: Array = Engine.call("capture_script_backtraces", false)
 		for bt in traces:
 			if bt != null and not bt.is_empty():
 				return _trim_backtrace_string(bt.format(0, 2), max_frames)

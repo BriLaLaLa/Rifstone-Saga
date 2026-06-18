@@ -1,19 +1,30 @@
 {
   "permissions": {
     "allow": [
-      "Bash(powershell.exe -ExecutionPolicy Bypass -File run_test_bag.ps1)",
-      "Bash(powershell.exe:*)",
-      "Bash(\"C:\\\\Users\\\\Davide\\\\Documents\\\\GODOT\\\\Godot_v4.5-stable_win64.exe\" --path . --headless --script addons/gut/gut_cmdln.gd -gtest=tests/test_bag_removal_no_space.gd)",
-      "Bash(taskkill:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(dir /s /b *.tscn)",
-      "Bash(findstr:*)",
-      "Bash(ls:*)",
-      "Bash(\"C:\\\\Users\\\\Davide\\\\Documents\\\\GODOT\\\\Godot_v4.5-stable_win64.exe\" --path . --headless --script addons/gut/gut_cmdln.gd -gtest=tests/test_quest_system.gd)",
-      "Bash(\"C:\\\\Users\\\\Davide\\\\Documents\\\\GODOT\\\\Godot_v4.5-stable_win64.exe\" --path . --headless --script addons/gut/gut_cmdln.gd -gtest=tests/test_quest_full_flow.gd)",
-      "Bash(del nul)",
-      "Bash(git reset:*)"
+      "Bash(git clone *)",
+      "Bash(git -C \"C:\\\\Users\\\\D.Brambilla\\\\Documents\\\\RIFTSTONE SAGA\" pull)",
+      "Bash(Move-Item \"C:\\\\Users\\\\D.Brambilla\\\\Documents\\\\RIFTSTONE SAGA\\\\temp_clone\\\\*\" \"C:\\\\Users\\\\D.Brambilla\\\\Documents\\\\RIFTSTONE SAGA\\\\\" -Force; Move-Item \"C:\\\\Users\\\\D.Brambilla\\\\Documents\\\\RIFTSTONE SAGA\\\\temp_clone\\\\.git\" \"C:\\\\Users\\\\D.Brambilla\\\\Documents\\\\RIFTSTONE SAGA\\\\\" -Force)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\D.Brambilla\\\\Documents\\\\RIFTSTONE SAGA\\\\temp_clone\" -Force -Recurse)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\D.Brambilla\\\\Documents\\\\RIFTSTONE SAGA\" -Force)",
+      "Bash(Select-Object Name, FullName)",
+      "mcp__godot__run_project",
+      "mcp__godot__get_debug_output",
+      "mcp__godot__stop_project",
+      "WebSearch",
+      "Bash(\"C:\\\\Users\\\\D.Brambilla\\\\Documents\\\\Godot_v4.5.1-stable_win64_console.exe\" --path \"C:\\\\Users\\\\D.Brambilla\\\\Documents\\\\RIFTSTONE SAGA\" --headless --script addons/gut/gut_cmdln.gd -- -gdir=res://tests -gprefix=test_ -gsuffix=.gd -gexit)",
+      "Bash(Select-String -Pattern \"test_player|Passing|Failing|Failed|Error|player_path\")",
+      "Bash(Select-Object -First 40)",
+      "Bash(\"C:/Users/D.Brambilla/Documents/Godot_v4.5.1-stable_win64_console.exe\" --path \"C:/Users/D.Brambilla/Documents/RIFTSTONE SAGA\" --headless --script addons/gut/gut_cmdln.gd -- -gdir=res://tests -gprefix=test_ -gsuffix=.gd -gexit)",
+      "Bash(cat .mcp.json)",
+      "Bash(cat .claude/settings.local.json)",
+      "mcp__godot__get_godot_version",
+      "Bash(cd \"C:/Users/D.Brambilla\" && echo \"=== ~/.claude.json \\(mcpServers grep\\) ===\" && grep -n -i \"godot\\\\|GODOT_PATH\\\\|mcpServers\" .claude.json 2>/dev/null | head -40 || echo \"\\(.claude.json assente o senza match\\)\")",
+      "Bash(ls -la Documents/Godot_v4.5*)",
+      "Bash(ls -la Desktop/Godot_v4.5* Desktop/godot4.5*)",
+      "Bash(find Documents Desktop -maxdepth 2 -iname \"Godot_v4.5*\")",
+      "Bash(grep -E \"test_enemy2d.gd$|test_zone_combat_controller.gd$|[0-9]+/[0-9]+ passed|Passing Tests|Failing Tests|Tests +[0-9]+$\")",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }

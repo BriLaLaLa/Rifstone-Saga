@@ -6,63 +6,24 @@ class_name QuestCard
 
 var quest: Quest = null
 
-# UI elements
-var title_label: Label
-var objectives_vbox: VBoxContainer
-var ready_indicator: Label
+@onready var title_label: Label = $Margin/VBox/TitleHBox/TitleLabel
+@onready var objectives_vbox: VBoxContainer = $Margin/VBox/ObjectivesVBox
+@onready var ready_indicator: Label = $Margin/VBox/TitleHBox/ReadyIndicator
 
 
 func _ready() -> void:
-	_build_ui()
-
-
-func _build_ui() -> void:
-	custom_minimum_size = Vector2(0, 100)
-	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
-	add_child(margin)
-
-	var vbox = VBoxContainer.new()
-	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	margin.add_child(vbox)
-
-	# Title with ready indicator
-	var title_hbox = HBoxContainer.new()
-	title_hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_child(title_hbox)
-
-	title_label = Label.new()
-	title_label.add_theme_font_size_override("font_size", 18)
-	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_hbox.add_child(title_label)
-
-	ready_indicator = Label.new()
-	ready_indicator.text = "✓ Ready!"
-	ready_indicator.modulate = Color(1.0, 1.0, 0.3)
-	ready_indicator.add_theme_font_size_override("font_size", 16)
-	ready_indicator.visible = false
-	title_hbox.add_child(ready_indicator)
-
-	vbox.add_child(HSeparator.new())
-
-	# Objectives container
-	objectives_vbox = VBoxContainer.new()
-	objectives_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_child(objectives_vbox)
+	# If set_quest() was called before the node entered the tree (@onready refs
+	# not yet valid), render now that the UI exists.
+	if quest != null:
+		_update_display()
 
 
 ## Set the quest to display
 func set_quest(q: Quest) -> void:
 	quest = q
-	# Ensure UI is built before updating
-	if title_label == null:
-		_build_ui()
-	_update_display()
+	# If not yet in tree, _ready() will render once @onready refs are valid.
+	if is_node_ready():
+		_update_display()
 
 
 ## Update the display with current quest data

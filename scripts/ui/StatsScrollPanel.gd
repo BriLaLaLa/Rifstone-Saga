@@ -4,30 +4,9 @@ class_name StatsScrollPanel
 # Stats Scroll Panel - Shows all character stats in Combat tab
 # Updates in real-time when stats change
 
-# UI Elements
-var stats_container: VBoxContainer = null
+@onready var stats_container: VBoxContainer = $StatsContainer
 
 func _ready() -> void:
-	_create_ui()
-	_connect_signals()
-
-	# Initial update after a small delay
-	await get_tree().create_timer(0.5).timeout
-	update_stats_display()
-
-func _create_ui() -> void:
-	"""Create the stats display UI"""
-	# This ScrollContainer properties
-	custom_minimum_size = Vector2(380, 300)
-	horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-
-	# Main container
-	stats_container = VBoxContainer.new()
-	stats_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_child(stats_container)
-
-	# Style
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.1, 0.1, 0.15, 0.9)
 	style.border_color = Color(0.3, 0.3, 0.4)
@@ -36,6 +15,12 @@ func _create_ui() -> void:
 	style.border_width_top = 2
 	style.border_width_bottom = 2
 	add_theme_stylebox_override("panel", style)
+
+	_connect_signals()
+
+	# Initial update after a small delay
+	await get_tree().create_timer(0.5).timeout
+	update_stats_display()
 
 func _connect_signals() -> void:
 	"""Connect to GameState signals for updates"""

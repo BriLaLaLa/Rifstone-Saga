@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://ff3lstbvirq6"]
+[gd_scene load_steps=9 format=3 uid="uid://ff3lstbvirq6"]
 
 [ext_resource type="Script" uid="uid://b1g1wh4xanohj" path="res://scripts/battle/BattleTab.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://hqnxf26wkwpv" path="res://scenes/battle/CharacterDisplay.tscn" id="2"]
@@ -6,9 +6,11 @@
 [ext_resource type="PackedScene" uid="uid://cworldmap2h8dkya" path="res://scenes/battle/WorldMapView.tscn" id="4"]
 [ext_resource type="PackedScene" uid="uid://cregionzoom2h8dkyb" path="res://scenes/battle/RegionZoomView.tscn" id="5"]
 [ext_resource type="Script" path="res://scripts/ui/StatsScrollPanel.gd" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/combat/ZoneCombatScene.tscn" id="7_zcc"]
+[ext_resource type="PackedScene" path="res://scenes/battle/CombatSkillBar.tscn" id="8_csb"]
 
 [node name="BattleTab" type="Control"]
-layout_mode = 3
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -18,13 +20,15 @@ mouse_filter = 1
 script = ExtResource("1")
 
 [node name="HSplit" type="HSplitContainer" parent="."]
+clip_contents = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
-grow_vertical = 2
+grow_vertical = 1
 mouse_filter = 1
+split_offset = -290
 dragger_visibility = 1
 
 [node name="LeftPanel" type="VBoxContainer" parent="HSplit"]
@@ -80,7 +84,14 @@ text = "📦 Open Inventory"
 [node name="StatsScrollPanel" type="ScrollContainer" parent="HSplit/LeftPanel"]
 layout_mode = 2
 size_flags_vertical = 3
+custom_minimum_size = Vector2(380, 100)
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
 script = ExtResource("6")
+
+[node name="StatsContainer" type="VBoxContainer" parent="HSplit/LeftPanel/StatsScrollPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="RightPanel" type="VBoxContainer" parent="HSplit"]
 layout_mode = 2
@@ -101,6 +112,12 @@ visible = false
 layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("3")
+
+[node name="ZoneCombatScene" parent="HSplit/RightPanel" instance=ExtResource("7_zcc")]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="BattleAreaBG" type="ColorRect" parent="HSplit/RightPanel/BattleArea"]
 visible = false
@@ -258,5 +275,52 @@ custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 text = "🔥
 ULTI"
+
+[node name="ExitBattleButton" type="Button" parent="HSplit/RightPanel/BattleArea"]
+visible = false
+layout_mode = 1
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 140.0
+offset_bottom = 50.0
+z_index = 100
+custom_minimum_size = Vector2(120, 40)
+theme_override_font_sizes/font_size = 16
+text = "🚪 Exit Battle"
+
+[node name="CombatSkillBar" parent="HSplit/RightPanel/BattleArea" instance=ExtResource("8_csb")]
+layout_mode = 1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -120.0
+offset_bottom = -10.0
+grow_horizontal = 2
+
+[node name="DeathOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+z_index = 999
+color = Color(0, 0, 0, 0.8)
+
+[node name="DeathLabel" type="Label" parent="DeathOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 72
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+text = "SEI MORTO"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [connection signal="visibility_changed" from="." to="." method="_on_battle_tab_visibility_changed"]

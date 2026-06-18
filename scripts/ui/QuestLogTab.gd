@@ -4,70 +4,15 @@ class_name QuestLogTab
 ## Quest Log UI Tab
 ## Displays all active quests and shows notifications
 
+const QUEST_CARD_SCENE = preload("res://scenes/ui/QuestCard.tscn")
 var quest_cards: Dictionary = {}  # quest_id -> QuestCard
-var quest_container: VBoxContainer
-var notification_label: Label
+@onready var quest_container: VBoxContainer = $Margin/VBox/Scroll/QuestContainer
+@onready var notification_label: Label = $Margin/VBox/NotificationLabel
 
 
 func _ready() -> void:
-	_build_ui()
 	_connect_signals()
 	_refresh_quests()
-
-
-func _build_ui() -> void:
-	# Main layout
-	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(margin)
-
-	var vbox = VBoxContainer.new()
-	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	margin.add_child(vbox)
-
-	# Header
-	var header = Label.new()
-	header.text = "Quest Log"
-	header.add_theme_font_size_override("font_size", 24)
-	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(header)
-
-	vbox.add_child(HSeparator.new())
-
-	# Notification area
-	notification_label = Label.new()
-	notification_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	notification_label.modulate = Color(1.0, 1.0, 0.3)
-	notification_label.add_theme_font_size_override("font_size", 16)
-	notification_label.visible = false
-	vbox.add_child(notification_label)
-
-	# Scroll container for quests
-	var scroll = ScrollContainer.new()
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_child(scroll)
-
-	quest_container = VBoxContainer.new()
-	quest_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	quest_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	quest_container.add_theme_constant_override("separation", 12)
-	scroll.add_child(quest_container)
-
-	# Empty state
-	var empty_label = Label.new()
-	empty_label.name = "EmptyLabel"
-	empty_label.text = "No active quests.\nVisit NPCs in the village to find quests!"
-	empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	empty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	empty_label.modulate = Color(0.7, 0.7, 0.7)
-	quest_container.add_child(empty_label)
 
 
 func _connect_signals() -> void:
@@ -101,10 +46,10 @@ func _refresh_quests() -> void:
 
 	# Create quest cards
 	for quest in active_quests:
-		var card = QuestCard.new()
+		var card = QUEST_CARD_SCENE.instantiate()
+		quest_container.add_child(card)
 		card.set_quest(quest)
 		quest_cards[quest.quest_id] = card
-		quest_container.add_child(card)
 
 
 func _on_quest_accepted(quest: Quest) -> void:

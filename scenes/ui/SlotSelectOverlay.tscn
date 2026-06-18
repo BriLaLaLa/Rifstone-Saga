@@ -1,0 +1,96 @@
+[gd_scene load_steps=1 format=3 uid="uid://slot_select_overlay_v1"]
+
+[node name="SlotSelectOverlay" type="Control"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Bg" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0, 0, 0, 0.78)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+layout_mode = 2
+custom_minimum_size = Vector2(740, 540)
+
+[node name="Margin" type="MarginContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_right = 24
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Title" type="Label" parent="Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Seleziona Slot"
+horizontal_alignment = 1
+
+[node name="Sep1" type="HSeparator" parent="Center/Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="SlotGrid" type="GridContainer" parent="Center/Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 2
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 14
+
+[node name="Slot1" type="Button" parent="Center/Panel/Margin/VBox/SlotGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(330, 160)
+size_flags_horizontal = 3
+text = "[ Slot 1 ]"
+
+[node name="Slot2" type="Button" parent="Center/Panel/Margin/VBox/SlotGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(330, 160)
+size_flags_horizontal = 3
+text = "[ Slot 2 ]"
+
+[node name="Slot3" type="Button" parent="Center/Panel/Margin/VBox/SlotGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(330, 160)
+size_flags_horizontal = 3
+text = "[ Slot 3 ]"
+
+[node name="Slot4" type="Button" parent="Center/Panel/Margin/VBox/SlotGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(330, 160)
+size_flags_horizontal = 3
+text = "[ Slot 4 ]"
+
+[node name="Sep2" type="HSeparator" parent="Center/Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="CancelRow" type="HBoxContainer" parent="Center/Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+
+[node name="CancelButton" type="Button" parent="Center/Panel/Margin/VBox/CancelRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(180, 40)
+text = "Annulla"

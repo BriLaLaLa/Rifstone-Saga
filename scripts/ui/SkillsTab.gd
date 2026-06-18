@@ -16,15 +16,13 @@ const SkillSlotScene = preload("res://scripts/ui/SkillSlot.tscn")
 @onready var details_panel: Panel = $VBoxContainer/DetailsSection/DetailsPanel
 @onready var search_bar: LineEdit = $VBoxContainer/CollectionSection/TopBar/SearchBar
 @onready var category_filter: OptionButton = $VBoxContainer/CollectionSection/TopBar/CategoryFilter
+@onready var battle_overlay: Panel = $BattleOverlay
 
 # State
 var loadout_slots: Array[SkillSlot] = []
 var skill_cards: Dictionary = {}  # skill_id -> SkillCard
 var selected_skill_for_equip: String = ""  # For click-to-equip mode
 var selected_skill_id: String = ""  # For details panel
-
-# Battle overlay
-var battle_overlay: Panel = null
 
 # Filters
 var current_search: String = ""
@@ -52,9 +50,6 @@ func _ready() -> void:
 
 	# Load saved loadout
 	_load_loadout()
-
-	# Create battle overlay (hidden initially)
-	_create_battle_overlay()
 
 	if GameLogger.ENABLED:
 		print("[SkillsTab] Initialized with %d skills, %d loadout slots" % [skill_cards.size(), loadout_slots.size()])
@@ -475,51 +470,6 @@ func _show_battle_warning() -> void:
 	if GameLogger.ENABLED:
 		print("[SkillsTab] ⚠️ Showed battle warning")
 
-func _create_battle_overlay() -> void:
-	"""Create overlay that blocks entire tab during battle"""
-	battle_overlay = Panel.new()
-	battle_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	battle_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	battle_overlay.z_index = 999
-
-	# Semi-transparent dark background
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.0, 0.0, 0.0, 0.85)
-	battle_overlay.add_theme_stylebox_override("panel", style)
-
-	# Giant text in the middle
-	var label = Label.new()
-	label.text = "⚔️ BATTAGLIA IN CORSO ⚔️"
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	label.add_theme_font_size_override("font_size", 60)
-	label.add_theme_color_override("font_color", Color(1.0, 0.2, 0.2))
-	label.add_theme_color_override("font_outline_color", Color.BLACK)
-	label.add_theme_constant_override("outline_size", 5)
-	battle_overlay.add_child(label)
-
-	# Subtitle
-	var subtitle = Label.new()
-	subtitle.text = "Exit the battle to change your loadout"
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	subtitle.set_anchors_preset(Control.PRESET_CENTER)
-	subtitle.position = Vector2(-300, 50)
-	subtitle.size = Vector2(600, 50)
-	subtitle.add_theme_font_size_override("font_size", 24)
-	subtitle.add_theme_color_override("font_color", Color(1.0, 0.8, 0.0))
-	subtitle.add_theme_color_override("font_outline_color", Color.BLACK)
-	subtitle.add_theme_constant_override("outline_size", 3)
-	battle_overlay.add_child(subtitle)
-
-	# Initially hidden
-	battle_overlay.visible = false
-
-	add_child(battle_overlay)
-
-	if GameLogger.ENABLED:
-		print("[SkillsTab] Battle overlay created")
 
 func show_battle_overlay() -> void:
 	"""Show battle overlay (called from BattleTab when battle starts)"""

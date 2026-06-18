@@ -10,7 +10,8 @@ class_name ZoneData
 @export var level_range: Array[int] = [1, 10]
 @export var unlocked: bool = false
 @export var unlock_requirement: int = 1
-@export var area_id: String = ""  # Links to existing battle area
+@export var area_id: String = ""  # Links to existing battle area (legacy)
+@export var background_key: String = ""  # Key per background legacy system
 @export var recommended_level: int = 1
 @export var clickable_rect: Rect2 = Rect2(0, 0, 100, 100)
 @export var enemies: Array[String] = []
@@ -20,6 +21,10 @@ class_name ZoneData
 @export var gold_max: int = 25
 @export var xp_min: int = 50
 @export var xp_max: int = 100
+
+# --- Nuovo sistema combat top-down ---
+@export var tilemap_scene: String = ""    # Path a .tscn della zona (es. "res://scenes/combat/zones/m1_z1_combat.tscn")
+@export var default_routes: Array = []   # Array di {id, name, waypoints: Array, loop: bool}
 
 func _init():
 	pass
@@ -58,8 +63,11 @@ static func from_dict(data: Dictionary) -> ZoneData:
 
 	zone.unlocked = data.get("unlocked", false)
 	zone.unlock_requirement = data.get("unlock_requirement", 1)
-	zone.area_id = data.get("area_id", "")
+	zone.area_id       = data.get("area_id", "")
+	zone.background_key = data.get("background_key", "")
 	zone.recommended_level = data.get("recommended_level", 1)
+	zone.tilemap_scene = data.get("tilemap_scene", "")
+	zone.default_routes = data.get("default_routes", [])
 
 	# Parse clickable area
 	if data.has("clickable_area"):

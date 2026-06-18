@@ -23,7 +23,9 @@
           "unlocked": true,
           "unlock_requirement": 1,
           "area_id": "forest_1",
+          "background_key": "m1_z1_1",
           "recommended_level": 5,
+          "tilemap_scene": "res://scenes/combat/zones/m1_z1_combat.tscn",
           "clickable_area": {
             "type": "rect",
             "x": 100,
@@ -41,7 +43,33 @@
           "rewards": {
             "gold_range": [10, 25],
             "xp_range": [50, 100]
-          }
+          },
+          "default_routes": [
+            {
+              "id": "plains_loop",
+              "name": "Giro delle Pianure",
+              "loop": true,
+              "waypoints": [
+                {"x": 150, "y": 150},
+                {"x": 650, "y": 150},
+                {"x": 650, "y": 450},
+                {"x": 400, "y": 500},
+                {"x": 150, "y": 450}
+              ]
+            },
+            {
+              "id": "plains_top",
+              "name": "Rotta Nord",
+              "loop": true,
+              "waypoints": [
+                {"x": 150, "y": 120},
+                {"x": 400, "y": 100},
+                {"x": 650, "y": 120},
+                {"x": 650, "y": 300},
+                {"x": 150, "y": 300}
+              ]
+            }
+          ]
         },
         {
           "id": "red_kingdom_lv11_30",

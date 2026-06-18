@@ -3,8 +3,8 @@
 
 extends Control
 
-const VILLAGE_MAP_SC: Script = preload("res://scripts/ui/VillageMap.gd")
-const VILLAGE_OV_SC: Script  = preload("res://scripts/ui/VillageOverlay.gd")
+const VILLAGE_MAP_SCENE = preload("res://scenes/ui/VillageMap.tscn")
+const VILLAGE_OV_SCENE       = preload("res://scenes/ui/VillageOverlay.tscn")
 
 # Percorso alla BattleTab scene
 const BATTLE_TAB_SCENE_PATH := "res://scenes/battle/BattleTab.tscn"
@@ -15,6 +15,16 @@ const BATTLE_TAB_SCENE_PATH := "res://scenes/battle/BattleTab.tscn"
 var last_gold_value: int = -1  # Track gold to update only on change
 
 func _ready() -> void:
+	# Stretch canvas_items + expand applicato via codice (più affidabile di project.godot in embedded mode)
+	var win := get_viewport().get_window()
+	print("[Main] BEFORE stretch — window size: ", win.size, " | mode: ", win.content_scale_mode, " | aspect: ", win.content_scale_aspect, " | scale_size: ", win.content_scale_size)
+	win.content_scale_mode   = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+	win.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
+	win.content_scale_size   = Vector2i(1280, 720)
+	print("[Main] AFTER  stretch — window size: ", win.size, " | mode: ", win.content_scale_mode, " | aspect: ", win.content_scale_aspect, " | scale_size: ", win.content_scale_size)
+	print("[Main] viewport size: ", get_viewport().get_visible_rect().size)
+	# Log deferred: dopo che il layout è stato calcolato
+	call_deferred("_log_window_state")
 	_update_gold_display()
 	print("[Main] mount tabs on existing scene")
 	_mount_village_tab()
@@ -37,16 +47,14 @@ func _mount_village_tab() -> void:
 	for c in vill_container.get_children(): 
 		c.queue_free()
 
-	var map: Control = (VILLAGE_MAP_SC as Script).new()
+	var map: Control = VILLAGE_MAP_SCENE.instantiate()
 	map.name = "VillageMap"
-	map.set_anchors_preset(Control.PRESET_FULL_RECT)
-	map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	map.size_flags_vertical   = Control.SIZE_EXPAND_FILL
 	vill_container.add_child(map)
 	print("[Main] VillageMap added")
 
-	var overlay: Control = (VILLAGE_OV_SC as Script).new()
+	var overlay: Control = VILLAGE_OV_SCENE.instantiate()
 	var map_root: Node = map.call("get_map_root")
+	map_root.add_child(overlay)
 	overlay.call("attach_to", map_root)
 	print("[Main] VillageOverlay attached")
 
@@ -103,15 +111,6 @@ func _mount_battle_tab() -> void:
 	# Instanzia la BattleTab
 	if battle_scene:
 		var battle_tab = battle_scene.instantiate()
-		battle_tab.set_anchors_preset(Control.PRESET_FULL_RECT)
-		battle_tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		battle_tab.size_flags_vertical = Control.SIZE_EXPAND_FILL
-
-		# CRITICAL: Set mouse_filter to IGNORE so tab buttons remain clickable
-		# Events pass through BattleTab root to reach TabContainer buttons
-		# Interactive children (Buttons, Panels) still receive events (they have STOP by default)
-		battle_tab.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
 		battle_container.add_child(battle_tab)
 		print("[Main] BattleTab montata con successo")
 	else:
@@ -232,6 +231,17 @@ func _update_gold_display() -> void:
 	if current_gold != last_gold_value:
 		last_gold_value = current_gold
 		gold_label.text = _format_number(current_gold)
+
+func _log_window_state() -> void:
+	var win := get_viewport().get_window()
+	print("[Main] DEFERRED — window size: ", win.size)
+	print("[Main] DEFERRED — content_scale_mode: ", win.content_scale_mode, " (expected ", Window.CONTENT_SCALE_MODE_CANVAS_ITEMS, ")")
+	print("[Main] DEFERRED — content_scale_aspect: ", win.content_scale_aspect, " (expected ", Window.CONTENT_SCALE_ASPECT_EXPAND, ")")
+	print("[Main] DEFERRED — content_scale_size: ", win.content_scale_size, " (expected 1280x720)")
+	print("[Main] DEFERRED — viewport visible rect: ", get_viewport().get_visible_rect())
+	print("[Main] DEFERRED — Main node size: ", size)
+	print("[Main] DEFERRED — Margin node size: ", $Margin.size)
+	print("[Main] DEFERRED — Tabs node size: ", $Margin/VBox/Tabs.size)
 
 func _format_number(value: int) -> String:
 	"""Format number with thousand separators (1234 -> 1,234)"""

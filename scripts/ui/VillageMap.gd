@@ -11,60 +11,26 @@ const NPC_MARKER_ICON: String = "res://Icons/marker.png"
 const NPC_MARKER_SIZE_PX: int = 48
 const NPC_QUEST_INDICATOR_SCENE: String = "res://scenes/ui/NPCQuestIndicator.tscn"
 
-var _map_root: Control
-var _layer: Control
+@onready var _map_root: Control = $Frame/AspectRatioContainer/MapRoot
+@onready var _layer: Control = $Frame/AspectRatioContainer/MapRoot/Layer
+@onready var _ar: AspectRatioContainer = $Frame/AspectRatioContainer
+@onready var _map_image: TextureRect = $Frame/AspectRatioContainer/MapRoot/MapImage
 
 func _ready() -> void:
-	_build()
-
-func get_map_root() -> Control:
-	return _map_root
-
-# ----- Build -----
-func _build() -> void:
-	for c in get_children():
-		c.queue_free()
-
-	var frame := PanelContainer.new()
-	frame.clip_contents = true
-	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(frame)
-
-	var ar := AspectRatioContainer.new()
-	ar.stretch_mode = AspectRatioContainer.STRETCH_FIT
-	ar.alignment_horizontal = AspectRatioContainer.ALIGNMENT_CENTER
-	ar.alignment_vertical   = AspectRatioContainer.ALIGNMENT_CENTER
-	ar.set_anchors_preset(Control.PRESET_FULL_RECT)
-	frame.add_child(ar)
-
-	var ratio: float = 16.0 / 9.0
 	if ResourceLoader.exists(VILLAGE_MAP):
 		var tex: Texture2D = load(VILLAGE_MAP)
 		if tex:
+			_map_image.texture = tex
 			var s: Vector2 = tex.get_size()
 			if s.y != 0.0:
-				ratio = s.x / s.y
-	ar.ratio = ratio
+				_ar.ratio = s.x / s.y
 
-	_map_root = Control.new()
-	_map_root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	ar.add_child(_map_root)
 	_map_root.resized.connect(_reposition_markers)
-	ar.resized.connect(_reposition_markers)
-
-	var img := TextureRect.new()
-	img.stretch_mode = TextureRect.STRETCH_SCALE
-	img.set_anchors_preset(Control.PRESET_FULL_RECT)
-	if ResourceLoader.exists(VILLAGE_MAP):
-		img.texture = load(VILLAGE_MAP)
-	_map_root.add_child(img)
-
-	_layer = Control.new()
-	_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_layer.mouse_filter = Control.MOUSE_FILTER_PASS
-	_map_root.add_child(_layer)
-
+	_ar.resized.connect(_reposition_markers)
 	_spawn_markers()
+
+func get_map_root() -> Control:
+	return _map_root
 
 # ----- Markers -----
 func _spawn_markers() -> void:

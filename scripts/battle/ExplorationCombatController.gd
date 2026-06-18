@@ -14,6 +14,7 @@ const EncounterGenerator = preload("res://scripts/battle/EncounterGenerator.gd")
 const CombatStateManager = preload("res://scripts/battle/CombatStateManager.gd")
 const SlotManager = preload("res://scripts/battle/SlotManager.gd")
 const ExplorationUI = preload("res://scripts/battle/ExplorationUI.gd")
+const EXPLORATION_UI_SCENE = preload("res://scenes/battle/ExplorationUI.tscn")
 const TransitionUI = preload("res://scripts/battle/TransitionUI.gd")
 
 # ==================== COMPONENTS ====================
@@ -135,8 +136,9 @@ func _create_uis() -> void:
 	if not battle_area:
 		return
 
-	# Exploration UI
-	exploration_ui = ExplorationUI.new()
+	# Exploration UI - CRITICAL: scene instantiation, NOT .new()!
+	# ExplorationUI.new() creates script only, bypassing the .tscn @onready nodes.
+	exploration_ui = EXPLORATION_UI_SCENE.instantiate()
 	exploration_ui.name = "ExplorationUI"
 	exploration_ui.set_anchors_preset(Control.PRESET_FULL_RECT)
 	exploration_ui.z_index = 100

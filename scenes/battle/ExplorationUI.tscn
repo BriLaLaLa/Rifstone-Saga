@@ -1,0 +1,92 @@
+[gd_scene load_steps=4 format=3 uid="uid://exploration_ui_v1"]
+
+[ext_resource type="Script" path="res://scripts/battle/ExplorationUI.gd" id="1_exp_ui"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_fill"]
+bg_color = Color(0.2, 0.6, 1.0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_bg"]
+bg_color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="ExplorationUI" type="Control"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_exp_ui")
+
+[node name="BgPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ContentBox" type="VBoxContainer" parent="BgPanel"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -150.0
+offset_right = 200.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="BgPanel/ContentBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(1, 0.9, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+text = "🔍 EXPLORING"
+horizontal_alignment = 1
+
+[node name="ZoneInfoLabel" type="Label" parent="BgPanel/ContentBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+text = ""
+horizontal_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="BgPanel/ContentBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+text = "Searching for enemies"
+horizontal_alignment = 1
+
+[node name="ProgressBar" type="ProgressBar" parent="BgPanel/ContentBox"]
+custom_minimum_size = Vector2(300, 30)
+layout_mode = 2
+max_value = 100.0
+show_percentage = false
+theme_override_styles/fill = SubResource("StyleBoxFlat_progress_fill")
+theme_override_styles/background = SubResource("StyleBoxFlat_progress_bg")
+
+[node name="ProgressDots" type="HBoxContainer" parent="BgPanel/ContentBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Dot0" type="Label" parent="BgPanel/ContentBox/ProgressDots"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+text = "●"
+
+[node name="Dot1" type="Label" parent="BgPanel/ContentBox/ProgressDots"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+text = "●"
+
+[node name="Dot2" type="Label" parent="BgPanel/ContentBox/ProgressDots"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+text = "●"

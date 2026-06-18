@@ -1,0 +1,159 @@
+[gd_scene load_steps=7 format=3 uid="uid://zone_combat_scene_v2"]
+
+[ext_resource type="Script" path="res://scripts/combat/ZoneCombatController.gd" id="1_ctrl"]
+[ext_resource type="Script" path="res://scripts/combat/PlayerPathController.gd" id="2_player"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="3_icon"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_player"]
+radius = 14.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_detect"]
+radius = 180.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_combat"]
+radius = 55.0
+
+[node name="ZoneCombatScene" type="Control"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_ctrl")
+
+[node name="HudBar" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_bottom = 46.0
+grow_horizontal = 2
+
+[node name="HudInner" type="HBoxContainer" parent="HudBar"]
+layout_mode = 2
+theme_override_constants/separation = 12
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="ExitButton" type="Button" parent="HudBar/HudInner"]
+layout_mode = 2
+custom_minimum_size = Vector2(150, 36)
+text = "Esci dalla Zona"
+
+[node name="RouteLabel" type="Label" parent="HudBar/HudInner"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.7, 0.85, 0.7, 1)
+text = "Rotta:"
+vertical_alignment = 1
+
+[node name="RouteOption" type="OptionButton" parent="HudBar/HudInner"]
+layout_mode = 2
+custom_minimum_size = Vector2(180, 36)
+
+[node name="DrawButton" type="Button" parent="HudBar/HudInner"]
+layout_mode = 2
+custom_minimum_size = Vector2(110, 36)
+text = "✏ Disegna"
+
+[node name="SaveRouteButton" type="Button" parent="HudBar/HudInner"]
+visible = false
+layout_mode = 2
+custom_minimum_size = Vector2(90, 36)
+text = "✔ Salva"
+
+[node name="CancelRouteButton" type="Button" parent="HudBar/HudInner"]
+visible = false
+layout_mode = 2
+custom_minimum_size = Vector2(90, 36)
+text = "✖ Annulla"
+
+[node name="Spacer" type="Control" parent="HudBar/HudInner"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StateLabel" type="Label" parent="HudBar/HudInner"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.9, 0.9, 0.5, 1)
+text = "Player: IDLE"
+vertical_alignment = 1
+
+[node name="ZoneLabel" type="Label" parent="HudBar/HudInner"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+text = ""
+vertical_alignment = 1
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 46.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
+size = Vector2i(800, 600)
+render_target_update_mode = 4
+
+[node name="Background" type="ColorRect" parent="SubViewportContainer/SubViewport"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.13, 0.1, 1)
+z_index = -10
+
+[node name="GameWorld" type="Node2D" parent="SubViewportContainer/SubViewport"]
+
+[node name="PathDisplay" type="Node2D" parent="SubViewportContainer/SubViewport/GameWorld"]
+z_index = -1
+
+[node name="EnemySpawnPoints" type="Node2D" parent="SubViewportContainer/SubViewport/GameWorld"]
+
+[node name="ActiveEnemies" type="Node2D" parent="SubViewportContainer/SubViewport/GameWorld"]
+
+[node name="PlayerCharacter" type="CharacterBody2D" parent="SubViewportContainer/SubViewport/GameWorld"]
+collision_layer = 1
+collision_mask = 2
+position = Vector2(400, 300)
+script = ExtResource("2_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SubViewportContainer/SubViewport/GameWorld/PlayerCharacter"]
+shape = SubResource("CircleShape2D_player")
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="SubViewportContainer/SubViewport/GameWorld/PlayerCharacter"]
+avoidance_enabled = false
+
+[node name="PlayerSprite" type="Sprite2D" parent="SubViewportContainer/SubViewport/GameWorld/PlayerCharacter"]
+texture = ExtResource("3_icon")
+scale = Vector2(0.5, 0.5)
+z_index = 5
+
+[node name="DetectionArea" type="Area2D" parent="SubViewportContainer/SubViewport/GameWorld/PlayerCharacter"]
+collision_layer = 0
+collision_mask = 4
+
+[node name="DetectionShape" type="CollisionShape2D" parent="SubViewportContainer/SubViewport/GameWorld/PlayerCharacter/DetectionArea"]
+shape = SubResource("CircleShape2D_detect")
+
+[node name="CombatRangeArea" type="Area2D" parent="SubViewportContainer/SubViewport/GameWorld/PlayerCharacter"]
+collision_layer = 0
+collision_mask = 4
+
+[node name="CombatRangeShape" type="CollisionShape2D" parent="SubViewportContainer/SubViewport/GameWorld/PlayerCharacter/CombatRangeArea"]
+shape = SubResource("CircleShape2D_combat")
+
+[node name="DrawOverlay" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 46.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

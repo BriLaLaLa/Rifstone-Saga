@@ -34,25 +34,16 @@ const SERVER_NAME := "godot-ai"
 ## the Windows-reservation diagnostics this is the escape hatch for.
 const DEFAULT_HTTP_PORT := 8000
 const DEFAULT_WS_PORT := 9500
-const SETTING_HTTP_PORT := "godot_ai/http_port"
-const SETTING_WS_PORT := "godot_ai/ws_port"
-const SETTING_STARTUP_TRACE := "godot_ai/log_startup_timing"
 const STARTUP_TRACE_ENV := "GODOT_AI_STARTUP_TRACE"
 const MIN_PORT := 1024
 const MAX_PORT := 65535
-
-## Comma-separated list of tool domains to drop from the server at spawn
-## time. Maps 1:1 onto the `--exclude-domains` CLI flag. Set via the dock's
-## "Tools" tab; a change requires a server restart (the dock handles this
-## by triggering a plugin reload). Unknown names are warned about on the
-## Python side and skipped, so an EditorSetting left over from a previous
-## plugin version can't wedge the spawn.
-const SETTING_EXCLUDED_DOMAINS := "godot_ai/excluded_domains"
+const SETTING_WS_PORT := "godot_ai/ws_port"
+const SETTING_STARTUP_TRACE := "godot_ai/log_startup_timing"
 
 
 ## Active HTTP port: user override (if in range) or `DEFAULT_HTTP_PORT`.
 static func http_port() -> int:
-	return _read_port_setting(SETTING_HTTP_PORT, DEFAULT_HTTP_PORT)
+	return _read_port_setting(McpSettings.SETTING_HTTP_PORT, DEFAULT_HTTP_PORT)
 
 
 ## Active WebSocket port: user override (if in range) or `DEFAULT_WS_PORT`.
@@ -83,7 +74,7 @@ static func ensure_settings_registered() -> void:
 	var es := EditorInterface.get_editor_settings()
 	if es == null:
 		return
-	_register_port_setting(es, SETTING_HTTP_PORT, DEFAULT_HTTP_PORT)
+	_register_port_setting(es, McpSettings.SETTING_HTTP_PORT, DEFAULT_HTTP_PORT)
 	_register_port_setting(es, SETTING_WS_PORT, DEFAULT_WS_PORT)
 	_register_bool_setting(es, SETTING_STARTUP_TRACE, false)
 
@@ -128,9 +119,9 @@ static func startup_trace_enabled() -> bool:
 ## `--exclude-domains` don't see an empty argument.
 static func excluded_domains() -> String:
 	var es := EditorInterface.get_editor_settings()
-	if es == null or not es.has_setting(SETTING_EXCLUDED_DOMAINS):
+	if es == null or not es.has_setting(McpSettings.SETTING_EXCLUDED_DOMAINS):
 		return ""
-	var raw := str(es.get_setting(SETTING_EXCLUDED_DOMAINS))
+	var raw := str(es.get_setting(McpSettings.SETTING_EXCLUDED_DOMAINS))
 	var parts := PackedStringArray()
 	for p in raw.split(","):
 		var t := p.strip_edges()
@@ -215,7 +206,11 @@ static func check_status_details_for_url_with_cli_path(id: String, url: String, 
 	var client := ClientRegistry.get_by_id(id)
 	if client == null:
 		return {"status": Client.Status.NOT_CONFIGURED, "error_msg": ""}
-	if client.config_type == "cli" and cli_path.is_empty():
+	# A cli client with no resolved binary normally reads as NOT_CONFIGURED.
+	# Skip that shortcut when the client has a JSON fallback (#463): the
+	# dispatch below reads its config file directly so the status dot reflects
+	# a fallback-configured entry instead of always showing red.
+	if client.config_type == "cli" and cli_path.is_empty() and not client.has_json_fallback():
 		return {"status": Client.Status.NOT_CONFIGURED, "error_msg": ""}
 	return _dispatch_check_status_with_cli_path_details(client, url, cli_path)
 
@@ -228,7 +223,9 @@ static func client_status_probe_snapshot(id: String) -> Dictionary:
 	var installed := false
 	if client.config_type == "cli":
 		cli_path = CliStrategy.resolve_cli_path(client)
-		installed = not cli_path.is_empty()
+		# #463: a JSON-fallback cli client (Claude Code as a VS Code extension)
+		# is "installed" when its fallback config exists, even with no binary.
+		installed = not cli_path.is_empty() or client.is_installed()
 	else:
 		installed = client.is_installed()
 	return {"id": id, "cli_path": cli_path, "installed": installed}
@@ -256,6 +253,10 @@ static func _dispatch_configure(client: Client, url: String) -> Dictionary:
 		"toml":
 			return TomlStrategy.configure(client, SERVER_NAME, url)
 		"cli":
+			# #463: fall back to writing the config file directly when the CLI
+			# binary isn't on PATH (Claude Code as a VS Code/Cursor extension).
+			if client.has_json_fallback() and CliStrategy.resolve_cli_path(client).is_empty():
+				return JsonStrategy.configure(client, SERVER_NAME, url)
 			return CliStrategy.configure(client, SERVER_NAME, url)
 	return {"status": "error", "message": "Unknown config_type for %s: %s" % [client.id, client.config_type]}
 
@@ -267,6 +268,10 @@ static func _dispatch_remove(client: Client) -> Dictionary:
 		"toml":
 			return TomlStrategy.remove(client, SERVER_NAME)
 		"cli":
+			# #463: mirror the configure fallback so Remove also works without
+			# the CLI binary — otherwise a fallback-written entry is unremovable.
+			if client.has_json_fallback() and CliStrategy.resolve_cli_path(client).is_empty():
+				return JsonStrategy.remove(client, SERVER_NAME)
 			return CliStrategy.remove(client, SERVER_NAME)
 	return {"status": "error", "message": "Unknown config_type for %s: %s" % [client.id, client.config_type]}
 
@@ -286,9 +291,12 @@ static func _dispatch_check_status_with_cli_path_details(client: Client, url: St
 		"toml":
 			return {"status": TomlStrategy.check_status(client, SERVER_NAME, url), "error_msg": ""}
 		"cli":
-			if cli_path.is_empty():
-				return CliStrategy.check_status_details(client, SERVER_NAME, url, CliStrategy.resolve_cli_path(client))
-			return CliStrategy.check_status_details(client, SERVER_NAME, url, cli_path)
+			var resolved_cli := cli_path if not cli_path.is_empty() else CliStrategy.resolve_cli_path(client)
+			# #463: with no CLI binary, read the JSON fallback config so a
+			# fallback-configured entry reports CONFIGURED instead of red.
+			if resolved_cli.is_empty() and client.has_json_fallback():
+				return {"status": JsonStrategy.check_status(client, SERVER_NAME, url), "error_msg": ""}
+			return CliStrategy.check_status_details(client, SERVER_NAME, url, resolved_cli)
 	return {"status": Client.Status.NOT_CONFIGURED, "error_msg": ""}
 
 

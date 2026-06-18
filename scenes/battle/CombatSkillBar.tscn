@@ -1,0 +1,531 @@
+[gd_scene load_steps=6 format=3 uid="uid://combat_skill_bar_v1"]
+
+[ext_resource type="Script" path="res://scripts/battle/CombatSkillBar.gd" id="1_csb"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slot_bg"]
+bg_color = Color(0.2, 0.2, 0.2, 0.8)
+border_color = Color(0.5, 0.5, 0.5, 1.0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_buff_fill"]
+bg_color = Color(0.2, 0.8, 0.3, 1.0)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_buff_bg"]
+bg_color = Color(0.1, 0.1, 0.1, 0.5)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cd_bg"]
+bg_color = Color(0.0, 0.0, 0.0, 0.7)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mana_fill"]
+bg_color = Color(0.2, 0.4, 1.0, 1.0)
+
+[node name="CombatSkillBar" type="Control"]
+custom_minimum_size = Vector2(450, 100)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_csb")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleLabel" type="Label" parent="VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "⚔️ Warrior Skills"
+horizontal_alignment = 1
+
+[node name="ManaContainer" type="VBoxContainer" parent="VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 35)
+
+[node name="ManaLabel" type="Label" parent="VBox/ManaContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Mana: 0/0"
+horizontal_alignment = 1
+
+[node name="ManaBar" type="ProgressBar" parent="VBox/ManaContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(250, 20)
+show_percentage = false
+theme_override_styles/fill = SubResource("StyleBoxFlat_mana_fill")
+
+[node name="SlotsHBox" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="SkillSlot0" type="Panel" parent="VBox/SlotsHBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(64, 72)
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_bg")
+
+[node name="Icon" type="TextureRect" parent="VBox/SlotsHBox/SkillSlot0"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(1, 1, 1, 0.3)
+
+[node name="BuffBar" type="ProgressBar" parent="VBox/SlotsHBox/SkillSlot0"]
+layout_mode = 1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -6.0
+grow_horizontal = 2
+visible = false
+show_percentage = false
+theme_override_styles/fill = SubResource("StyleBoxFlat_buff_fill")
+theme_override_styles/background = SubResource("StyleBoxFlat_buff_bg")
+
+[node name="CooldownOverlay" type="Panel" parent="VBox/SlotsHBox/SkillSlot0"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_cd_bg")
+
+[node name="CooldownLabel" type="Label" parent="VBox/SlotsHBox/SkillSlot0"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="VBox/SlotsHBox/SkillSlot0"]
+layout_mode = 0
+position = Vector2(0, 49)
+size = Vector2(64, 15)
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 1
+text = "Slot 1"
+horizontal_alignment = 1
+
+[node name="CastingIndicator" type="Label" parent="VBox/SlotsHBox/SkillSlot0"]
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -20.0
+offset_right = 0.0
+offset_bottom = 20.0
+visible = false
+theme_override_font_sizes/font_size = 16
+text = "⏳"
+horizontal_alignment = 1
+
+[node name="SkillSlot1" type="Panel" parent="VBox/SlotsHBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(64, 72)
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_bg")
+
+[node name="Icon" type="TextureRect" parent="VBox/SlotsHBox/SkillSlot1"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(1, 1, 1, 0.3)
+
+[node name="BuffBar" type="ProgressBar" parent="VBox/SlotsHBox/SkillSlot1"]
+layout_mode = 1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -6.0
+grow_horizontal = 2
+visible = false
+show_percentage = false
+theme_override_styles/fill = SubResource("StyleBoxFlat_buff_fill")
+theme_override_styles/background = SubResource("StyleBoxFlat_buff_bg")
+
+[node name="CooldownOverlay" type="Panel" parent="VBox/SlotsHBox/SkillSlot1"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_cd_bg")
+
+[node name="CooldownLabel" type="Label" parent="VBox/SlotsHBox/SkillSlot1"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="VBox/SlotsHBox/SkillSlot1"]
+layout_mode = 0
+position = Vector2(0, 49)
+size = Vector2(64, 15)
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 1
+text = "Slot 2"
+horizontal_alignment = 1
+
+[node name="CastingIndicator" type="Label" parent="VBox/SlotsHBox/SkillSlot1"]
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -20.0
+offset_right = 0.0
+offset_bottom = 20.0
+visible = false
+theme_override_font_sizes/font_size = 16
+text = "⏳"
+horizontal_alignment = 1
+
+[node name="SkillSlot2" type="Panel" parent="VBox/SlotsHBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(64, 72)
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_bg")
+
+[node name="Icon" type="TextureRect" parent="VBox/SlotsHBox/SkillSlot2"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(1, 1, 1, 0.3)
+
+[node name="BuffBar" type="ProgressBar" parent="VBox/SlotsHBox/SkillSlot2"]
+layout_mode = 1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -6.0
+grow_horizontal = 2
+visible = false
+show_percentage = false
+theme_override_styles/fill = SubResource("StyleBoxFlat_buff_fill")
+theme_override_styles/background = SubResource("StyleBoxFlat_buff_bg")
+
+[node name="CooldownOverlay" type="Panel" parent="VBox/SlotsHBox/SkillSlot2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_cd_bg")
+
+[node name="CooldownLabel" type="Label" parent="VBox/SlotsHBox/SkillSlot2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="VBox/SlotsHBox/SkillSlot2"]
+layout_mode = 0
+position = Vector2(0, 49)
+size = Vector2(64, 15)
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 1
+text = "Slot 3"
+horizontal_alignment = 1
+
+[node name="CastingIndicator" type="Label" parent="VBox/SlotsHBox/SkillSlot2"]
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -20.0
+offset_right = 0.0
+offset_bottom = 20.0
+visible = false
+theme_override_font_sizes/font_size = 16
+text = "⏳"
+horizontal_alignment = 1
+
+[node name="SkillSlot3" type="Panel" parent="VBox/SlotsHBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(64, 72)
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_bg")
+
+[node name="Icon" type="TextureRect" parent="VBox/SlotsHBox/SkillSlot3"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(1, 1, 1, 0.3)
+
+[node name="BuffBar" type="ProgressBar" parent="VBox/SlotsHBox/SkillSlot3"]
+layout_mode = 1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -6.0
+grow_horizontal = 2
+visible = false
+show_percentage = false
+theme_override_styles/fill = SubResource("StyleBoxFlat_buff_fill")
+theme_override_styles/background = SubResource("StyleBoxFlat_buff_bg")
+
+[node name="CooldownOverlay" type="Panel" parent="VBox/SlotsHBox/SkillSlot3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_cd_bg")
+
+[node name="CooldownLabel" type="Label" parent="VBox/SlotsHBox/SkillSlot3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="VBox/SlotsHBox/SkillSlot3"]
+layout_mode = 0
+position = Vector2(0, 49)
+size = Vector2(64, 15)
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 1
+text = "Slot 4"
+horizontal_alignment = 1
+
+[node name="CastingIndicator" type="Label" parent="VBox/SlotsHBox/SkillSlot3"]
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -20.0
+offset_right = 0.0
+offset_bottom = 20.0
+visible = false
+theme_override_font_sizes/font_size = 16
+text = "⏳"
+horizontal_alignment = 1
+
+[node name="SkillSlot4" type="Panel" parent="VBox/SlotsHBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(64, 72)
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_bg")
+
+[node name="Icon" type="TextureRect" parent="VBox/SlotsHBox/SkillSlot4"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(1, 1, 1, 0.3)
+
+[node name="BuffBar" type="ProgressBar" parent="VBox/SlotsHBox/SkillSlot4"]
+layout_mode = 1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -6.0
+grow_horizontal = 2
+visible = false
+show_percentage = false
+theme_override_styles/fill = SubResource("StyleBoxFlat_buff_fill")
+theme_override_styles/background = SubResource("StyleBoxFlat_buff_bg")
+
+[node name="CooldownOverlay" type="Panel" parent="VBox/SlotsHBox/SkillSlot4"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_cd_bg")
+
+[node name="CooldownLabel" type="Label" parent="VBox/SlotsHBox/SkillSlot4"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="VBox/SlotsHBox/SkillSlot4"]
+layout_mode = 0
+position = Vector2(0, 49)
+size = Vector2(64, 15)
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 1
+text = "Slot 5"
+horizontal_alignment = 1
+
+[node name="CastingIndicator" type="Label" parent="VBox/SlotsHBox/SkillSlot4"]
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -20.0
+offset_right = 0.0
+offset_bottom = 20.0
+visible = false
+theme_override_font_sizes/font_size = 16
+text = "⏳"
+horizontal_alignment = 1
+
+[node name="SkillSlot5" type="Panel" parent="VBox/SlotsHBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(64, 72)
+theme_override_styles/panel = SubResource("StyleBoxFlat_slot_bg")
+
+[node name="Icon" type="TextureRect" parent="VBox/SlotsHBox/SkillSlot5"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(1, 1, 1, 0.3)
+
+[node name="BuffBar" type="ProgressBar" parent="VBox/SlotsHBox/SkillSlot5"]
+layout_mode = 1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -6.0
+grow_horizontal = 2
+visible = false
+show_percentage = false
+theme_override_styles/fill = SubResource("StyleBoxFlat_buff_fill")
+theme_override_styles/background = SubResource("StyleBoxFlat_buff_bg")
+
+[node name="CooldownOverlay" type="Panel" parent="VBox/SlotsHBox/SkillSlot5"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_cd_bg")
+
+[node name="CooldownLabel" type="Label" parent="VBox/SlotsHBox/SkillSlot5"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="VBox/SlotsHBox/SkillSlot5"]
+layout_mode = 0
+position = Vector2(0, 49)
+size = Vector2(64, 15)
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 1
+text = "Slot 6"
+horizontal_alignment = 1
+
+[node name="CastingIndicator" type="Label" parent="VBox/SlotsHBox/SkillSlot5"]
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -20.0
+offset_right = 0.0
+offset_bottom = 20.0
+visible = false
+theme_override_font_sizes/font_size = 16
+text = "⏳"
+horizontal_alignment = 1

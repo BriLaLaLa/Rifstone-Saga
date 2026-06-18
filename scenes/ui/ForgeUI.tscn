@@ -1,0 +1,162 @@
+[gd_scene load_steps=3 format=3 uid="uid://forge_ui_v1"]
+
+[ext_resource type="Script" path="res://scripts/ui/ForgeUI.gd" id="1_forge"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_upgrade_slot"]
+bg_color = Color(0.15, 0.15, 0.2, 0.9)
+border_color = Color(0.5, 0.5, 0.6, 1.0)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[node name="ForgeUI" type="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+mouse_filter = 1
+script = ExtResource("1_forge")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.7)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -450.0
+offset_top = -300.0
+offset_right = 450.0
+offset_bottom = 300.0
+custom_minimum_size = Vector2(900, 600)
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 15
+
+[node name="Header" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Panel/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+text = "🔨 Fucina del Fabbro"
+
+[node name="CloseButton" type="Button" parent="Panel/Margin/VBox/Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(100, 40)
+text = "✖ Chiudi"
+
+[node name="Sep1" type="HSeparator" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Content" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 30
+
+[node name="LeftPanel" type="VBoxContainer" parent="Panel/Margin/VBox/Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="InvTitle" type="Label" parent="Panel/Margin/VBox/Content/LeftPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "📦 Inventario"
+
+[node name="InvScroll" type="ScrollContainer" parent="Panel/Margin/VBox/Content/LeftPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(500, 400)
+
+[node name="GridContainer" type="VBoxContainer" parent="Panel/Margin/VBox/Content/LeftPanel/InvScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="InventoryGrid" type="GridContainer" parent="Panel/Margin/VBox/Content/LeftPanel/InvScroll/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 6
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+
+[node name="RightPanel" type="VBoxContainer" parent="Panel/Margin/VBox/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+theme_override_constants/separation = 15
+
+[node name="UpgradeTitle" type="Label" parent="Panel/Margin/VBox/Content/RightPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "⚒️ Potenziamento"
+
+[node name="UpgradeSlot" type="Panel" parent="Panel/Margin/VBox/Content/RightPanel"]
+layout_mode = 2
+custom_minimum_size = Vector2(128, 128)
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_upgrade_slot")
+
+[node name="PlaceholderLabel" type="Label" parent="Panel/Margin/VBox/Content/RightPanel/UpgradeSlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+text = "Trascina qui
+l'equipaggiamento"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="InfoLabel" type="Label" parent="Panel/Margin/VBox/Content/RightPanel"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Nessun item"
+horizontal_alignment = 1
+
+[node name="SuccessLabel" type="Label" parent="Panel/Margin/VBox/Content/RightPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+text = ""
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="Panel/Margin/VBox/Content/RightPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="UpgradeButton" type="Button" parent="Panel/Margin/VBox/Content/RightPanel"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 60)
+disabled = true
+theme_override_font_sizes/font_size = 22
+text = "⚡ POTENZIA"
