@@ -37,6 +37,7 @@
           "boss_types": ["scrofa"],
           "metin_types": ["metin"],
           "gathering_node_types": ["mining_node", "gathering_node", "fishing_pond"],
+          "world_size": [12800, 12800],
           "gold_min": 10,
           "gold_max": 25,
           "xp_min": 50,

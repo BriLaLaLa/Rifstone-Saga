@@ -25,6 +25,8 @@ class_name ZoneData
 # --- Nuovo sistema combat top-down ---
 @export var tilemap_scene: String = ""    # Path a .tscn della zona (es. "res://scenes/combat/zones/m1_z1_combat.tscn")
 @export var default_routes: Array = []   # Array di {id, name, waypoints: Array, loop: bool}
+@export var world_size: Array = []        # [larghezza, altezza] in px; vuoto = default del controller
+@export var gathering_node_types: Array = []  # tipi di nodo gathering ammessi in zona
 
 func _init():
 	pass
@@ -68,6 +70,8 @@ static func from_dict(data: Dictionary) -> ZoneData:
 	zone.recommended_level = data.get("recommended_level", 1)
 	zone.tilemap_scene = data.get("tilemap_scene", "")
 	zone.default_routes = data.get("default_routes", [])
+	zone.world_size = data.get("world_size", [])
+	zone.gathering_node_types = data.get("gathering_node_types", [])
 
 	# Parse clickable area
 	if data.has("clickable_area"):

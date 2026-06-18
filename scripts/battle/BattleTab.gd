@@ -698,6 +698,8 @@ func _show_zone_combat(zone_data: ZoneData) -> void:
 		"xp_min":         zone_data.xp_min,
 		"xp_max":         zone_data.xp_max,
 		"default_routes": zone_data.default_routes,
+		"world_size":     zone_data.world_size,
+		"gathering_node_types": zone_data.gathering_node_types,
 	}
 
 	var route = _get_default_route(zone_data)
