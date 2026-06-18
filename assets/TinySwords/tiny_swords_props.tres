@@ -1,4 +1,4 @@
-[gd_resource type="TileSet" load_steps=41 format=3]
+[gd_resource type="TileSet" load_steps=41 format=3 uid="uid://bs0oni8mu48r1"]
 
 [ext_resource type="Texture2D" uid="uid://cra6rt7285s33" path="res://assets/TinySwords/Terrain/Decorations/Bushes/Bushe1.png" id="e1"]
 [ext_resource type="Texture2D" uid="uid://b7lg3ftb2j85w" path="res://assets/TinySwords/Terrain/Decorations/Bushes/Bushe2.png" id="e2"]
@@ -35,6 +35,7 @@ texture_region_size = Vector2i(128, 128)
 0:0/animation_frame_6/duration = 1.0
 0:0/animation_frame_7/duration = 1.0
 0:0/0 = 0
+
 [sub_resource type="TileSetAtlasSource" id="s2"]
 texture = ExtResource("e2")
 texture_region_size = Vector2i(128, 128)
@@ -49,94 +50,7 @@ texture_region_size = Vector2i(128, 128)
 0:0/animation_frame_6/duration = 1.0
 0:0/animation_frame_7/duration = 1.0
 0:0/0 = 0
-[sub_resource type="TileSetAtlasSource" id="s3"]
-texture = ExtResource("e3")
-texture_region_size = Vector2i(128, 128)
-0:0/animation_columns = 8
-0:0/animation_speed = 4.0
-0:0/animation_frame_0/duration = 1.0
-0:0/animation_frame_1/duration = 1.0
-0:0/animation_frame_2/duration = 1.0
-0:0/animation_frame_3/duration = 1.0
-0:0/animation_frame_4/duration = 1.0
-0:0/animation_frame_5/duration = 1.0
-0:0/animation_frame_6/duration = 1.0
-0:0/animation_frame_7/duration = 1.0
-0:0/0 = 0
-[sub_resource type="TileSetAtlasSource" id="s4"]
-texture = ExtResource("e4")
-texture_region_size = Vector2i(128, 128)
-0:0/animation_columns = 8
-0:0/animation_speed = 4.0
-0:0/animation_frame_0/duration = 1.0
-0:0/animation_frame_1/duration = 1.0
-0:0/animation_frame_2/duration = 1.0
-0:0/animation_frame_3/duration = 1.0
-0:0/animation_frame_4/duration = 1.0
-0:0/animation_frame_5/duration = 1.0
-0:0/animation_frame_6/duration = 1.0
-0:0/animation_frame_7/duration = 1.0
-0:0/0 = 0
-[sub_resource type="TileSetAtlasSource" id="s5"]
-texture = ExtResource("e5")
-texture_region_size = Vector2i(64, 64)
-0:0/0 = 0
-[sub_resource type="TileSetAtlasSource" id="s6"]
-texture = ExtResource("e6")
-texture_region_size = Vector2i(64, 64)
-0:0/0 = 0
-[sub_resource type="TileSetAtlasSource" id="s7"]
-texture = ExtResource("e7")
-texture_region_size = Vector2i(64, 64)
-0:0/0 = 0
-[sub_resource type="TileSetAtlasSource" id="s8"]
-texture = ExtResource("e8")
-texture_region_size = Vector2i(64, 64)
-0:0/0 = 0
-[sub_resource type="TileSetAtlasSource" id="s9"]
-texture = ExtResource("e9")
-texture_region_size = Vector2i(64, 64)
-0:0/animation_columns = 16
-0:0/animation_speed = 6.0
-0:0/animation_frame_0/duration = 1.0
-0:0/animation_frame_1/duration = 1.0
-0:0/animation_frame_2/duration = 1.0
-0:0/animation_frame_3/duration = 1.0
-0:0/animation_frame_4/duration = 1.0
-0:0/animation_frame_5/duration = 1.0
-0:0/animation_frame_6/duration = 1.0
-0:0/animation_frame_7/duration = 1.0
-0:0/animation_frame_8/duration = 1.0
-0:0/animation_frame_9/duration = 1.0
-0:0/animation_frame_10/duration = 1.0
-0:0/animation_frame_11/duration = 1.0
-0:0/animation_frame_12/duration = 1.0
-0:0/animation_frame_13/duration = 1.0
-0:0/animation_frame_14/duration = 1.0
-0:0/animation_frame_15/duration = 1.0
-0:0/0 = 0
-[sub_resource type="TileSetAtlasSource" id="s10"]
-texture = ExtResource("e10")
-texture_region_size = Vector2i(64, 64)
-0:0/animation_columns = 16
-0:0/animation_speed = 6.0
-0:0/animation_frame_0/duration = 1.0
-0:0/animation_frame_1/duration = 1.0
-0:0/animation_frame_2/duration = 1.0
-0:0/animation_frame_3/duration = 1.0
-0:0/animation_frame_4/duration = 1.0
-0:0/animation_frame_5/duration = 1.0
-0:0/animation_frame_6/duration = 1.0
-0:0/animation_frame_7/duration = 1.0
-0:0/animation_frame_8/duration = 1.0
-0:0/animation_frame_9/duration = 1.0
-0:0/animation_frame_10/duration = 1.0
-0:0/animation_frame_11/duration = 1.0
-0:0/animation_frame_12/duration = 1.0
-0:0/animation_frame_13/duration = 1.0
-0:0/animation_frame_14/duration = 1.0
-0:0/animation_frame_15/duration = 1.0
-0:0/0 = 0
+
 [sub_resource type="TileSetAtlasSource" id="s11"]
 texture = ExtResource("e11")
 texture_region_size = Vector2i(64, 64)
@@ -159,6 +73,7 @@ texture_region_size = Vector2i(64, 64)
 0:0/animation_frame_14/duration = 1.0
 0:0/animation_frame_15/duration = 1.0
 0:0/0 = 0
+
 [sub_resource type="TileSetAtlasSource" id="s12"]
 texture = ExtResource("e12")
 texture_region_size = Vector2i(64, 64)
@@ -181,22 +96,27 @@ texture_region_size = Vector2i(64, 64)
 0:0/animation_frame_14/duration = 1.0
 0:0/animation_frame_15/duration = 1.0
 0:0/0 = 0
+
 [sub_resource type="TileSetAtlasSource" id="s13"]
 texture = ExtResource("e13")
 texture_region_size = Vector2i(192, 256)
 0:0/0 = 0
+
 [sub_resource type="TileSetAtlasSource" id="s14"]
 texture = ExtResource("e14")
 texture_region_size = Vector2i(192, 256)
 0:0/0 = 0
+
 [sub_resource type="TileSetAtlasSource" id="s15"]
 texture = ExtResource("e15")
 texture_region_size = Vector2i(192, 256)
 0:0/0 = 0
+
 [sub_resource type="TileSetAtlasSource" id="s16"]
 texture = ExtResource("e16")
 texture_region_size = Vector2i(192, 256)
 0:0/0 = 0
+
 [sub_resource type="TileSetAtlasSource" id="s17"]
 texture = ExtResource("e17")
 texture_region_size = Vector2i(192, 256)
@@ -211,6 +131,7 @@ texture_region_size = Vector2i(192, 256)
 0:0/animation_frame_6/duration = 1.0
 0:0/animation_frame_7/duration = 1.0
 0:0/0 = 0
+
 [sub_resource type="TileSetAtlasSource" id="s18"]
 texture = ExtResource("e18")
 texture_region_size = Vector2i(192, 256)
@@ -225,6 +146,7 @@ texture_region_size = Vector2i(192, 256)
 0:0/animation_frame_6/duration = 1.0
 0:0/animation_frame_7/duration = 1.0
 0:0/0 = 0
+
 [sub_resource type="TileSetAtlasSource" id="s19"]
 texture = ExtResource("e19")
 texture_region_size = Vector2i(192, 192)
@@ -239,6 +161,7 @@ texture_region_size = Vector2i(192, 192)
 0:0/animation_frame_6/duration = 1.0
 0:0/animation_frame_7/duration = 1.0
 0:0/0 = 0
+
 [sub_resource type="TileSetAtlasSource" id="s20"]
 texture = ExtResource("e20")
 texture_region_size = Vector2i(192, 192)
@@ -252,6 +175,102 @@ texture_region_size = Vector2i(192, 192)
 0:0/animation_frame_5/duration = 1.0
 0:0/animation_frame_6/duration = 1.0
 0:0/animation_frame_7/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="s3"]
+texture = ExtResource("e3")
+texture_region_size = Vector2i(128, 128)
+0:0/animation_columns = 8
+0:0/animation_speed = 4.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/animation_frame_4/duration = 1.0
+0:0/animation_frame_5/duration = 1.0
+0:0/animation_frame_6/duration = 1.0
+0:0/animation_frame_7/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="s4"]
+texture = ExtResource("e4")
+texture_region_size = Vector2i(128, 128)
+0:0/animation_columns = 8
+0:0/animation_speed = 4.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/animation_frame_4/duration = 1.0
+0:0/animation_frame_5/duration = 1.0
+0:0/animation_frame_6/duration = 1.0
+0:0/animation_frame_7/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="s5"]
+texture = ExtResource("e5")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="s6"]
+texture = ExtResource("e6")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="s7"]
+texture = ExtResource("e7")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="s8"]
+texture = ExtResource("e8")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="s9"]
+texture = ExtResource("e9")
+texture_region_size = Vector2i(64, 64)
+0:0/animation_columns = 16
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/animation_frame_4/duration = 1.0
+0:0/animation_frame_5/duration = 1.0
+0:0/animation_frame_6/duration = 1.0
+0:0/animation_frame_7/duration = 1.0
+0:0/animation_frame_8/duration = 1.0
+0:0/animation_frame_9/duration = 1.0
+0:0/animation_frame_10/duration = 1.0
+0:0/animation_frame_11/duration = 1.0
+0:0/animation_frame_12/duration = 1.0
+0:0/animation_frame_13/duration = 1.0
+0:0/animation_frame_14/duration = 1.0
+0:0/animation_frame_15/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="s10"]
+texture = ExtResource("e10")
+texture_region_size = Vector2i(64, 64)
+0:0/animation_columns = 16
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/animation_frame_4/duration = 1.0
+0:0/animation_frame_5/duration = 1.0
+0:0/animation_frame_6/duration = 1.0
+0:0/animation_frame_7/duration = 1.0
+0:0/animation_frame_8/duration = 1.0
+0:0/animation_frame_9/duration = 1.0
+0:0/animation_frame_10/duration = 1.0
+0:0/animation_frame_11/duration = 1.0
+0:0/animation_frame_12/duration = 1.0
+0:0/animation_frame_13/duration = 1.0
+0:0/animation_frame_14/duration = 1.0
+0:0/animation_frame_15/duration = 1.0
 0:0/0 = 0
 
 [resource]
