@@ -109,7 +109,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.1, 0.13, 0.1, 1)
+color = Color(0.2784, 0.6706, 0.6627, 1)
 
 [node name="GameWorld" type="Node2D" parent="SubViewportContainer/SubViewport"]
 
