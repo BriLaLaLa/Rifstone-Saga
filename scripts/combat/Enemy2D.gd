@@ -27,6 +27,9 @@ enum EnemyState { IDLE, CHASING, ATTACKING, DEAD }
 
 var _base_modulate: Color = Color.WHITE
 var _tex_size: Vector2 = Vector2.ONE
+# Animazione procedurale (dà "vita" agli sprite statici)
+var _base_scale: Vector2 = Vector2.ONE
+var _anim_t: float = 0.0
 
 # ==================== DATA ====================
 
@@ -92,6 +95,40 @@ func _apply_sprite_scale(target_px: float) -> void:
 		return
 	if _tex_size.x > 0.0 and _tex_size.y > 0.0:
 		sprite.scale = Vector2(target_px / _tex_size.x, target_px / _tex_size.y)
+		_base_scale = sprite.scale
+
+# ==================== ANIMAZIONE PROCEDURALE ====================
+# Dà movimento a sprite statici: saltello mentre si muove, respiro da fermo,
+# fluttuazione per il Metin. Niente spritesheet richiesti.
+
+func _process(delta: float) -> void:
+	if not is_instance_valid(sprite) or state == EnemyState.DEAD:
+		return
+	if not is_visible_in_tree():
+		return
+
+	if is_metin:
+		# Pietra Metin: lieve fluttuazione + pulsazione
+		_anim_t += delta * 2.2
+		var p := sin(_anim_t) * 0.04
+		sprite.scale = Vector2(_base_scale.x * (1.0 - p), _base_scale.y * (1.0 + p))
+		sprite.position = Vector2(0.0, sin(_anim_t) * 3.0)
+		return
+
+	var moving := velocity.length() > 5.0
+	if moving:
+		# Saltello: lo sprite "rimbalza" e si schiaccia all'atterraggio
+		_anim_t += delta * 12.0
+		var hop := absf(sin(_anim_t))
+		sprite.position = Vector2(0.0, -hop * 5.0)
+		var squash := (1.0 - hop) * 0.08
+		sprite.scale = Vector2(_base_scale.x * (1.0 + squash), _base_scale.y * (1.0 - squash))
+	else:
+		# Respiro da fermo
+		_anim_t += delta * 3.0
+		var b := sin(_anim_t) * 0.03
+		sprite.position = Vector2.ZERO
+		sprite.scale = Vector2(_base_scale.x * (1.0 - b), _base_scale.y * (1.0 + b))
 
 # ==================== PHYSICS ====================
 
