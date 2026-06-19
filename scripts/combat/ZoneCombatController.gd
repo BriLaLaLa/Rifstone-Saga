@@ -449,9 +449,10 @@ func _sp_center(sp) -> Vector2:
 # Posizione casuale dentro il raggio, preferendo l'erba
 func _sp_random_pos(sp) -> Vector2:
 	var center := _sp_center(sp)
+	var radius: float = sp.spawn_radius
 	for _i in range(24):
 		var ang := randf() * TAU
-		var d := sqrt(randf()) * sp.spawn_radius
+		var d: float = sqrt(randf()) * radius
 		var p := center + Vector2(cos(ang), sin(ang)) * d
 		if _is_on_land(p):
 			return p
