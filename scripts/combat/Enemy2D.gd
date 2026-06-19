@@ -26,6 +26,7 @@ enum EnemyState { IDLE, CHASING, ATTACKING, DEAD }
 @onready var _aggro_mark: Label = $AggroMark
 
 var _base_modulate: Color = Color.WHITE
+var _tex_size: Vector2 = Vector2.ONE
 
 # ==================== DATA ====================
 
@@ -83,11 +84,14 @@ func _apply_sprite(icon_path: String) -> void:
 		sprite.modulate = Color(1.0, 0.4, 0.4)  # rosso = nemico fallback
 	sprite.texture = tex
 	_base_modulate = sprite.modulate
-	# Normalizza a ~36px di lato
-	var tsize: Vector2 = tex.get_size()
-	if tsize.x > 0.0 and tsize.y > 0.0:
-		var target := 36.0
-		sprite.scale = Vector2(target / tsize.x, target / tsize.y)
+	_tex_size = tex.get_size()
+	_apply_sprite_scale(56.0)  # nemico ~56px di lato (player ~64px)
+
+func _apply_sprite_scale(target_px: float) -> void:
+	if not is_instance_valid(sprite):
+		return
+	if _tex_size.x > 0.0 and _tex_size.y > 0.0:
+		sprite.scale = Vector2(target_px / _tex_size.x, target_px / _tex_size.y)
 
 # ==================== PHYSICS ====================
 
@@ -169,6 +173,7 @@ func setup_metin(thresholds: Array = [0.75, 0.5, 0.25]) -> void:
 	is_metin = true
 	is_static = true
 	_thresholds_left = thresholds.duplicate()
+	_apply_sprite_scale(120.0)  # la pietra Metin è grande
 
 func _flash_hit() -> void:
 	if not is_instance_valid(sprite):
