@@ -83,6 +83,12 @@ var _gathering_nodes: Array = []
 # calpestabile. Spawn di nemici e gathering avvengono solo dove c'è una tessera qui.
 var _land_layer: TileMapLayer = null
 
+# Spawn points stile Metin2 (regen): nodi SpawnPoint piazzati nella mappa.
+# Se presenti, sostituiscono il vecchio sistema a ondate attorno al player.
+var _spawn_points: Array = []
+var _use_spawn_points: bool = false
+var _sp_entities: Dictionary = {}  # SpawnPoint -> Array di entità vive (Enemy2D / GatheringNode2D)
+
 # Camera
 var _follow_player: bool = true
 var _panning: bool = false
@@ -215,8 +221,12 @@ func setup(zone: Dictionary, route: Dictionary) -> void:
 			current_route.get("waypoints", []).size(),
 			_available_routes.size()
 		])
-	_spawn_wave()
-	_populate_gathering_nodes()
+	# Spawn points (stile Metin2): se presenti nella mappa, gestiscono loro mob/metin/risorse
+	_setup_spawn_points()
+	if not _use_spawn_points:
+		# Nessuno spawn point definito: fallback al vecchio sistema (ondate + gathering auto)
+		_spawn_wave()
+		_populate_gathering_nodes()
 
 # ==================== ROUTE SELECTION ====================
 
@@ -409,6 +419,135 @@ func _is_on_land(world_pos: Vector2) -> bool:
 	var cell := _land_layer.local_to_map(world_pos)
 	return _land_layer.get_cell_source_id(cell) != -1
 
+# ==================== SPAWN POINTS (stile Metin2 regen) ====================
+
+func _setup_spawn_points() -> void:
+	_spawn_points.clear()
+	_sp_entities.clear()
+	var map := get_node_or_null("SubViewportContainer/SubViewport/GameWorld/PlainsMap")
+	if map == null:
+		return
+	_collect_spawn_points(map)
+	_use_spawn_points = not _spawn_points.is_empty()
+	if not _use_spawn_points:
+		return
+	for sp in _spawn_points:
+		_activate_spawn_point(sp)
+	if GameLogger.ENABLED:
+		print("[ZoneCombatController] 🎯 %d spawn point attivati" % _spawn_points.size())
+
+func _collect_spawn_points(node: Node) -> void:
+	for c in node.get_children():
+		if c is SpawnPoint:
+			_spawn_points.append(c)
+		_collect_spawn_points(c)
+
+# Centro del punto in spazio GameWorld (gestisce annidamenti)
+func _sp_center(sp) -> Vector2:
+	return game_world.to_local(sp.global_position)
+
+# Posizione casuale dentro il raggio, preferendo l'erba
+func _sp_random_pos(sp) -> Vector2:
+	var center := _sp_center(sp)
+	for _i in range(24):
+		var ang := randf() * TAU
+		var d := sqrt(randf()) * sp.spawn_radius
+		var p := center + Vector2(cos(ang), sin(ang)) * d
+		if _is_on_land(p):
+			return p
+	return center
+
+func _activate_spawn_point(sp) -> void:
+	if not is_instance_valid(sp):
+		return
+	match sp.kind:
+		SpawnPoint.Kind.MOB:
+			_sp_spawn_mob_group(sp)
+		SpawnPoint.Kind.METIN:
+			_sp_spawn_metin(sp)
+		SpawnPoint.Kind.RESOURCE:
+			_sp_spawn_resource(sp)
+
+func _sp_spawn_mob_group(sp) -> void:
+	var arr: Array = []
+	var pool: Array = sp.enemy_ids if not sp.enemy_ids.is_empty() else ["lupo"]
+	for _i in range(max(1, sp.count)):
+		var enemy = ENEMY_SCENE.instantiate()
+		active_enemies.add_child(enemy)
+		enemy.position = _sp_random_pos(sp)
+		enemy.setup(str(pool.pick_random()), randi_range(sp.level_min, sp.level_max), player)
+		enemy.set_meta("spawn_point", sp)
+		enemy.died.connect(_on_enemy_died)
+		_enemies.append(enemy)
+		arr.append(enemy)
+	_sp_entities[sp] = arr
+
+func _sp_spawn_metin(sp) -> void:
+	var metin = ENEMY_SCENE.instantiate()
+	active_enemies.add_child(metin)
+	metin.position = _sp_center(sp)
+	metin.setup(sp.metin_id, randi_range(sp.level_min, sp.level_max), player)
+	metin.setup_metin()
+	metin.set_meta("spawn_point", sp)
+	metin.died.connect(_on_enemy_died)
+	metin.hp_threshold_crossed.connect(_on_metin_threshold)
+	_enemies.append(metin)
+	_sp_entities[sp] = [metin]
+
+func _on_metin_threshold(metin, _fraction: float) -> void:
+	# Ondata di adds attorno alla pietra (gli adds non rispawnano, sono parte della fight)
+	if not metin.has_meta("spawn_point"):
+		return
+	var sp = metin.get_meta("spawn_point")
+	var pool: Array = sp.metin_adds_ids if not sp.metin_adds_ids.is_empty() else ["lupo"]
+	for _i in range(max(1, sp.metin_adds_count)):
+		var add = ENEMY_SCENE.instantiate()
+		active_enemies.add_child(add)
+		add.position = _sp_random_pos(sp)
+		add.setup(str(pool.pick_random()), randi_range(sp.level_min, sp.level_max), player)
+		add.died.connect(_on_enemy_died)
+		_enemies.append(add)
+
+func _sp_spawn_resource(sp) -> void:
+	var db = get_node_or_null("/root/GatheringDatabase")
+	if db == null:
+		return
+	var node_data: Dictionary = db.get_node_data(sp.resource_node_id)
+	if node_data.is_empty():
+		return
+	var gn = GATHERING_NODE2D_SCENE.instantiate()
+	game_world.add_child(gn)
+	gn.position = _sp_center(sp)
+	gn.setup(node_data, player)
+	gn.set_meta("spawn_point", sp)
+	gn.depleted.connect(_on_sp_resource_depleted)
+	_gathering_nodes.append(gn)
+	_sp_entities[sp] = [gn]
+
+func _on_sp_resource_depleted(node) -> void:
+	_gathering_nodes.erase(node)
+	if node.has_meta("spawn_point"):
+		var sp = node.get_meta("spawn_point")
+		_sp_entities.erase(sp)
+		_schedule_sp_respawn(sp)
+
+func _on_sp_entity_removed(sp, entity) -> void:
+	if not _sp_entities.has(sp):
+		return
+	var arr: Array = _sp_entities[sp]
+	arr.erase(entity)
+	if arr.is_empty():
+		_sp_entities.erase(sp)
+		_schedule_sp_respawn(sp)
+
+func _schedule_sp_respawn(sp) -> void:
+	if not is_instance_valid(sp):
+		return
+	var t: float = max(1.0, sp.respawn_time)
+	await get_tree().create_timer(t).timeout
+	if is_inside_tree() and visible and is_instance_valid(sp):
+		_activate_spawn_point(sp)
+
 func _on_enemy_died(enemy) -> void:
 	# L'enemy è ancora valido qui (queue_free è differito): leggo dati + posizione.
 	if is_instance_valid(enemy):
@@ -416,6 +555,13 @@ func _on_enemy_died(enemy) -> void:
 	_enemies.erase(enemy)
 	if GameLogger.ENABLED:
 		print("[ZoneCombatController] Nemico morto — rimasti: %d" % _enemies.size())
+
+	# Sistema spawn point: notifica il punto di appartenenza (gestisce il respawn)
+	if _use_spawn_points and enemy.has_meta("spawn_point"):
+		_on_sp_entity_removed(enemy.get_meta("spawn_point"), enemy)
+		return
+
+	# Vecchio sistema a ondate
 	if _enemies.is_empty():
 		_on_wave_cleared()
 
@@ -584,6 +730,9 @@ func _on_wave_cleared() -> void:
 	combat_ended.emit()
 	if is_instance_valid(player):
 		player.on_all_enemies_dead()
+	# Con gli spawn point il respawn è per-punto (a timer), niente ondate globali
+	if _use_spawn_points:
+		return
 	# Respawn della prossima ondata dopo una breve pausa
 	await get_tree().create_timer(2.0).timeout
 	if is_inside_tree() and visible:

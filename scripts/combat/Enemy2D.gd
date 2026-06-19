@@ -43,6 +43,13 @@ var state: EnemyState = EnemyState.IDLE
 var _player: Node2D = null
 var _attack_cooldown: float = 0.0
 
+# Mob statico (es. pietra Metin): non insegue né attacca, sta fermo e prende danno.
+var is_static: bool = false
+# Metin: emette segnali a soglie HP e alla morte (gestiti dal controller per le ondate)
+var is_metin: bool = false
+signal hp_threshold_crossed(enemy, fraction: float)
+var _thresholds_left: Array = []  # frazioni HP rimaste da attraversare (es. [0.75,0.5,0.25])
+
 const FALLBACK_ICON := "res://icon.svg"
 const DAMAGE_NUMBER := preload("res://scripts/battle/DamageNumber.gd")
 
@@ -90,6 +97,11 @@ func _physics_process(delta: float) -> void:
 	# Se la zona non è visibile (back to map / cambio scheda), congela:
 	# niente movimento né attacchi in background.
 	if not is_visible_in_tree():
+		velocity = Vector2.ZERO
+		return
+
+	# Mob statico (pietra Metin): non si muove e non attacca, fa solo da bersaglio.
+	if is_static:
 		velocity = Vector2.ZERO
 		return
 
@@ -141,8 +153,22 @@ func take_damage(amount: float) -> void:
 		_hp_bar.value = current_hp
 	_flash_hit()
 	_show_damage_number(int(round(amount)))
+
+	# Metin: emetti segnale quando l'HP scende sotto le soglie (per ondate di adds)
+	if is_metin and not _thresholds_left.is_empty():
+		var frac := current_hp / max_hp
+		while not _thresholds_left.is_empty() and frac <= _thresholds_left[0]:
+			var t: float = _thresholds_left.pop_front()
+			hp_threshold_crossed.emit(self, t)
+
 	if current_hp <= 0.0:
 		_die()
+
+func setup_metin(thresholds: Array = [0.75, 0.5, 0.25]) -> void:
+	"""Configura questo nemico come pietra Metin: statico + soglie HP per ondate."""
+	is_metin = true
+	is_static = true
+	_thresholds_left = thresholds.duplicate()
 
 func _flash_hit() -> void:
 	if not is_instance_valid(sprite):
