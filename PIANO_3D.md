@@ -56,10 +56,10 @@ così il resto del gioco non si accorge del cambio.
 ## Fasi
 
 ### Fase 0 — Preparazione
-- [ ] Commit dello stato attuale su `main` (file .import/.uid copiati, addon godot_ai aggiornato, art/warrior, piani)
-- [ ] Tag `v2d-final`, push su GitHub (chiedere conferma all'utente prima del push)
-- [ ] Branch `feature/3d`
-- [ ] Segnare in `TODO_WARRIOR_BLENDER.md` che le fasi sprite 2D sono sostituite da questo piano
+- [x] Commit dello stato attuale su `main` (file .import/.uid copiati, addon godot_ai aggiornato, art/warrior, piani)
+- [ ] Tag `v2d-final` (fatto, locale), push su GitHub (chiedere conferma all'utente prima del push)
+- [x] Branch `feature/3d`
+- [x] Segnare in `TODO_WARRIOR_BLENDER.md` che le fasi sprite 2D sono sostituite da questo piano
 
 ### Fase 1 — Warrior 3D completo
 - [ ] Modello: corpo base + equip separati (elmo, armatura, stivali, spada, scudo), vista 3/4 come riferimento

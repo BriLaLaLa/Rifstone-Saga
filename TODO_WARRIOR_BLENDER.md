@@ -1,5 +1,8 @@
 # TODO — Warrior 3D (Blender) → sprite 2D → Godot
 
+> **2026-10-04 — SOSTITUITO in parte da `PIANO_3D.md`.** Il gioco passa al 3D: le fasi 4 (render 2D), 5 (sprite sheet) e 6 (integrazione Sprite2D) non si fanno più.
+> Restano valide modellazione (fase 2) e rig/animazioni (fase 3), che proseguono nella Fase 1 di `PIANO_3D.md`.
+
 Obiettivo: sostituire `icon.svg` del player (`PlayerSprite`, Sprite2D in `scenes/combat/ZoneCombatScene.tscn`)
 con un warrior modellato in Blender, renderizzato in sprite sheet e animato in Godot.
 
@@ -46,7 +49,7 @@ Stato attuale rilevato:
 - [ ] Loop puliti per `idle` / `run`
 - [ ] Spada attaccata all'osso della mano (Child Of / parent to bone)
 
-## Fase 4 — Setup render 2D in Blender
+## Fase 4 — Setup render 2D in Blender — ~~SOSTITUITA da PIANO_3D.md~~
 - [ ] Camera ortografica, angolo ~30°, inquadratura fissa
 - [ ] Sfondo trasparente (Film → Transparent), formato PNG RGBA
 - [ ] Shading: toon (Shader to RGB + ColorRamp a gradini) + outline (Line Art o Freestyle o inverted hull)
@@ -56,12 +59,12 @@ Stato attuale rilevato:
   - alternativa addon gratuiti: BlenderSpriteGenerator (MIT), Sprite Sheet Generator (extensions.blender.org)
 - [ ] Pixel art (solo se scelto): render a bassa risoluzione + filtro Nearest in Godot
 
-## Fase 5 — Sprite sheet
+## Fase 5 — Sprite sheet — ~~SOSTITUITA da PIANO_3D.md~~
 - [ ] Script (Python/PIL) che impacchetta i frame: una riga per animazione (stile Tiny Swords: `Warrior_Run.png` = 6x192)
 - [ ] Ritaglio coerente: stessa ancora (piedi) in tutti i frame, niente "salti"
 - [ ] Salvare in `assets/characters/warrior/`
 
-## Fase 6 — Integrazione Godot
+## Fase 6 — Integrazione Godot — ~~SOSTITUITA da PIANO_3D.md~~
 - [ ] `PlayerSprite`: Sprite2D → AnimatedSprite2D con risorsa `SpriteFrames` (`warrior_frames.tres`)
 - [ ] Animazioni nel SpriteFrames: `idle`, `run`, `attack`, `gather` (loop on/off giusti)
 - [ ] `PlayerPathController.gd`: cambiare animazione in base allo stato (IDLE / moving / attacking / gathering)
