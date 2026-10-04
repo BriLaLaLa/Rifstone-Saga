@@ -62,8 +62,12 @@ così il resto del gioco non si accorge del cambio.
 - [x] Segnare in `TODO_WARRIOR_BLENDER.md` che le fasi sprite 2D sono sostituite da questo piano
 
 ### Fase 1 — Warrior 3D completo
-- [ ] Modello: corpo base + equip separati (elmo, armatura, stivali, spada, scudo), vista 3/4 come riferimento
-- [ ] Modifiche richieste: visiera più marcata, scudo un po' più piccolo
+- [x] Modello: corpo base + equip separati (elmo, armatura, stivali, spada, scudo), vista 3/4 come riferimento
+  - `art/warrior/warrior.blend`: `Body` + `Eq_Helmet`, `Eq_Chest`, `Eq_Boots`, `Eq_Belt`, `Eq_Sword` (hand.R), `Eq_Shield` (hand.L)
+  - ogni mesh ha vertex group = nome osso (head, chest, hips, upper_arm/forearm/hand/thigh/shin/foot .L/.R); ~6.1k tri con tutto addosso
+  - render di revisione in `art/warrior/review/`
+  - [ ] **OK utente sul modello**
+- [x] Modifiche richieste: visiera più marcata, scudo un po' più piccolo
 - [ ] Rig (Rigify o armatura semplice da gioco) con ossa di aggancio dai nomi standard
 - [ ] Animazioni: idle, run, attack1, attack2, gather, hit, death
 - [ ] Maschera zone metalliche sugli equip (per il bagliore)
