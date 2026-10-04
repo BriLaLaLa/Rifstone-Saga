@@ -201,7 +201,8 @@ Scena di prova: `scenes/world3d/ZoneTest3D.tscn` (F6). Zona: `scenes/world3d/zon
 - [x] Prima zona: Red Plains convertita dal 2D in automatico (`scripts/world3d/tools/convert_2d_zone.gd`): 628 celle d'erba, 65 props, 3 spawn
 - [x] Navigazione (`Zone3D.build_navigation`): erba camminabile, acqua esclusa, alberi/rocce/ceppi ostacoli allargati del raggio del personaggio,
       griglia 12.5 cm. Test: 11 viaggi casuali in 90 s, 0 frame fuori dall'erba, 0 frame dentro ostacoli
-- [ ] Tessere e props definitivi da Blender (conversazione Blender in corso) → poi controllo visivo con i modelli veri
+- [x] Tessere definitive da Blender (`art/tiles/terrain_tiles.blend` → `assets/3d/tiles/terrain_tiles.glb`): bordo erba a lobi, scogliera a colonne, giunture verificate (0 differenze su 49 coppie), dettagli su ~1 tessera piena su 8
+- [ ] Props definitivi da Blender (in corso) → poi controllo visivo nella zona
 
 ### Fase 4 — Port del combattimento
 - [ ] `PlayerPathController` → versione 3D (CharacterBody3D + NavigationAgent3D), stessa API e stessi stati

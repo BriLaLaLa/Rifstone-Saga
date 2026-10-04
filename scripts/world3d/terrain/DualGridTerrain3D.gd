@@ -8,6 +8,8 @@ extends Node3D
 @export_tool_button("Rigenera tessere", "Reload") var regenerate_button: Callable = regenerate
 @export var auto_regenerate_in_editor: bool = true
 
+const DETAIL_PLAIN_PERCENT := 88
+
 var _tiles: GridMap
 var _land: Dictionary = {}
 var _last_hash: int = 0
@@ -72,9 +74,11 @@ func regenerate() -> void:
 			var item: int
 			var turns: int
 			if m == 15:
+				# circa 1 tessera piena su 8 con dettagli (ciuffi, fiori, sassolini): di più a distanza diventa rumore
 				var h := absi(hash(Vector2i(i, j)))
-				item = TerrainTiles.Item.FULL if h % 10 < 7 else (TerrainTiles.Item.FULL_B if h % 10 < 9 else TerrainTiles.Item.FULL_C)
-				turns = (h / 10) % 4
+				var roll := h % 100
+				item = TerrainTiles.Item.FULL if roll < DETAIL_PLAIN_PERCENT else (TerrainTiles.Item.FULL_B if roll < 94 else TerrainTiles.Item.FULL_C)
+				turns = (h / 100) % 4
 			else:
 				var lk := TerrainTiles.lookup(m)
 				item = lk[0]
