@@ -22,7 +22,8 @@ func _ready() -> void:
 		if a.begins_with("--"):
 			var kv := a.substr(2).split("=", true, 1)
 			_opts[kv[0]] = kv[1] if kv.size() > 1 else "1"
-	_world.configure(_opts)
+	if _world.has_method("configure"):
+		_world.configure(_opts)
 	if _opts.has("shots"):
 		_shot_dir = _opts["shots"]
 		for t in String(_opts.get("at", "3")).split(","):

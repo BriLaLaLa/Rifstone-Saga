@@ -227,8 +227,14 @@ Scena di prova: `scenes/world3d/ZoneTest3D.tscn` (F6). Zona: `scenes/world3d/zon
 - [ ] Effetti in Godot (particelle, scie, onde d'urto) + eventi di danno/stordimento/buff sincronizzati
 
 ### Fase 6 — Contenuti
-- [ ] Nemici della prima zona (Blender, scheletri per famiglia), pietre Metin, nodi risorsa
-- [ ] Altre zone, una alla volta
+- [x] Modelli della prima zona (Red Plains), da collegare al combattimento in Fase 4:
+  - lupo `assets/3d/enemies/lupo.glb`: 3916 tri, scheletro quadrupede 26 ossa, ingombro r 0.30 m;
+    animazioni idle 2.00 s (loop), run 0.53 s (loop), attack 0.73 s (morso a **0.43 s**), hit 0.40 s, death 1.20 s (a terra da 0.60 s)
+  - scheletro quadrupede riusabile `art/rigs/quadruped_base.blend` (costruttore con proporzioni regolabili per cinghiali, orsi...)
+  - pietra Metin `assets/3d/enemies/metin.glb`: 964 tri, 1.92 m, ingombro r 0.48 m (0.74 con i detriti), COLOR_0 = 1 su rune e crepe (da far pulsare)
+  - nodo miniera `assets/3d/resources/mining_node.glb`: `mining_node` (cristalli, 1.05 m) e `mining_node_depleted` (esaurito, 0.63 m), ingombro r 0.55 m
+- [ ] Altri nemici, Metin e risorse delle zone successive
+- [ ] Altre zone, una alla volta (convertite dal 2D con `convert_2d_zone.gd` o dipinte da zero)
 
 ### Fase 7 — Sostituzione e merge
 - [ ] Il gioco usa la scena 3D al posto di `ZoneCombatScene` 2D
