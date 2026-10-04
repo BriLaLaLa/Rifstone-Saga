@@ -205,7 +205,7 @@ Scena di prova: `scenes/world3d/ZoneTest3D.tscn` (F6). Zona: `scenes/world3d/zon
 - [x] Props definitivi da Blender (`art/props/props_plains.blend` → `assets/3d/props/props_plains.glb`): 13 pezzi, 2734 triangoli in totale
       (alberi tondo / abete / autunnale arancio, cespugli, rocce, ceppi, scogli). Ingombri per pezzo in `PropLibrary.FOOTPRINT`,
       navigazione ritestata: 0 frame fuori dall'erba, 0 dentro ostacoli
-- [ ] Dettagli d'erba di `tile_full_b/c` più grandi (≥ 15 cm) per evitare i puntini del contorno a distanza (Blender)
+- [x] Dettagli d'erba di `tile_full_b/c` rifatti più grandi (ciuffi ~25 cm, fiori ~19 cm, sassi ~21 cm): niente più puntini a distanza
 - [ ] Chioma degli alberi trasparente quando il player ci passa dietro (Godot, con il port del combattimento)
 
 ### Fase 4 — Port del combattimento
