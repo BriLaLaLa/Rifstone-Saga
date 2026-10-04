@@ -45,8 +45,8 @@ così il resto del gioco non si accorge del cambio.
 5. Per ora **solo la classe warrior**; altre classi dopo, sullo stesso scheletro umanoide.
 6. Piattaforma: **solo PC**.
 7. Ogni skill avrà un'animazione descritta dall'utente (animazione Blender + effetti Godot + tempismo del colpo):
-   fase dedicata dopo il port del combattimento. Skill attuali del warrior: Attacco Base, Sibilare, Vortice della Spada,
-   Grido di Battaglia, Guardia, Taglio a Tre Vie (`scripts/battle/SkillDatabase.gd`).
+   specifica in `SKILLS_WARRIOR.md`. Nuovo set: Aura della Spada (danno extra fisso a ogni colpo), Estasi da Combattimento
+   (= Grido di Battaglia), Vortice della Spada, Taglio a Tre Vie, Sibilare, Volontà di Vivere (colpo ad area che cura). Guardia tolta.
 
 ## Pipeline asset
 
@@ -222,7 +222,9 @@ Scena di prova: `scenes/world3d/ZoneTest3D.tscn` (F6). Zona: `scenes/world3d/zon
 - [ ] Set di equip iniziali modellati (almeno 2-3 per slot visibile)
 
 ### Fase 5b — Skill animate
-- [ ] L'utente descrive ogni skill (movimento del corpo, effetti visivi, momento del colpo)
+Specifica completa in `SKILLS_WARRIOR.md` (nuovo set: Aura della Spada, Estasi da Combattimento, Vortice della Spada,
+Taglio a Tre Vie, Sibilare, Volontà di Vivere; Guardia tolta, Grido di Battaglia → Estasi).
+- [x] L'utente descrive ogni skill (movimento del corpo, effetti visivi, momento del colpo)
 - [ ] Animazioni in Blender sullo scheletro umanoide base, export nel .glb
 - [ ] Effetti in Godot (particelle, scie, onde d'urto) + eventi di danno/stordimento/buff sincronizzati
 
