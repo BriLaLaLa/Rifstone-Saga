@@ -1,3 +1,4 @@
+@tool
 class_name ToonMaterials
 extends RefCounted
 ## Cache dei materiali toon condivisi: un ShaderMaterial per colore, riusato da tutte le istanze.

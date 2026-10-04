@@ -6,7 +6,6 @@ extends Node3D
 
 enum State { IDLE, RUN, ATTACK, GATHER, HIT, DEAD }
 
-const OUTLINE_SHADER := preload("res://shaders/world3d/outline_post.gdshader")
 const RUN_SPEED := 3.2
 const ATTACK_RANGE := 1.35
 const GATHER_RANGE := 1.3
@@ -62,7 +61,6 @@ func _ready() -> void:
 	camera_rig = CameraRig3D.new()
 	camera_rig.target = warrior
 	add_child(camera_rig)
-	_add_outline(camera_rig.camera)
 
 
 ## Opzioni dal contenitore (argomenti da riga di comando, usati per screenshot e misure)
@@ -87,6 +85,15 @@ func configure(opts: Dictionary) -> void:
 
 func state_name() -> String:
 	return STATE_NAMES[state]
+
+
+func hud_text() -> String:
+	return "PROTOTIPO 3D  |  %s  |  spada +%d  |  armatura +%d  |  uccisioni %d  |  unità extra %d" % [
+		state_name(), warrior.get_enhancement("weapon"), warrior.get_enhancement("chest"), kills_total, _stress.size()]
+
+
+func help_text() -> String:
+	return "1-4 spada +0/7/8/9 · 5-8 armatura · H C B L S X equip · K morte · N +50 unità · destro pan · rotella zoom"
 
 
 # ==================== AUTOPLAY ====================
@@ -306,27 +313,10 @@ func stress_count() -> int:
 # ==================== COSTRUZIONE SCENA ====================
 
 func _build_environment() -> void:
-	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = WATER
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color.WHITE
-	env.ambient_light_energy = 0.32
-	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
-	env.glow_enabled = true
-	env.glow_intensity = 0.9
-	env.glow_bloom = 0.0
-	env.glow_hdr_threshold = 1.0
-	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
 	var we := WorldEnvironment.new()
-	we.environment = env
+	we.environment = WorldLook3D.make_environment()
 	add_child(we)
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-58.0, -35.0, 0.0)
-	sun.light_energy = 0.78
-	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 45.0
-	add_child(sun)
+	add_child(WorldLook3D.make_sun())
 
 
 func _mesh(mesh: Mesh, color: Color, pos: Vector3, parent: Node3D = self) -> MeshInstance3D:
@@ -464,21 +454,6 @@ func _upright_rotation(size: Vector3) -> Vector3:
 	if size.z >= size.y and size.z >= size.x:
 		return Vector3(PI * 0.5, 0, 0)
 	return Vector3.ZERO
-
-
-func _add_outline(cam: Camera3D) -> void:
-	var quad := QuadMesh.new()
-	quad.size = Vector2(2, 2)
-	quad.flip_faces = true
-	var mi := MeshInstance3D.new()
-	mi.mesh = quad
-	var mat := ShaderMaterial.new()
-	mat.shader = OUTLINE_SHADER
-	mi.material_override = mat
-	mi.extra_cull_margin = 16384.0
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mi.position = Vector3(0, 0, -1)
-	cam.add_child(mi)
 
 
 func _physics_process(delta: float) -> void:

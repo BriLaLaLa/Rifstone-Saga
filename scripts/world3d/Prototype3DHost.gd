@@ -1,5 +1,5 @@
 extends Control
-## Contenitore del prototipo 3D: barra HUD in alto (come ZoneCombatScene) + SubViewport con il mondo 3D.
+## Contenitore delle scene 3D di prova (prototipo, zone): barra HUD in alto (come ZoneCombatScene) + SubViewport con il mondo 3D.
 ## Argomenti da riga di comando dopo "--" (per screenshot e misure automatiche):
 ##   --shots=<cartella> --at=2,5,8   salva screenshot ai secondi indicati, poi esce
 ##   --stress=50 --weapon=9 --armor=7 --focus=showcase|warrior_close --cam=8 --pose=death
@@ -43,7 +43,7 @@ func _build_hud() -> void:
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(_status)
 	var help := Label.new()
-	help.text = "1-4 spada +0/7/8/9 · 5-8 armatura · H C B L S X equip · K morte · N +50 unità · destro pan · rotella zoom"
+	help.text = _world.help_text() if _world.has_method("help_text") else ""
 	help.modulate = Color(1, 1, 1, 0.7)
 	row.add_child(help)
 
@@ -52,10 +52,7 @@ func _process(delta: float) -> void:
 	_elapsed += delta
 	if _elapsed > 2.0:
 		_frame_times.append(delta)
-	var w: WarriorVisual = _world.warrior
-	_status.text = "PROTOTIPO 3D  |  %s  |  spada +%d  |  armatura +%d  |  uccisioni %d  |  unità extra %d  |  FPS %d" % [
-		_world.state_name(), w.get_enhancement("weapon"), w.get_enhancement("chest"),
-		_world.kills_total, _world.stress_count(), Engine.get_frames_per_second()]
+	_status.text = "%s  |  FPS %d" % [_world.hud_text(), Engine.get_frames_per_second()]
 	if not _capturing and not _shot_times.is_empty() and _elapsed >= _shot_times[0]:
 		_capture(_shot_times.pop_front())
 
@@ -73,6 +70,8 @@ func _capture(t: float) -> void:
 
 
 func _report_and_quit() -> void:
+	if _world.has_method("report"):
+		_world.report()
 	if not _frame_times.is_empty():
 		var total := 0.0
 		var worst := 0.0

@@ -94,6 +94,43 @@ lo stesso `SkeletonProfileHumanoid` su entrambi i modelli, con "Fix Silhouette" 
   `shaders/enhancement_plus7/8/9.gdshader` (+7 brace arancione pulsante, +8 viola instabile, +9 ciano con distorsione).
   Ogni slot ha il suo livello, gli effetti si combinano.
 
+## Kit tessere e props (specifica per Blender)
+
+Sistema **dual grid**: la mappa logica dice solo terra/acqua per cella (1 cella = 1 m = 1 tessera 64px del 2D).
+Le tessere visive stanno sugli **angoli** delle celle: ognuna copre 1×1 m e i suoi 4 quarti corrispondono
+alle 4 celle logiche attorno all'angolo. Il gioco sceglie tessera e rotazione da solo (16 combinazioni → 5 tessere ruotate).
+
+Convenzioni (in Blender: +X = est, +Y = nord, +Z = su; nel .glb diventano Godot +X est, -Z nord, +Y su):
+- Ogni tessera: impronta 1×1 m **centrata sull'origine** (da -0.5 a +0.5 su X e Y).
+- Quarti: NO = (-X,+Y), NE = (+X,+Y), SE = (+X,-Y), SO = (-X,-Y). Un quarto è "terra" o "vuoto" (l'acqua è un piano unico fatto in Godot).
+- Erba in cima a **Z = 0**. Scogliera dal bordo dell'erba giù fino a **Z = -0.7** (l'acqua sta a Z = -0.45, la base della scogliera finisce sott'acqua).
+- Il confine terra/acqua passa sulle **linee di mezzo** della tessera (X = 0 o Y = 0). Può ondulare per sembrare naturale,
+  ma deve **toccare i bordi della tessera esattamente in X = 0 / Y = 0 e con lo stesso profilo di scogliera**, così le tessere si uniscono senza fessure.
+- Ai bordi esterni della tessera (X = ±0.5, Y = ±0.5) niente pareti: lì continua la tessera vicina.
+
+| Nome nodo | Quarti di terra | Descrizione |
+|---|---|---|
+| `tile_full` (+ `tile_full_b`, `tile_full_c`) | tutti e 4 | erba piena; varianti con piccoli dettagli (ciuffi, fiorellini, sassolini) |
+| `tile_edge` | NO + NE | metà nord erba, scogliera rivolta a sud lungo Y = 0 |
+| `tile_corner_outer` | solo NE | angolo esterno arrotondato |
+| `tile_corner_inner` | NO + NE + SE (vuoto SO) | angolo interno |
+| `tile_diagonal` | NE + SO | due angoli opposti (raro) |
+
+Props (origine alla base, al centro; scala reale rispetto al warrior alto ~1.2 m):
+
+| Nome nodo | Riferimento 2D | Note |
+|---|---|---|
+| `tree_a`, `tree_b`, `tree_c` | Tree1-4 | alberi tondi stile Tiny Swords, ~2.5-3.5 m |
+| `bush_a`, `bush_b`, `bush_c` | Bushe1-4 | cespugli ~0.6-0.9 m |
+| `rock_a`, `rock_b`, `rock_c` | Rock1-4 | sassi da 0.3 a 0.8 m |
+| `stump_a`, `stump_b` | Stump 1-4 | ceppi |
+| `water_rock_a`, `water_rock_b` | Water Rocks | scogli che spuntano dall'acqua (base a Z = -0.7) |
+
+File: sorgenti in `art/tiles/` (`terrain_tiles.blend`, `props_plains.blend`), export in
+`assets/3d/tiles/terrain_tiles.glb` e `assets/3d/props/props_plains.glb`, **un nodo per pezzo con i nomi esatti delle tabelle**.
+Materiali a colore piatto (il toon lo fa Godot), palette coerente con il warrior. Budget: tessere < 300 triangoli, props < 800.
+Finché questi file non esistono, Godot usa tessere segnaposto generate in codice con le stesse convenzioni.
+
 ## Fasi
 
 ### Fase 0 — Preparazione
