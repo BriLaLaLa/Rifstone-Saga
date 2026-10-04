@@ -102,9 +102,24 @@ lo stesso `SkeletonProfileHumanoid` su entrambi i modelli, con "Fix Silhouette" 
   - la tunica copia i pesi della corazza vertice per vertice → il corpo non buca l'equip in nessuna posa
   - controllo automatico compenetrazioni: script `clip_check.py` dentro il .blend (posa estrema: 0 vertici fuori)
   - [x] posa estrema mostrata all'utente (`art/warrior/review/p1_rig_pose.png`)
-- [ ] Animazioni: idle, run, attack1, attack2, gather, hit, death
-- [ ] Maschera zone metalliche sugli equip (per il bagliore)
-- [ ] Export .glb in `assets/3d/characters/warrior/`
+- [x] Animazioni: idle, run, attack1, attack2, gather, hit, death
+  - 30 fps, in place, una Action per animazione (rigenerabili con lo script `anim_actions.py` dentro il .blend)
+  - | anim | durata | loop | evento |
+    |---|---|---|---|
+    | `idle` | 1.60 s | sì | — |
+    | `run` | 0.67 s (2 passi) | sì | — |
+    | `attack1` | 0.67 s | no | colpo al frame 9 = **0.30 s** (fendente orizzontale) |
+    | `attack2` | 0.73 s | no | colpo al frame 11 = **0.37 s** (colpo dall'alto) |
+    | `gather` | 1.00 s | sì | impatto al frame 12 = **0.40 s** |
+    | `hit` | 0.47 s | no | — |
+    | `death` | 1.20 s | no | a terra dal frame 20 (0.67 s), resta sull'ultimo frame |
+  - verifiche automatiche su ogni frame: corpo visibile dentro l'equip (max 2.5 mm fuori), spada/scudo contro corazza/elmo (max 7 mm), niente sotto il terreno (max 1.4 cm)
+- [x] Maschera zone metalliche sugli equip (per il bagliore)
+  - colore per vertice `metal_mask` → `COLOR_0` nel .glb, solo sugli equip: 1.0 metallo (elmo, piastre, lama, guardia, borchia, fibbia), 0.6 scudo dipinto, 0.5 cuoio, 0.3 pennacchio, 0 fessure visiera
+- [x] Export .glb in `assets/3d/characters/warrior/`
+  - `assets/3d/characters/warrior/warrior.glb` (script `export_glb.py` nel .blend): scheletro 20 ossa, 7 animazioni, materiali come colore piatto (il toon lo farà lo shader Godot)
+  - mesh: `Body` (sempre visibile), `Body_Head` / `Body_Torso` / `Body_Feet` (da **nascondere** quando è equipaggiato rispettivamente elmo / corazza / stivali), `Eq_Helmet`, `Eq_Chest`, `Eq_Boots`, `Eq_Belt` (skinnate), `Eq_Sword` figlio di `hand.R`, `Eq_Shield` figlio di `hand.L` (→ `BoneAttachment3D` all'import)
+  - con tutto l'equip addosso (pezzi coperti nascosti): ~4.6k triangoli
 
 ### Fase 2 — Prototipo 3D (go/no-go)
 - [ ] Scena di test `scenes/world3d/Prototype3D.tscn`: terreno semplice, luce, camera 3/4 con follow/zoom/pan
