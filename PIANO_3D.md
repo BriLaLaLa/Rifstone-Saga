@@ -43,6 +43,34 @@ così il resto del gioco non si accorge del cambio.
 - Ossa di aggancio con nomi fissi: `hand.R` (arma), `hand.L` (scudo), `head` (elmo).
 - Fonti e licenze dei pacchetti esterni annotate in `assets/3d/CREDITS.md`.
 
+## Scheletro del warrior e retargeting umanoide Godot
+
+Gerarchia: `root` > `hips` > `spine` > `chest` > `neck` > `head`; `chest` > `shoulder.X` > `upper_arm.X` > `forearm.X` > `hand.X`;
+`hips` > `thigh.X` > `shin.X` > `foot.X` (X = L/R). Rest pose = T-pose, piedi a terra sull'origine, scala 1 = 1 m.
+
+Mappa per `BoneMap` con `SkeletonProfileHumanoid` (import .glb → Skeleton3D → Retarget):
+
+| Osso Blender/glTF | Profilo umanoide Godot |
+|---|---|
+| `root` | `Root` |
+| `hips` | `Hips` |
+| `spine` | `Spine` |
+| `chest` | `Chest` |
+| — | `UpperChest` (assente, opzionale) |
+| `neck` | `Neck` |
+| `head` | `Head` |
+| `shoulder.L` / `shoulder.R` | `LeftShoulder` / `RightShoulder` |
+| `upper_arm.L` / `upper_arm.R` | `LeftUpperArm` / `RightUpperArm` |
+| `forearm.L` / `forearm.R` | `LeftLowerArm` / `RightLowerArm` |
+| `hand.L` / `hand.R` | `LeftHand` / `RightHand` |
+| `thigh.L` / `thigh.R` | `LeftUpperLeg` / `RightUpperLeg` |
+| `shin.L` / `shin.R` | `LeftLowerLeg` / `RightLowerLeg` |
+| `foot.L` / `foot.R` | `LeftFoot` / `RightFoot` |
+| — | `LeftToes`/`RightToes`, dita, occhi, mascella (assenti, opzionali: le tracce di animazioni esterne su queste ossa vengono ignorate) |
+
+Note: in Godot L = sinistra del personaggio. Per animazioni esterne (es. Quaternius Universal Animation Library) usare
+lo stesso `SkeletonProfileHumanoid` su entrambi i modelli, con "Fix Silhouette" attivo nell'import.
+
 ## Equip visibile e potenziamento
 
 - Arma e scudo: `BoneAttachment3D` sulle ossa delle mani, si sostituisce la scena dell'oggetto.
@@ -68,7 +96,12 @@ così il resto del gioco non si accorge del cambio.
   - render di revisione in `art/warrior/review/`
   - [ ] **OK utente sul modello**
 - [x] Modifiche richieste: visiera più marcata, scudo un po' più piccolo
-- [ ] Rig (Rigify o armatura semplice da gioco) con ossa di aggancio dai nomi standard
+- [x] Rig (Rigify o armatura semplice da gioco) con ossa di aggancio dai nomi standard
+  - armatura semplice `Warrior_Rig` (niente Rigify), T-pose, personaggio rivolto a -Y in Blender (= +Z in Godot)
+  - pesi sfumati su collo, spalle, gomiti, polsi, anche, ginocchia, caviglie (corpo base, corazza, stivali); rigidi su elmo, cintura; spada/scudo figli delle ossa `hand.R`/`hand.L`
+  - la tunica copia i pesi della corazza vertice per vertice → il corpo non buca l'equip in nessuna posa
+  - controllo automatico compenetrazioni: script `clip_check.py` dentro il .blend (posa estrema: 0 vertici fuori)
+  - [x] posa estrema mostrata all'utente (`art/warrior/review/p1_rig_pose.png`)
 - [ ] Animazioni: idle, run, attack1, attack2, gather, hit, death
 - [ ] Maschera zone metalliche sugli equip (per il bagliore)
 - [ ] Export .glb in `assets/3d/characters/warrior/`
