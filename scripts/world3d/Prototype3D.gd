@@ -3,8 +3,9 @@ extends Node3D
 ## vetrina spade +0/+7/+8/+9, camera fissa, contorno toon, test prestazioni.
 ## Tasti: 1-4 spada +0/+7/+8/+9 · 5-8 armatura +0/+7/+8/+9 · H C B L S X equip on/off
 ##        K animazione morte · N +50 unità (prestazioni) · F camera segue on/off
+##        F1-F6 animazioni delle skill (solo animazione: effetti e gameplay arrivano in Fase 5b)
 
-enum State { IDLE, RUN, ATTACK, GATHER, HIT, DEAD }
+enum State { IDLE, RUN, ATTACK, GATHER, HIT, DEAD, SKILL }
 
 const RUN_SPEED := 3.2
 const ATTACK_RANGE := 1.35
@@ -13,7 +14,8 @@ const ISLAND_RADIUS := 16.0
 const KILLS_BEFORE_GATHER := 3
 const GATHER_STROKES := 3
 const ARMOR_SLOTS := ["helmet", "chest", "boots", "belt", "shield"]
-const STATE_NAMES := ["IDLE", "RUN", "ATTACK", "GATHER", "HIT", "DEAD"]
+const STATE_NAMES := ["IDLE", "RUN", "ATTACK", "GATHER", "HIT", "DEAD", "SKILL"]
+const SKILL_ANIMS := ["skill_sword_aura", "skill_berserk", "skill_sword_vortex", "skill_three_way_slash", "skill_hiss", "skill_life_force"]
 
 const GRASS := Color(0.56, 0.76, 0.33)
 const CLIFF := Color(0.82, 0.68, 0.47)
@@ -81,6 +83,8 @@ func configure(opts: Dictionary) -> void:
 		camera_rig.distance = float(opts["cam"])
 	if opts.get("pose", "") == "death":
 		_play_death()
+	if opts.has("skill"):
+		play_skill(String(opts["skill"]))
 
 
 func state_name() -> String:
@@ -93,7 +97,7 @@ func hud_text() -> String:
 
 
 func help_text() -> String:
-	return "1-4 spada +0/7/8/9 · 5-8 armatura · H C B L S X equip · K morte · N +50 unità · destro pan · rotella zoom"
+	return "F1-F6 skill · 1-4 spada +0/7/8/9 · 5-8 armatura · H C B L S X equip · K morte · N +50 unità"
 
 
 # ==================== AUTOPLAY ====================
@@ -175,6 +179,8 @@ func _on_animation_done(anim_name: String) -> void:
 			_play_attack()
 		else:
 			_set_idle(0.35)
+	elif state == State.SKILL and anim_name.begins_with("skill_"):
+		_set_idle(0.3)
 	elif state == State.HIT and anim_name == "hit":
 		if _target is TrainingDummy3D and (_target as TrainingDummy3D).alive:
 			state = State.ATTACK
@@ -187,6 +193,12 @@ func _set_idle(wait: float) -> void:
 	state = State.IDLE
 	_idle_timer = wait
 	warrior.play("idle")
+
+
+## Riproduce l'animazione di una skill (prova visiva: niente effetti né danni per ora)
+func play_skill(anim_name: String) -> void:
+	state = State.SKILL
+	warrior.play(anim_name, 0.08, true)
 
 
 func _play_death() -> void:
@@ -253,7 +265,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var levels := [0, 7, 8, 9]
 	var k := (event as InputEventKey).keycode
-	if k >= KEY_1 and k <= KEY_4:
+	if k >= KEY_F1 and k <= KEY_F6:
+		play_skill(SKILL_ANIMS[k - KEY_F1])
+	elif k >= KEY_1 and k <= KEY_4:
 		warrior.set_enhancement("weapon", levels[k - KEY_1])
 	elif k >= KEY_5 and k <= KEY_8:
 		for s in ARMOR_SLOTS:

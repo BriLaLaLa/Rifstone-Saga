@@ -34,6 +34,24 @@ Decisione utente (2026-10-04): il warrior può combattere in 3 stili, decisi dal
 - Ordine di lavoro: prima spada + scudo completo (base + 6 skill) fatto bene; poi due spade e spadone riusando struttura e tempi.
   Script e pose in Blender vanno scritti già pensando ai 3 stili (parametrici), così le varianti non si rifanno da zero.
 
+## Animazioni fatte — stile spada + scudo (versione 2, approvata 2026-10-05)
+
+30 fps, sul posto, in `assets/3d/characters/warrior/warrior.glb`. Provale nel prototipo con F1-F6.
+
+| Animazione | Durata | Eventi |
+|---|---|---|
+| `skill_sword_aura` | 1.333 s | on 0.400 s (battito del piede) |
+| `skill_berserk` | 1.133 s | on 0.533 s (culmine del salto) |
+| `skill_sword_vortex` | 1.200 s | hit 0.533 s (metà giro) · on 0.900 s (frenata, anello a terra) |
+| `skill_three_way_slash` | 1.100 s | hit1 0.167 s · hit2 0.400 s · hit3 0.733 s |
+| `skill_hiss` | 0.600 s | hit 0.333 s (Godot sposta il warrior tra 0.12 e 0.32 s) |
+| `skill_life_force` | 1.400 s | hit 0.900 s |
+
+- Lama nello spazio di `hand.R`: punta (-0.702, 0.025, 0), base (-0.101, 0.025, 0); la lama corre lungo -X dell'osso.
+- Vortice: il root gira di 450° in senso antiorario visto dall'alto; il warrior finisce rivolto in avanti. Avanzamento di ~0.8 m a carico di Godot.
+- Script in `art/warrior/warrior.blend`: `skill_v2_lib.py` (pose come "intenzioni", stili ss/dual/gs in `STYLES`), `skill_v2_actions.py`,
+  `skill_check.py`, `v2_preview.py`. Per gli stili `dual_` e `gs_` restano da definire posizioni di mani e arma (tabella `L_DUAL` segnaposto).
+
 ## Regole comuni per le animazioni (Blender)
 
 - Scheletro `Warrior_Rig`, 30 fps, **sul posto** (niente root motion): spostamenti e avanzamenti li fa Godot nei tempi indicati.
@@ -96,7 +114,7 @@ Decisione utente (2026-10-04): il warrior può combattere in 3 stili, decisi dal
 
 ## Da fare
 
-- [ ] Animazioni `skill_*` spada + scudo, versione 2 (la prima era troppo rigida) + tabella durate/eventi
+- [x] Animazioni `skill_*` spada + scudo, versione 2 (la prima era troppo rigida) + tabella durate/eventi
 - [ ] Stili due spade (`dual_`) e spadone (`gs_`): modelli arma, animazioni base + 6 skill, tabelle eventi
 - [ ] Gameplay armi: campo `weapon_type`, slot sinistro scudo/seconda spada, blocco con spadone, scelta dello stile in Godot
 - [ ] Gameplay: SkillDatabase (nuove skill, rinomina, rimozione Guardia), SkillCastController (danno extra Aura, cura Volontà, velocità Estasi), `data/skills.json`
