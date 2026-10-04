@@ -56,3 +56,6 @@ bld/
 *.swo
 *.bak
 *.orig
+# Blender backups
+*.blend1
+*.blend2

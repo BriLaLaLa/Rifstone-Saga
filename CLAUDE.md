@@ -81,6 +81,7 @@ tests/              # Test GUT
 | Nome | Stato | Note |
 |------|-------|------|
 | `godot-ai` | **Connesso** | Plugin Godot AI v2.5.6 installato, server su `http://127.0.0.1:8000/mcp` — deve essere attivo Godot con il plugin abilitato |
+| `blender` | Configurato (scope local) | `uvx mcp-for-blender` + addon "MCP for Blender" in Blender 4.2.1 LTS — deve essere aperto Blender (sidebar `N` → tab MCP → Start MCP Server) |
 
 > Il server parte automaticamente quando Godot è aperto con il progetto e il plugin **Godot AI** è abilitato in Project → Project Settings → Plugins.
 > Usa `uvx` (Python) per avviare il processo: `uvx --from godot-ai==2.5.6 godot-ai --transport streamable-http --port 8000 --ws-port 9500`

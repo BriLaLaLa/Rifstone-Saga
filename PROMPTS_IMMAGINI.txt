@@ -1,0 +1,98 @@
+============================================================
+ PROMPT IMMAGINI — RIFTSTONE SAGA (Leonardo.AI)
+============================================================
+
+IMPOSTAZIONI LEONARDO:
+- Formato: 1:1 (1024x1024)
+- Style: Dynamic (o Pixel Art se disponibile)
+
+TRASPARENZA / OMBRA:
+- NON serve "Remove Background" di Leonardo. Genera pure con SFONDO BIANCO
+  piatto e mandami il PNG cosi' com'e': la trasparenza (e l'ombra, se su
+  sfondo piatto) la tolgo io via script. Funziona pulito grazie al
+  contorno nero spesso degli sprite.
+- (Le frasi "no shadow / plain background" nei prompt sono solo parole
+  guida per l'IA, non bottoni.)
+
+ORIENTAMENTO:
+- MOSTRI = vista di LATO (profilo orizzontale), la creatura guarda a
+  DESTRA, come i lupo/cinghiale gia' nel gioco. NON frontale/verticale.
+  Il gioco la specchia da solo per girarla a sinistra quando si muove.
+- PIETRE METIN e GIACIMENTI = vista 3/4 da oggetto (non "guardano").
+
+NON SERVE generare: varianti (lupo grigio/blu/alfa...) e boss -> li
+ricavo io ricolorando/ingrandendo le basi. Delle 5 Pietre Metin
+generane 1, faccio io i colori.
+
+
+============================================================
+ MOSTRI  (vista di LATO, di profilo, rivolti a DESTRA)
+============================================================
+
+--- CANE SELVAGGIO ---
+side view full body sprite in profile facing right, like a 2D platformer character, a feral wild brown dog snarling, lean and aggressive, cartoon style, thick black outlines, vibrant flat colors, soft shading, matching "Tiny Swords" pixel-art-ish cartoon aesthetic, single centered creature, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text, game enemy creature.
+
+--- TIGRE ---
+side view full body sprite in profile facing right, like a 2D platformer character, a fierce orange tiger with black stripes crouching ready to pounce with fangs bared, cartoon style, thick black outlines, vibrant flat colors, soft shading, matching "Tiny Swords" pixel-art-ish cartoon aesthetic, single centered creature, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text, game enemy creature.
+
+--- ORSO ---
+side view full body sprite in profile facing right, like a 2D platformer character, a big brown bear with thick fur standing menacingly with claws out, cartoon style, thick black outlines, vibrant flat colors, soft shading, matching "Tiny Swords" pixel-art-ish cartoon aesthetic, single centered creature, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text, game enemy creature.
+
+--- LUPO (opzionale) ---
+side view full body sprite in profile facing right, like a 2D platformer character, a grey wolf with bristling fur and glowing yellow eyes snarling, cartoon style, thick black outlines, vibrant flat colors, soft shading, matching "Tiny Swords" pixel-art-ish cartoon aesthetic, single centered creature, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text, game enemy creature.
+
+--- CINGHIALE (opzionale) ---
+side view full body sprite in profile facing right, like a 2D platformer character, a wild boar with dark bristly fur and big curved ivory tusks, aggressive, cartoon style, thick black outlines, vibrant flat colors, soft shading, matching "Tiny Swords" pixel-art-ish cartoon aesthetic, single centered creature, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text, game enemy creature.
+
+
+============================================================
+ PIETRA METIN  (genera 1, faccio io i 5 colori)
+============================================================
+
+3/4 view game object, a floating cracked dark stone monolith with carved glowing runes and an evil glowing energy crack in the center, ominous magical boss stone, cartoon style, thick black outlines, vibrant colors, soft shading, matching "Tiny Swords" pixel-art-ish cartoon aesthetic, single centered object, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text.
+
+
+============================================================
+ GIACIMENTI RISORSE  (oggetti-nodo nel mondo)
+============================================================
+
+--- GIACIMENTO DI DIAMANTI ---
+3/4 view game resource node, a grey rock embedded with sparkling blue-white diamond crystals, mineable ore deposit, cartoon style, thick black outlines, vibrant flat colors, soft shading, matching "Tiny Swords" pixel-art-ish cartoon aesthetic, single centered object, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text.
+
+--- GIACIMENTO DI RAME ---
+3/4 view game resource node, a grey rock with orange-brown copper ore veins, mineable ore deposit, cartoon style, thick black outlines, vibrant flat colors, soft shading, matching "Tiny Swords" pixel-art-ish cartoon aesthetic, single centered object, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text.
+
+--- GIACIMENTO D'ARGENTO ---
+3/4 view game resource node, a grey rock with shiny metallic silver ore veins, mineable ore deposit, cartoon style, thick black outlines, vibrant flat colors, soft shading, matching "Tiny Swords" pixel-art-ish cartoon aesthetic, single centered object, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text.
+
+
+============================================================
+ ICONE OGGETTI  (drop materiali — stile icona inventario)
+============================================================
+
+--- PELLICCIA DI LUPO ---
+game inventory item icon, a folded grey wolf fur pelt, cartoon style, thick black outline, simple flat shading, vibrant colors, matching "Tiny Swords" aesthetic, single centered object, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text.
+
+--- ARTIGLIO DI LUPO ---
+game inventory item icon, a single sharp curved wolf claw, cartoon style, thick black outline, simple flat shading, vibrant colors, matching "Tiny Swords" aesthetic, single centered object, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text.
+
+--- ZANNA DI CINGHIALE ---
+game inventory item icon, a curved ivory boar tusk, cartoon style, thick black outline, simple flat shading, vibrant colors, matching "Tiny Swords" aesthetic, single centered object, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text.
+
+--- PELLE DI TIGRE ---
+game inventory item icon, a striped orange tiger pelt, cartoon style, thick black outline, simple flat shading, vibrant colors, matching "Tiny Swords" aesthetic, single centered object, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text.
+
+--- ARTIGLIO D'ORSO ---
+game inventory item icon, a large brown bear claw, cartoon style, thick black outline, simple flat shading, vibrant colors, matching "Tiny Swords" aesthetic, single centered object, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text.
+
+--- MINERALE D'ARGENTO ---
+game inventory item icon, a chunk of raw silver ore (metallic grey with shiny bits), cartoon style, thick black outline, simple flat shading, vibrant colors, matching "Tiny Swords" aesthetic, single centered object, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text.
+
+--- LEGNO FOSSILE ---
+game inventory item icon, a piece of petrified fossilized wood log (stone-grey with wood grain), cartoon style, thick black outline, simple flat shading, vibrant colors, matching "Tiny Swords" aesthetic, single centered object, isolated on a plain flat background, no drop shadow, no cast shadow, no ground shadow, no text.
+
+
+============================================================
+ RICORDA: genera con sfondo bianco, salva i PNG cosi' come sono e
+ dimmi la cartella. La trasparenza + rimozione ombra la faccio io.
+============================================================
