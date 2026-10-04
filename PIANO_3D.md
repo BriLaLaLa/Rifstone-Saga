@@ -87,6 +87,8 @@ lo stesso `SkeletonProfileHumanoid` su entrambi i modelli, con "Fix Silhouette" 
 ## Equip visibile e potenziamento
 
 - Arma e scudo: `BoneAttachment3D` sulle ossa delle mani, si sostituisce la scena dell'oggetto.
+- 3 stili di combattimento (decisione utente): spada + scudo, due spade (seconda spada nello slot sinistro, ex `shield`),
+  spadone a due mani (blocca lo slot sinistro). Ogni stile ha il suo set di animazioni (prefissi in `SKILLS_WARRIOR.md`).
 - Elmo, armatura, stivali (cintura opzionale): mesh skinnate sullo stesso scheletro, si sostituisce la mesh della `MeshInstance3D` dello slot.
 - Dati item: campo nuovo `model_3d` (path .glb) negli item del database; slot vuoto = mesh base del corpo.
 - +7 / +8 / +9: shader overlay (`next_pass`) con emissione, limitato alle zone metalliche tramite maschera

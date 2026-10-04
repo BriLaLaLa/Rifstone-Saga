@@ -15,6 +15,25 @@ Decisione utente (2026-10-04): queste 6 skill sostituiscono il set attuale di `s
 Implementazione gameplay (SkillDatabase, SkillCastController, `data/skills.json`, icone) nella Fase 5b, insieme agli effetti.
 I numeri marcati *proposta* sono da bilanciare.
 
+## Stili di combattimento (armi)
+
+Decisione utente (2026-10-04): il warrior può combattere in 3 stili, decisi dalle armi equipaggiate.
+
+| Stile | Armi | Prefisso animazioni |
+|---|---|---|
+| Spada + scudo | spada a una mano + scudo (o niente) nella mano sinistra | nessuno: `idle`, `attack1`, `skill_hiss`... (nomi attuali) |
+| Due spade | spada a una mano + seconda spada a una mano nella mano sinistra | `dual_` (es. `dual_attack1`, `dual_skill_sword_vortex`) |
+| Spadone a due mani | spada a due mani, mano sinistra bloccata | `gs_` (es. `gs_idle`, `gs_skill_life_force`) |
+
+- Lo slot `shield` diventa la **mano sinistra**: ci va uno scudo **oppure** una seconda spada a una mano. Equipaggiando uno spadone a due mani
+  lo slot sinistro si blocca (l'oggetto torna nell'inventario). Le armi avranno un campo `weapon_type`: `one_hand` / `two_hand`.
+- Ogni skill esiste in tutti e 3 gli stili: stesso effetto di gioco, animazione e tempi propri. Eventi e durate vanno indicati per stile.
+- Animazioni in comune (es. `gather`) possono non avere la versione con prefisso: Godot usa quella base se manca la variante.
+- Rig: arma destra su `hand.R`; scudo **o** seconda spada su `hand.L`; lo spadone sta su `hand.R` con la mano sinistra sull'impugnatura
+  (vincolo/IK in Blender, cotto nell'export).
+- Ordine di lavoro: prima spada + scudo completo (base + 6 skill) fatto bene; poi due spade e spadone riusando struttura e tempi.
+  Script e pose in Blender vanno scritti già pensando ai 3 stili (parametrici), così le varianti non si rifanno da zero.
+
 ## Regole comuni per le animazioni (Blender)
 
 - Scheletro `Warrior_Rig`, 30 fps, **sul posto** (niente root motion): spostamenti e avanzamenti li fa Godot nei tempi indicati.
@@ -77,7 +96,9 @@ I numeri marcati *proposta* sono da bilanciare.
 
 ## Da fare
 
-- [ ] Animazioni `skill_*` in Blender + tabella durate/eventi + punta e base della lama in spazio `hand.R`
+- [ ] Animazioni `skill_*` spada + scudo, versione 2 (la prima era troppo rigida) + tabella durate/eventi
+- [ ] Stili due spade (`dual_`) e spadone (`gs_`): modelli arma, animazioni base + 6 skill, tabelle eventi
+- [ ] Gameplay armi: campo `weapon_type`, slot sinistro scudo/seconda spada, blocco con spadone, scelta dello stile in Godot
 - [ ] Gameplay: SkillDatabase (nuove skill, rinomina, rimozione Guardia), SkillCastController (danno extra Aura, cura Volontà, velocità Estasi), `data/skills.json`
 - [ ] Icone per Aura della Spada, Estasi da Combattimento, Volontà di Vivere (`Icons/Skills/`)
 - [ ] Effetti Godot per ogni skill + eventi sincronizzati con le animazioni (Fase 5b del piano)
