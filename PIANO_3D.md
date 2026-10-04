@@ -189,10 +189,19 @@ shader in `shaders/world3d/` (toon, outline_post, enhance_glow, spark).
 - [ ] **Checkpoint go/no-go con l'utente**
 
 ### Fase 3 — Fondamenta mondo 3D
-- [ ] Controller camera definitivo (stessi comandi del 2D: follow, tasto destro pan, rotella zoom)
-- [ ] Illuminazione e ambiente (cielo/colore di fondo, nebbia leggera)
-- [ ] Prima zona in 3D (Red Plains / m1_z1): terreno, acqua, isola, props (GridMap con tessere fatte in Blender)
-- [ ] NavigationRegion3D con navmesh dal terreno (niente pathing su acqua/alberi, come oggi)
+Scena di prova: `scenes/world3d/ZoneTest3D.tscn` (F6). Zona: `scenes/world3d/zones/red_plains_3d.tscn`. Screenshot in `art/zone3d/`.
+- [x] Controller camera definitivo (`CameraRig3D`): follow, tasto destro pan, rotella zoom, limiti della zona, contorno toon integrato
+- [x] Illuminazione e ambiente condivisi (`WorldLook3D`): sfondo acqua, luce ambiente piatta, sole con ombre, bagliore, nebbia leggerissima
+- [x] Terreno a tessere dual grid (`DualGridTerrain3D` + `TerrainTiles`): si dipinge terra/acqua nel GridMap `LandPaint`
+      (pennello "terra", visibile solo nell'editor), tessere e rotazioni scelte da sole, rigenerazione automatica mentre dipingi
+      (o bottone "Rigenera tessere"). Usa `assets/3d/tiles/terrain_tiles.glb` appena esiste, altrimenti segnaposto squadrati
+- [x] Acqua toon (`shaders/world3d/water.gdshader`): riva chiara, schiuma ondulata su scogliere e scogli, increspature; fondale sotto
+- [x] Props piazzabili nell'editor (`Prop3D`, tipo da menu) con `PropLibrary`: usa `assets/3d/props/props_plains.glb` appena esiste
+- [x] Punti di spawn 3D (`SpawnPoint3D`): stessi dati del 2D in metri, anello colorato nell'editor (logica di spawn in Fase 4)
+- [x] Prima zona: Red Plains convertita dal 2D in automatico (`scripts/world3d/tools/convert_2d_zone.gd`): 628 celle d'erba, 65 props, 3 spawn
+- [x] Navigazione (`Zone3D.build_navigation`): erba camminabile, acqua esclusa, alberi/rocce/ceppi ostacoli allargati del raggio del personaggio,
+      griglia 12.5 cm. Test: 11 viaggi casuali in 90 s, 0 frame fuori dall'erba, 0 frame dentro ostacoli
+- [ ] Tessere e props definitivi da Blender (conversazione Blender in corso) → poi controllo visivo con i modelli veri
 
 ### Fase 4 — Port del combattimento
 - [ ] `PlayerPathController` → versione 3D (CharacterBody3D + NavigationAgent3D), stessa API e stessi stati

@@ -19,8 +19,25 @@ scripts/            # Script GDScript
   systems/          # Sistemi core (Enhancement, Quest, Level, Gathering)
   ui/               # Tutti i componenti UI (inventory, equip, skill, quest...)
 shaders/            # Shader visivi
+  world3d/          # Shader mondo 3D (toon, contorno, acqua, bagliore potenziamento)
 tests/              # Test GUT
 ```
+
+### Mondo 3D (branch `feature/3d`, piano in `PIANO_3D.md`)
+
+```
+art/                # Sorgenti Blender (.blend) e screenshot di revisione — ha .gdignore, Godot non lo importa
+assets/3d/          # Modelli esportati .glb (characters/, tiles/, props/)
+scenes/world3d/     # Prototype3D.tscn, ZoneTest3D.tscn (F6 per provarle), zones/ (zone 3D)
+scripts/world3d/    # WarriorVisual, CameraRig3D, Enhancement3D, ToonMaterials, WorldLook3D
+  terrain/          # DualGridTerrain3D + TerrainTiles (tessere dual grid)
+  zone/             # Zone3D, Prop3D, PropLibrary, SpawnPoint3D
+  tools/            # convert_2d_zone.gd: converte una mappa 2D in zona 3D
+```
+
+- 1 cella = 1 m = 1 tessera 64 px del 2D.
+- Godot per i test: `C:\Users\Davide\Desktop\GODOT\Godot_v4.5-stable_win64_console.exe`
+- Screenshot automatici: `godot --path . res://scenes/world3d/ZoneTest3D.tscn -- --shots=<cartella> --at=3,10` (vedi `Prototype3DHost.gd`)
 
 > Nota: alcune scene .tscn si trovano in `scripts/ui/` anziché in `scenes/`.
 
