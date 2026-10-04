@@ -7,8 +7,13 @@ extends RefCounted
 const PROPS_GLB := "res://assets/3d/props/props_plains.glb"
 const IDS := ["tree_a", "tree_b", "tree_c", "bush_a", "bush_b", "bush_c", "rock_a", "rock_b", "rock_c",
 	"stump_a", "stump_b", "water_rock_a", "water_rock_b"]
-## Raggio d'ingombro per la navigazione (cespugli e scogli non bloccano, come nel 2D)
-const FOOTPRINT := {"tree": 0.35, "rock": 0.3, "stump": 0.28}
+## Raggio d'ingombro a terra per la navigazione, misurato sui modelli Blender (alberi = solo il tronco:
+## sotto la chioma si passa). Cespugli e scogli non bloccano, come nel 2D.
+const FOOTPRINT := {
+	"tree_a": 0.15, "tree_b": 0.14, "tree_c": 0.13,
+	"rock_a": 0.26, "rock_b": 0.52, "rock_c": 0.69,
+	"stump_a": 0.25, "stump_b": 0.41,
+}
 
 const TRUNK := Color(0.55, 0.38, 0.25)
 const LEAVES := Color(0.32, 0.6, 0.3)
@@ -17,8 +22,9 @@ const BUSH := Color(0.38, 0.66, 0.3)
 const ROCK := Color(0.63, 0.65, 0.7)
 const STUMP_TOP := Color(0.85, 0.7, 0.5)
 
-static var _glb_scene: Node
-static var _glb_nodes: Dictionary = {}
+## id -> [[Mesh, Transform3D locale], ...] letti dal .glb (solo risorse: la scena viene liberata subito)
+static var _glb_parts: Dictionary = {}
+static var _glb_loaded: bool = false
 
 
 static func kind(id: String) -> String:
@@ -26,11 +32,11 @@ static func kind(id: String) -> String:
 
 
 static func is_solid(id: String) -> bool:
-	return FOOTPRINT.has(kind(id))
+	return FOOTPRINT.has(id)
 
 
 static func footprint(id: String) -> float:
-	return FOOTPRINT.get(kind(id), 0.0)
+	return FOOTPRINT.get(id, 0.0)
 
 
 static func uses_placeholders() -> bool:
@@ -39,25 +45,41 @@ static func uses_placeholders() -> bool:
 
 static func make_visual(id: String) -> Node3D:
 	_load_glb()
-	if _glb_nodes.has(id):
-		var n := (_glb_nodes[id] as Node3D).duplicate() as Node3D
-		n.transform = Transform3D.IDENTITY
-		var meshes: Array = n.find_children("*", "MeshInstance3D", true, false)
-		if n is MeshInstance3D:
-			meshes.append(n)
-		for mi in meshes:
+	if _glb_parts.has(id):
+		var root := Node3D.new()
+		for part in _glb_parts[id]:
+			var mi := MeshInstance3D.new()
+			mi.mesh = part[0]
+			mi.transform = part[1]
 			ToonMaterials.apply_to_mesh(mi)
-		return n
+			root.add_child(mi)
+		return root
 	return _placeholder(id)
 
 
 static func _load_glb() -> void:
-	if _glb_scene != null or uses_placeholders():
+	if _glb_loaded or uses_placeholders():
 		return
-	_glb_scene = (load(PROPS_GLB) as PackedScene).instantiate()
-	for n in _glb_scene.find_children("*", "Node3D", true, false):
-		if String(n.name) in IDS:
-			_glb_nodes[String(n.name)] = n
+	_glb_loaded = true
+	var scene: Node = (load(PROPS_GLB) as PackedScene).instantiate()
+	for n in scene.find_children("*", "Node3D", true, false):
+		if String(n.name) not in IDS:
+			continue
+		var prop_root := n as Node3D
+		var parts: Array = []
+		var meshes: Array = prop_root.find_children("*", "MeshInstance3D", true, false)
+		if prop_root is MeshInstance3D:
+			meshes.push_front(prop_root)
+		for mi in meshes:
+			# trasformazione della mesh relativa alla base del prop (il prop resta all'origine)
+			var t := Transform3D.IDENTITY
+			var node: Node3D = mi
+			while node != prop_root:
+				t = node.transform * t
+				node = node.get_parent() as Node3D
+			parts.append([(mi as MeshInstance3D).mesh, t])
+		_glb_parts[String(n.name)] = parts
+	scene.free()
 
 
 static func _placeholder(id: String) -> Node3D:

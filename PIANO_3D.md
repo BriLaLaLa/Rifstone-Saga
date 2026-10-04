@@ -202,7 +202,11 @@ Scena di prova: `scenes/world3d/ZoneTest3D.tscn` (F6). Zona: `scenes/world3d/zon
 - [x] Navigazione (`Zone3D.build_navigation`): erba camminabile, acqua esclusa, alberi/rocce/ceppi ostacoli allargati del raggio del personaggio,
       griglia 12.5 cm. Test: 11 viaggi casuali in 90 s, 0 frame fuori dall'erba, 0 frame dentro ostacoli
 - [x] Tessere definitive da Blender (`art/tiles/terrain_tiles.blend` → `assets/3d/tiles/terrain_tiles.glb`): bordo erba a lobi, scogliera a colonne, giunture verificate (0 differenze su 49 coppie), dettagli su ~1 tessera piena su 8
-- [ ] Props definitivi da Blender (in corso) → poi controllo visivo nella zona
+- [x] Props definitivi da Blender (`art/props/props_plains.blend` → `assets/3d/props/props_plains.glb`): 13 pezzi, 2734 triangoli in totale
+      (alberi tondo / abete / autunnale arancio, cespugli, rocce, ceppi, scogli). Ingombri per pezzo in `PropLibrary.FOOTPRINT`,
+      navigazione ritestata: 0 frame fuori dall'erba, 0 dentro ostacoli
+- [ ] Dettagli d'erba di `tile_full_b/c` più grandi (≥ 15 cm) per evitare i puntini del contorno a distanza (Blender)
+- [ ] Chioma degli alberi trasparente quando il player ci passa dietro (Godot, con il port del combattimento)
 
 ### Fase 4 — Port del combattimento
 - [ ] `PlayerPathController` → versione 3D (CharacterBody3D + NavigationAgent3D), stessa API e stessi stati
