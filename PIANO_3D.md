@@ -29,11 +29,24 @@ così il resto del gioco non si accorge del cambio.
 ## Direzione artistica
 
 - Low-poly stilizzato, toon shading a gradini + outline scuro, palette limitata, proporzioni chibi.
-- Camera dall'alto a 3/4 (stile Metin2/ARPG), angolo ~45-55°, zoom con rotella, pan come nel 2D attuale.
-- Personaggio giocante ed equip: modellati su misura in Blender (Claude via Blender MCP).
-- Nemici, ambienti, props: pacchetti gratuiti CC0 (KayKit, Quaternius, Kenney), ricolorati per coerenza.
-  Claude modella solo ciò che manca (es. pietre Metin, nodi risorsa particolari).
-- Budget: ~3-6k triangoli per personaggio, texture piccole o solo colori/palette, ombre solo dalla luce principale.
+- Camera dall'alto a 3/4 (stile Metin2/ARPG), angolo ~45-55°, **fissa come oggi** (follow, tasto destro pan, rotella zoom, niente rotazione).
+- Personaggio giocante, equip, **tutti i nemici** e le **tessere della mappa**: modellati su misura in Blender (Claude via Blender MCP),
+  stesso stile e palette del warrior. Niente pacchetti esterni salvo eccezioni concordate.
+- Scheletri condivisi per famiglia: lo scheletro del warrior (`Warrior_Rig`, 20 ossa) è lo **scheletro umanoide base**
+  (classi future + nemici umanoidi); più avanti uno quadrupede e uno per creature volanti/informi. Animazioni riusate per famiglia.
+- Budget (**solo PC**): fino a ~10k triangoli per personaggio, texture piccole o solo colori/palette, ombre in tempo reale dalla luce principale.
+
+## Decisioni di gioco (2026-10-04)
+
+1. Camera fissa come oggi.
+2. Il gioco resta **autoplay/idle**: nessun controllo manuale o click-to-move.
+3. Mappa costruita a **tessere 3D** (`GridMap` + `MeshLibrary`), tessere fatte in Blender.
+4. Nemici tutti fatti in Blender.
+5. Per ora **solo la classe warrior**; altre classi dopo, sullo stesso scheletro umanoide.
+6. Piattaforma: **solo PC**.
+7. Ogni skill avrà un'animazione descritta dall'utente (animazione Blender + effetti Godot + tempismo del colpo):
+   fase dedicata dopo il port del combattimento. Skill attuali del warrior: Attacco Base, Sibilare, Vortice della Spada,
+   Grido di Battaglia, Guardia, Taglio a Tre Vie (`scripts/battle/SkillDatabase.gd`).
 
 ## Pipeline asset
 
@@ -85,7 +98,7 @@ lo stesso `SkeletonProfileHumanoid` su entrambi i modelli, con "Fix Silhouette" 
 
 ### Fase 0 — Preparazione
 - [x] Commit dello stato attuale su `main` (file .import/.uid copiati, addon godot_ai aggiornato, art/warrior, piani)
-- [ ] Tag `v2d-final` (fatto, locale), push su GitHub (chiedere conferma all'utente prima del push)
+- [x] Tag `v2d-final`, push su GitHub (main, tag, feature/3d)
 - [x] Branch `feature/3d`
 - [x] Segnare in `TODO_WARRIOR_BLENDER.md` che le fasi sprite 2D sono sostituite da questo piano
 
@@ -122,18 +135,26 @@ lo stesso `SkeletonProfileHumanoid` su entrambi i modelli, con "Fix Silhouette" 
   - con tutto l'equip addosso (pezzi coperti nascosti): ~4.6k triangoli
 
 ### Fase 2 — Prototipo 3D (go/no-go)
-- [ ] Scena di test `scenes/world3d/Prototype3D.tscn`: terreno semplice, luce, camera 3/4 con follow/zoom/pan
-- [ ] Shader toon + outline in Godot, confronto stile con il render Blender
-- [ ] Warrior che corre verso un nemico (1 nemico da pacchetto CC0) e lo attacca
-- [ ] Cambio spada a runtime + spada a +0, +7, +8, +9 una accanto all'altra
-- [ ] UI esistente sopra la scena 3D (verifica che nulla si rompa)
-- [ ] Misura prestazioni con 30-50 nemici
+Scena: `scenes/world3d/Prototype3D.tscn` (F6 nell'editor). Screenshot in `art/prototype3d/`.
+Codice: `scripts/world3d/` (WarriorVisual, CameraRig3D, Enhancement3D, ToonMaterials, TrainingDummy3D, Prototype3D, Prototype3DHost),
+shader in `shaders/world3d/` (toon, outline_post, enhance_glow, spark).
+- [x] Scena di test: isola con acqua, alberi, rocce, luce con ombre, camera 3/4 fissa (follow, tasto destro pan, rotella zoom)
+- [x] Shader toon a due bande (ombra azzurrata) + contorno a schermo intero (profondità + normali, funziona su tutto senza modificare le mesh)
+- [x] Warrior in autoplay: corre al manichino, alterna attack1/attack2, il danno parte al momento del colpo (0.30 s / 0.37 s),
+      ogni 5 colpi subisce `hit`, dopo 3 uccisioni va a raccogliere (`gather`, 3 colpi), tasto K = `death`
+  - manichino di paglia come segnaposto (i nemici veri da Blender), numeri danno 3D, lampeggio e oscillazione al colpo
+- [x] Equip on/off a runtime (H C B L S X) con le parti del corpo coperte nascoste/mostrate
+- [x] Bagliore +7/+8/+9 (tasti 1-4 spada, 5-8 armatura): overlay limitato al metallo con la maschera per vertice,
+      scintille e luce per arma/scudo, armature più tenui; vetrina con 4 spade +0/+7/+8/+9
+- [x] UI esistente: il prototipo dentro la BattleTab vera (al posto del combat 2D) funziona, nessun errore
+- [x] Prestazioni (RTX 2070 Super, vsync spento): base 633 FPS · +50 warrior animati 179 FPS · +100 warrior 95 FPS
+  - nota: ogni warrior ha ~10 mesh separate (equip); i nemici, senza equip intercambiabile, potranno avere una mesh unica → molto più leggeri
 - [ ] **Checkpoint go/no-go con l'utente**
 
 ### Fase 3 — Fondamenta mondo 3D
 - [ ] Controller camera definitivo (stessi comandi del 2D: follow, tasto destro pan, rotella zoom)
 - [ ] Illuminazione e ambiente (cielo/colore di fondo, nebbia leggera)
-- [ ] Prima zona in 3D (Red Plains / m1_z1): terreno, acqua, isola, props (GridMap con tile CC0 o mesh da Blender)
+- [ ] Prima zona in 3D (Red Plains / m1_z1): terreno, acqua, isola, props (GridMap con tessere fatte in Blender)
 - [ ] NavigationRegion3D con navmesh dal terreno (niente pathing su acqua/alberi, come oggi)
 
 ### Fase 4 — Port del combattimento
@@ -149,8 +170,13 @@ lo stesso `SkeletonProfileHumanoid` su entrambi i modelli, con "Fix Silhouette" 
 - [ ] Effetti +7/+8/+9 per ogni slot
 - [ ] Set di equip iniziali modellati (almeno 2-3 per slot visibile)
 
+### Fase 5b — Skill animate
+- [ ] L'utente descrive ogni skill (movimento del corpo, effetti visivi, momento del colpo)
+- [ ] Animazioni in Blender sullo scheletro umanoide base, export nel .glb
+- [ ] Effetti in Godot (particelle, scie, onde d'urto) + eventi di danno/stordimento/buff sincronizzati
+
 ### Fase 6 — Contenuti
-- [ ] Nemici della prima zona (pacchetti CC0, ricolorati), pietre Metin, nodi risorsa
+- [ ] Nemici della prima zona (Blender, scheletri per famiglia), pietre Metin, nodi risorsa
 - [ ] Altre zone, una alla volta
 
 ### Fase 7 — Sostituzione e merge
