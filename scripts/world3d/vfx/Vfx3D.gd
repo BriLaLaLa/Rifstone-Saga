@@ -288,4 +288,4 @@ static func afterimage(meshes: Array, parent: Node, color: Color, life: float = 
 
 ## Numero di cura verde sopra il warrior
 static func heal_number(parent: Node, pos: Vector3, amount: float) -> void:
-	FloatingText3D.spawn(parent, pos, "+%d" % int(round(amount)), FloatingText3D.HEAL, 64)
+	FloatingText3D.spawn(parent, pos, "+%d" % int(round(amount)), FloatingText3D.HEAL, 80)

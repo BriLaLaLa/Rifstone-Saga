@@ -33,7 +33,7 @@ const TABLE := {
 	"skill_berserk": {"on": 0.533},
 	"skill_sword_vortex": {"hit": [0.400, 0.533, 0.667], "on": 0.900, "spin": [0.267, 0.800], "trails": [[0.267, 0.86, "R"]]},
 	"skill_three_way_slash": {"hit1": 0.167, "hit2": 0.400, "hit3": 0.733,
-		"trails": [[0.06, 0.22, "R"], [0.29, 0.45, "R"], [0.60, 0.80, "R"]]},
+		"trails": [[0.03, 0.24, "R"], [0.26, 0.47, "R"], [0.55, 0.82, "R"]]},
 	"skill_hiss": {"hit": 0.333, "dash": [0.12, 0.32], "trails": [[0.12, 0.40, "R"]]},
 	"skill_life_force": {"hit": 0.900, "charge": [0.05, 0.86], "trails": [[0.78, 1.00, "R"]]},
 	# ---------- spadone (gs_) ----------
@@ -43,7 +43,7 @@ const TABLE := {
 	"gs_skill_berserk": {"on": 0.600},
 	"gs_skill_sword_vortex": {"hit": [0.500, 0.633, 0.767], "on": 1.067, "spin": [0.300, 0.933], "trails": [[0.30, 1.00, "R"]]},
 	"gs_skill_three_way_slash": {"hit1": 0.233, "hit2": 0.533, "hit3": 1.000,
-		"trails": [[0.08, 0.29, "R"], [0.40, 0.60, "R"], [0.86, 1.08, "R"]]},
+		"trails": [[0.06, 0.30, "R"], [0.36, 0.60, "R"], [0.80, 1.10, "R"]]},
 	"gs_skill_hiss": {"hit": 0.400, "dash": [0.20, 0.40], "trails": [[0.20, 0.47, "R"]]},
 	"gs_skill_life_force": {"hit": 1.067, "charge": [0.10, 1.00], "trails": [[0.90, 1.17, "R"]]},
 	# ---------- due spade (dual_) ----------
@@ -53,7 +53,7 @@ const TABLE := {
 	"dual_skill_berserk": {"on": 0.533},
 	"dual_skill_sword_vortex": {"hit": [0.400, 0.533, 0.667], "on": 0.900, "spin": [0.233, 0.800], "trails": [[0.233, 0.86, "RL"]]},
 	"dual_skill_three_way_slash": {"hit1": 0.167, "hit2": 0.400, "hit3": 0.733,
-		"trails": [[0.05, 0.21, "R"], [0.28, 0.45, "L"], [0.62, 0.80, "RL"]]},
+		"trails": [[0.03, 0.24, "R"], [0.26, 0.47, "L"], [0.55, 0.82, "RL"]]},
 	"dual_skill_hiss": {"hit": 0.367, "dash": [0.20, 0.367], "trails": [[0.20, 0.43, "RL"]]},
 	"dual_skill_life_force": {"hit": 0.933, "charge": [0.10, 0.86], "trails": [[0.84, 1.02, "RL"]]},
 }
@@ -107,3 +107,12 @@ static func trail_blades(resolved_anim: String, t: float) -> String:
 		if t >= tr[0] and t <= tr[1]:
 			out += tr[2]
 	return out
+
+
+## Indice della finestra di scia attiva alla posizione t (0, 1, 2...), -1 se nessuna
+static func trail_index(resolved_anim: String, t: float) -> int:
+	var trails: Array = info(resolved_anim).get("trails", [])
+	for i in trails.size():
+		if t >= trails[i][0] and t <= trails[i][1]:
+			return i
+	return -1

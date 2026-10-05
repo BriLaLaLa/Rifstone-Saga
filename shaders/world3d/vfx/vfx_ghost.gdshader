@@ -9,5 +9,5 @@ instance uniform float fade = 1.0;
 
 void fragment() {
 	float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), rim_power);
-	ALBEDO = ghost_color.rgb * (0.28 + fres * 1.3) * fade;
+	ALBEDO = ghost_color.rgb * (0.16 + fres * 0.9) * fade;
 }

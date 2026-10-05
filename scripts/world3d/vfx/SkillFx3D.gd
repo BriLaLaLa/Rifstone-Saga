@@ -16,8 +16,14 @@ const AURA_PARAMS := {"metal_mask": 1.0, "inflate": 0.006, "base_glow": 0.9, "ri
 	"flow_scale": 16.0, "flow_amount": 0.55, "flicker": 0.08}
 const RAGE_PARAMS := {"inflate": 0.016, "base_glow": 0.1, "rim_power": 2.2, "flow_speed": 1.8,
 	"flow_scale": 7.0, "flow_amount": 0.7, "flicker": 0.3}
-const CHARGE_PARAMS := {"inflate": 0.012, "base_glow": 0.35, "rim_power": 1.6, "flow_speed": 2.4,
+const CHARGE_PARAMS := {"inflate": 0.012, "base_glow": 0.06, "rim_power": 1.8, "flow_speed": 2.4,
 	"flow_scale": 11.0, "flow_amount": 0.35, "flicker": 0.0}
+
+## Aspetto delle scie: argento normale, argento con punta verde (Vortice), azzurro col bordo deciso (Tre Vie)
+const TRAIL_DEFAULT := {"edge": Color(0.72, 0.9, 1.0), "tip": Color(0.9, 1.0, 1.0), "rim_width": 0.0, "opacity": 0.8, "brightness": 1.0}
+const TRAIL_VORTEX := {"edge": Color(0.82, 0.93, 1.0), "tip": Color(0.55, 1.0, 0.7), "rim_width": 0.0, "opacity": 0.8, "brightness": 1.0}
+const TRAIL_THREE_WAY := {"edge": Color(0.55, 0.82, 1.0), "tip": Color(0.8, 0.95, 1.0), "rim": Color(0.16, 0.42, 0.92),
+	"rim_width": 0.16, "opacity": 0.92, "brightness": 1.0}
 
 ## Velocità di Estasi (se il database non risponde)
 const RAGE_ANIM_SPEED := 1.3
@@ -140,6 +146,9 @@ func _process(delta: float) -> void:
 func _update_trails(t: float) -> void:
 	var blades := SkillEvents3D.trail_blades(_anim, t) if t >= 0.0 else ""
 	var vortex := _base == "skill_sword_vortex"
+	var three := _base == "skill_three_way_slash"
+	# Taglio a Tre Vie: il terzo fendente è più largo e luminoso
+	var strength := 1.0 if three and SkillEvents3D.trail_index(_anim, t) == 2 else 0.0
 	for hand in _trails:
 		var tr: BladeTrail3D = _trails[hand]
 		var want: bool = hand in blades
@@ -149,11 +158,16 @@ func _update_trails(t: float) -> void:
 				want = false
 			else:
 				tr.set_blade(seg["node"], seg["base"], seg["tip"])
-				tr.duration = 0.32 if vortex else (0.24 if _base == "skill_three_way_slash" else 0.16)
 				if vortex:
-					tr.set_colors(Vfx3D.SILVER, Vfx3D.VORTEX_TIP)
+					tr.duration = 0.32
+					tr.set_style(TRAIL_VORTEX)
+				elif three:
+					tr.duration = 0.36
+					tr.set_style(TRAIL_THREE_WAY)
 				else:
-					tr.set_colors(Color(0.72, 0.9, 1.0), Color(0.9, 1.0, 1.0))
+					tr.duration = 0.16
+					tr.set_style(TRAIL_DEFAULT)
+		tr.strength = strength
 		tr.emitting = want
 
 
@@ -188,11 +202,11 @@ func _event_vfx(event_name: String, index: int) -> void:
 				_end_charge()
 				var fwd := forward()
 				var front := pos + fwd * 0.9 + Vector3(0, 0.55, 0)
-				Vfx3D.burst(root, front, Vfx3D.CHARGE, 60, 6.0, 0.6, 0.11, fwd + Vector3(0, 0.25, 0), 38.0, -2.0)
-				Vfx3D.burst(root, front, Color(1, 1, 1), 24, 3.0, 0.35, 0.08, fwd, 70.0, 0.0)
-				Vfx3D.ring(root, pos + fwd * 1.0, 2.4, Vfx3D.CHARGE, 0.55, 0.16, 0.3)
-				Vfx3D.ring(root, pos, 1.3, Color(1, 1, 1), 0.3, 0.1, 0.5)
-				Vfx3D.flash(root, front, Vfx3D.CHARGE, 1.8, 4.0, 0.5)
+				Vfx3D.burst(root, front, Vfx3D.CHARGE, 40, 6.0, 0.6, 0.08, fwd + Vector3(0, 0.25, 0), 34.0, -2.0)
+				Vfx3D.burst(root, front, Color(1, 1, 1), 10, 3.0, 0.3, 0.06, fwd, 60.0, 0.0)
+				Vfx3D.ring(root, pos + fwd * 1.0, 2.4, Vfx3D.CHARGE, 0.55, 0.16, 0.1)
+				Vfx3D.ring(root, pos, 1.3, Color(1, 1, 1), 0.3, 0.1, 0.15)
+				Vfx3D.flash(root, front, Vfx3D.CHARGE, 0.7, 3.0, 0.4)
 
 
 ## Effetti che dipendono dal gameplay (bersagli colpiti, cura): chiamato da chi applica l'evento
@@ -264,8 +278,8 @@ func _update_windows(t: float, delta: float) -> void:
 	if dash >= 0.0:
 		_ghost_t -= delta
 		if _ghost_t <= 0.0:
-			_ghost_t = 0.04
-			Vfx3D.afterimage(visual.visible_meshes(), root, Color(0.55, 0.85, 1.0), 0.26)
+			_ghost_t = 0.055
+			Vfx3D.afterimage(visual.visible_meshes(), root, Color(0.4, 0.7, 1.0), 0.24)
 	else:
 		_ghost_t = 0.0
 	# Volontà di Vivere: corpo e lama brillano sempre di più
@@ -274,10 +288,10 @@ func _update_windows(t: float, delta: float) -> void:
 		var k := pow(charge, 1.4)
 		for n in _charge_nodes:
 			if is_instance_valid(n) and n is GeometryInstance3D:
-				(n as GeometryInstance3D).set_instance_shader_parameter("intensity", 0.15 + 2.2 * k)
+				(n as GeometryInstance3D).set_instance_shader_parameter("intensity", 0.1 + 0.75 * k)
 		if is_instance_valid(_charge_light):
-			_charge_light.light_energy = 0.3 + 2.5 * k
-			_charge_light.omni_range = 1.5 + 1.5 * k
+			_charge_light.light_energy = 0.1 + 0.6 * k
+			_charge_light.omni_range = 1.2 + 0.8 * k
 
 
 func _update_arc(_progress: float) -> void:
@@ -343,7 +357,7 @@ func _begin_charge() -> void:
 			layer.set_instance_shader_parameter("intensity", 0.0)
 			_charge_nodes.append(layer)
 	# particelle che convergono sul warrior
-	var em := Vfx3D.emitter(visual, Vfx3D.CHARGE, 40, 0.7, Vector3(0.7, 0.5, 0.7), Vector3(0, 0.2, 0), 0.06, true, true)
+	var em := Vfx3D.emitter(visual, Vfx3D.CHARGE, 24, 0.7, Vector3(0.7, 0.5, 0.7), Vector3(0, 0.2, 0), 0.045, true, true)
 	em.position = Vector3(0, 0.7, 0)
 	var pm := em.process_material as ParticleProcessMaterial
 	pm.radial_accel_min = -4.0
