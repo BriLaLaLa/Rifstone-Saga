@@ -52,6 +52,26 @@ Decisione utente (2026-10-04): il warrior può combattere in 3 stili, decisi dal
 - Script in `art/warrior/warrior.blend`: `skill_v2_lib.py` (pose come "intenzioni", stili ss/dual/gs in `STYLES`), `skill_v2_actions.py`,
   `skill_check.py`, `v2_preview.py`. Per gli stili `dual_` e `gs_` restano da definire posizioni di mani e arma (tabella `L_DUAL` segnaposto).
 
+## Animazioni fatte — stile spadone (`gs_`, 2026-10-05)
+
+Arma `Eq_Greatsword` (1.19 m, su `hand.R`): punta (-0.900, 0.025, 0), base (-0.075, 0.025, 0) nello spazio dell'osso.
+Seconda spada `Eq_Sword_L` (su `hand.L`): punta (0.702, 0.025, 0), base (0.101, 0.025, 0).
+
+| Animazione | Durata | Eventi |
+|---|---|---|
+| `gs_idle` | 1.600 s, loop | — |
+| `gs_run` | 0.667 s, loop | — |
+| `gs_attack1` | 1.133 s | hit 0.500 s (fendente orizzontale) |
+| `gs_attack2` | 1.200 s | hit 0.600 s (diagonale dalla spalla destra) |
+| `gs_hit` | 0.500 s | — |
+| `gs_death` | 1.467 s | — (**da rifare**: non arriva a terra, la testa resta a 0.60 m; lo spadone resta in mano) |
+| `gs_skill_sword_aura` | 1.400 s | on 0.467 s |
+| `gs_skill_berserk` | 1.200 s | on 0.600 s |
+| `gs_skill_sword_vortex` | 1.467 s | hit 0.633 s · on 1.067 s |
+| `gs_skill_three_way_slash` | 1.500 s | hit1 0.233 · hit2 0.533 · hit3 1.000 s |
+| `gs_skill_hiss` | 0.733 s | hit 0.400 s (Godot sposta il warrior tra 0.20 e 0.40 s) |
+| `gs_skill_life_force` | 1.600 s | hit 1.067 s |
+
 ## Regole comuni per le animazioni (Blender)
 
 - Scheletro `Warrior_Rig`, 30 fps, **sul posto** (niente root motion): spostamenti e avanzamenti li fa Godot nei tempi indicati.
@@ -115,7 +135,8 @@ Decisione utente (2026-10-04): il warrior può combattere in 3 stili, decisi dal
 ## Da fare
 
 - [x] Animazioni `skill_*` spada + scudo, versione 2 (la prima era troppo rigida) + tabella durate/eventi
-- [ ] Stili due spade (`dual_`) e spadone (`gs_`): modelli arma, animazioni base + 6 skill, tabelle eventi
+- [x] Modelli arma `Eq_Greatsword` e `Eq_Sword_L`; stile spadone (`gs_`): animazioni base + 6 skill (resta da rifare `gs_death`)
+- [ ] Stile due spade (`dual_`): animazioni base + 6 skill, tabella eventi
 - [ ] Gameplay armi: campo `weapon_type`, slot sinistro scudo/seconda spada, blocco con spadone, scelta dello stile in Godot
 - [ ] Gameplay: SkillDatabase (nuove skill, rinomina, rimozione Guardia), SkillCastController (danno extra Aura, cura Volontà, velocità Estasi), `data/skills.json`
 - [ ] Icone per Aura della Spada, Estasi da Combattimento, Volontà di Vivere (`Icons/Skills/`)

@@ -89,6 +89,18 @@ func test_style_follows_weapons() -> void:
 	assert_eq(_warrior.style, WarriorVisual.STYLE_SWORD_SHIELD, "Rimesso lo scudo torna spada + scudo")
 
 
+func test_greatsword_style_and_left_hand_blocked() -> void:
+	if not _warrior.equip_visual("weapon", "greatsword_basic"):
+		pending("Eq_Greatsword non ancora nel modello")
+		return
+	assert_eq(_warrior.style, WarriorVisual.STYLE_GREATSWORD, "Spadone = stile spadone")
+	assert_false(_warrior.is_slot_equipped("shield"), "Montare lo spadone toglie lo scudo")
+	assert_false(_warrior.equip_visual("shield", "shield_basic"), "Con lo spadone la mano sinistra è bloccata")
+	assert_eq(_warrior.styled_animation("attack1"), "gs_attack1", "Usa le animazioni dello spadone")
+	_warrior.equip_visual("weapon", "sword_basic")
+	assert_eq(_warrior.style, WarriorVisual.STYLE_SWORD_SHIELD, "Tornando alla spada si torna allo stile base")
+
+
 func test_styled_animation_falls_back_to_base() -> void:
 	_warrior.equip_visual("shield", "sword_iron")
 	var anim := _warrior.styled_animation("attack1")

@@ -18,7 +18,7 @@ const MODEL_SCENE := preload("res://assets/3d/characters/warrior/warrior.glb")
 
 const LOOPING: Array[String] = ["idle", "run", "gather"]
 ## Momento del colpo in secondi (tabelle in PIANO_3D.md e SKILLS_WARRIOR.md)
-const HIT_TIMES := {"attack1": 0.30, "attack2": 0.37, "gather": 0.40}
+const HIT_TIMES := {"attack1": 0.30, "attack2": 0.37, "gather": 0.40, "gs_attack1": 0.50, "gs_attack2": 0.60}
 const SLOTS := ["weapon", "shield", "helmet", "chest", "boots", "belt"]
 const RIGID_SLOTS := ["weapon", "shield"]
 const DEFAULT_BONES := {"weapon": "hand.R", "shield": "hand.L", "helmet": "head"}
@@ -137,6 +137,11 @@ func equip_visual(slot: String, visual_id: String, level: int = -1) -> bool:
 	if piece.is_empty():
 		push_warning("[WarriorVisual] Skin '%s' sconosciuta per lo slot %s" % [visual_id, slot])
 		return false
+	# stesse regole di GameState: con lo spadone la mano sinistra è bloccata, e montarlo toglie scudo/seconda spada
+	if slot == "shield" and _two_handed():
+		return false
+	if slot == "weapon" and str(piece.get("weapon_type", "one_hand")) == "two_hand":
+		unequip("shield")
 	var src := _source_mesh(piece)
 	if src == null:
 		push_warning("[WarriorVisual] Modello per la skin '%s' non trovato (%s)" % [visual_id, piece.get("node", "?")])
@@ -227,6 +232,10 @@ func _update_body_visibility() -> void:
 			hidden[part] = true
 	for part in _body:
 		(_body[part] as MeshInstance3D).visible = not hidden.has(part)
+
+
+func _two_handed() -> bool:
+	return _pieces.has("weapon") and str(_pieces["weapon"]["piece"].get("weapon_type", "one_hand")) == "two_hand"
 
 
 func _update_style() -> void:
