@@ -6,6 +6,9 @@ extends Node3D
 
 const OUTLINE_SHADER := preload("res://shaders/world3d/outline_post.gdshader")
 
+## Emesso quando inizia un trascinamento col tasto destro (nel combat 2D questo disattivava "Segui")
+signal pan_started
+
 @export var target: Node3D
 @export var pitch_deg: float = 52.0
 @export var distance: float = 11.0
@@ -59,6 +62,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_RIGHT:
 			_dragging = mb.pressed
+			if mb.pressed:
+				pan_started.emit()
 		elif mb.pressed and mb.button_index == MOUSE_BUTTON_WHEEL_UP:
 			distance = maxf(min_distance, distance / zoom_step)
 		elif mb.pressed and mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:

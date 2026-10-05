@@ -33,6 +33,7 @@ scripts/world3d/    # WarriorVisual, CameraRig3D, Enhancement3D, ToonMaterials, 
   terrain/          # DualGridTerrain3D + TerrainTiles (tessere dual grid)
   zone/             # Zone3D, Prop3D, PropLibrary, SpawnPoint3D
   tools/            # convert_2d_zone.gd: converte una mappa 2D in zona 3D
+  combat/           # ZoneCombat3D (controller), Player3D, Enemy3D, GatheringNode3D, Bar3D, FloatingText3D
 ```
 
 - 1 cella = 1 m = 1 tessera 64 px del 2D.
@@ -88,6 +89,7 @@ scripts/world3d/    # WarriorVisual, CameraRig3D, Enhancement3D, ToonMaterials, 
 
 - **Framework**: GUT 9.5.0 (by Butch Wesley)
 - **Cartella test**: `tests/`
+- **Salvataggi**: i test scrivono su `user://gut_test_save.dat` (hook `tests/gut_pre_run.gd` in `.gutconfig.json`), mai sul salvataggio del giocatore
 - **Comando headless**:
   ```
   godot --headless --script addons/gut/gut_cmdln.gd

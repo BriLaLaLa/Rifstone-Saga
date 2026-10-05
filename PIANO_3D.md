@@ -211,11 +211,23 @@ Scena di prova: `scenes/world3d/ZoneTest3D.tscn` (F6). Zona: `scenes/world3d/zon
 - [ ] Chioma degli alberi trasparente quando il player ci passa dietro (Godot, con il port del combattimento)
 
 ### Fase 4 — Port del combattimento
-- [ ] `PlayerPathController` → versione 3D (CharacterBody3D + NavigationAgent3D), stessa API e stessi stati
-- [ ] `Enemy2D` → `Enemy3D` (modello + AnimationTree/AnimationPlayer al posto dell'animazione procedurale)
-- [ ] `SpawnPoint`, `GatheringNode2D`, `RouteManager`, `ZoneCombatController` in 3D
-- [ ] Danni, orb loot/xp/gold, skill visive: adattate al 3D (numeri e popup restano 2D a schermo)
-- [ ] Test GUT aggiornati/nuovi
+Scena: `scenes/world3d/ZoneCombat3D.tscn` (stessa barra HUD e stessa API di `ZoneCombatScene`). Prova: `scenes/world3d/ZoneCombatTest3D.tscn`
+(F6; con `-- --start=mob` parte accanto ai lupi, `--start=tree` dietro un albero). Codice in `scripts/world3d/combat/`. Screenshot in `art/combat3d/`.
+- [x] `PlayerCharacter3D` (port di PlayerPathController): stessi stati e segnali, rotta, aggro per distanza (180 px = 2.8 m),
+      si ferma al bordo del nemico, raccolta, ritorno alla rotta; navigazione 3D con ritorno in linea retta se manca la navmesh
+- [x] Animazioni del warrior collegate a SkillCastController: ogni skill lanciata fa partire la sua animazione (attacco base alterna attack1/attack2)
+- [x] `Enemy3D` (port di Enemy2D, stessa API + `stun()`): modello lupo con idle/run/attack/hit/death, il morso colpisce al momento giusto (0.43 s),
+      movimento agganciato alla navmesh, il branco si dispone attorno al warrior, barra vita e "!" di aggro, stelline di stordimento,
+      pietra Metin statica con rune che pulsano più veloci quando la vita cala e ondate di adds alle soglie; `cinghiale` = lupo ricolorato (segnaposto)
+- [x] `GatheringNode3D` (port di GatheringNode2D): modello miniera, barra di avanzamento, variante esaurita, stessi drop/exp/attrezzi
+- [x] `ZoneCombatController3D` (port di ZoneCombatController): carica la zona 3D, rotte in pixel convertite in metri (condivise col 2D),
+      disegno rotte cliccando sul terreno, spawn point (mob/Metin/risorsa) e ondate, orb loot/xp/oro dalla posizione a schermo, API bersagli
+- [x] Numeri danno/cura 3D, chiome degli alberi trasparenti quando il warrior ci passa dietro (`fade_occluder` nel toon + global uniform `player_world_pos`)
+- [x] Test GUT: `test_enemy3d`, `test_player3d`, `test_zone_combat3d` (25 test, tutti verdi). Suite completa: stessi 7 test falliti della versione 2D (`v2d-final`)
+- [x] I test non toccano più il salvataggio del giocatore: `.gutconfig.json` + `tests/gut_pre_run.gd` (salvataggi su `user://gut_test_save.dat`);
+      scene di prova 3D su `user://test3d_save.dat`
+- [ ] Effetti visivi delle skill in 3D (oggi le skill fanno danno ma gli effetti 2D sono spenti senza battle_area) → Fase 5b
+- [ ] Inserimento nella BattleTab al posto del combat 2D → Fase 7
 
 ### Fase 5 — Sistema equip visibile
 - [ ] Campo `model_3d` negli item + mappatura slot → aggancio

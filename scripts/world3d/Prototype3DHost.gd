@@ -17,6 +17,10 @@ var _frame_times: Array[float] = []
 
 
 func _ready() -> void:
+	# scena di prova: i salvataggi automatici non toccano il salvataggio vero
+	var gs = get_node_or_null("/root/GameState")
+	if gs:
+		gs.SAVE_PATH = "user://test3d_save.dat"
 	_build_hud()
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--"):

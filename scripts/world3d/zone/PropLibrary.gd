@@ -51,7 +51,8 @@ static func make_visual(id: String) -> Node3D:
 			var mi := MeshInstance3D.new()
 			mi.mesh = part[0]
 			mi.transform = part[1]
-			ToonMaterials.apply_to_mesh(mi)
+			# alberi: trasparenti quando il player ci passa dietro
+			ToonMaterials.apply_to_mesh(mi, Color.WHITE, kind(id) == "tree")
 			root.add_child(mi)
 		return root
 	return _placeholder(id)
@@ -108,10 +109,10 @@ static func _placeholder(id: String) -> Node3D:
 	return root
 
 
-static func _part(root: Node3D, mesh: Mesh, color: Color, pos: Vector3) -> void:
+static func _part(root: Node3D, mesh: Mesh, color: Color, pos: Vector3, fade: bool = false) -> void:
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
-	mi.material_override = ToonMaterials.get_material(color)
+	mi.material_override = ToonMaterials.get_material(color, fade)
 	mi.position = pos
 	root.add_child(mi)
 

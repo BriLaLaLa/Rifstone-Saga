@@ -48,3 +48,10 @@ enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg", "res://addons/gut/
 [gui]
 
 timers/tooltip_delay_sec=0.2
+
+[shader_globals]
+
+player_world_pos={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}

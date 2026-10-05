@@ -14,7 +14,33 @@ uniform float rim_amount : hint_range(0.0, 1.0) = 0.12;
 // Lampeggio quando colpito (per istanza, i materiali restano condivisi)
 instance uniform float flash = 0.0;
 
+// Chiome degli alberi: diventano trasparenti (retinatura) quando il player ci passa dietro.
+// La posizione del player arriva da una global uniform aggiornata da PlayerCharacter3D.
+uniform bool fade_occluder = false;
+uniform float fade_radius = 0.95;
+global uniform vec3 player_world_pos;
+
+float bayer4(vec2 p) {
+	int x = int(mod(p.x, 4.0));
+	int y = int(mod(p.y, 4.0));
+	int i = x + y * 4;
+	float m[16] = float[](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
+	return (m[i] + 0.5) / 16.0;
+}
+
 void fragment() {
+	if (fade_occluder) {
+		vec3 pv = (VIEW_MATRIX * vec4(player_world_pos + vec3(0.0, 0.6, 0.0), 1.0)).xyz;
+		// solo se il frammento sta davanti al player (più vicino alla camera)
+		if (VERTEX.z > pv.z + 0.3 && pv.z < 0.0) {
+			vec2 at_player_depth = VERTEX.xy * (pv.z / VERTEX.z);
+			float d = length(at_player_depth - pv.xy);
+			float alpha = smoothstep(fade_radius * 0.82, fade_radius, d);
+			if (alpha < 1.0 && bayer4(FRAGCOORD.xy) > alpha) {
+				discard;
+			}
+		}
+	}
 	ALBEDO = albedo.rgb;
 	ROUGHNESS = 1.0;
 	METALLIC = 0.0;
