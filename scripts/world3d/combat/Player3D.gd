@@ -234,7 +234,10 @@ func _retarget_or_return() -> void:
 		_begin_return()
 
 
-func _nearest_enemy_in_detection(exclude: Node3D) -> Node3D:
+func _nearest_enemy_in_detection(exclude: Variant) -> Node3D:
+	# exclude può essere un nemico già liberato (uscita dalla zona): lo si tratta come nessuno
+	if not is_instance_valid(exclude):
+		exclude = null
 	var best: Node3D = null
 	var best_d := INF
 	for b in get_tree().get_nodes_in_group("enemies"):

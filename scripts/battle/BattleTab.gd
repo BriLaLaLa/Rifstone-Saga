@@ -29,7 +29,11 @@ enum NavigationState { WORLD_MAP, REGION_ZOOM, BATTLE, ZONE_COMBAT }
 @onready var world_map_view: Control = $HSplit/RightPanel/WorldMapView
 @onready var region_zoom_view: Control = $HSplit/RightPanel/RegionZoomView
 @onready var battle_area: BattleArea = $HSplit/RightPanel/BattleArea
-@onready var _zone_combat: ZoneCombatController = $HSplit/RightPanel/ZoneCombatScene
+## Combattimento nelle zone: true = mondo 3D (ZoneCombat3D), false = vecchio combat 2D (ZoneCombatScene).
+## Le due scene hanno la stessa API, quindi il resto della BattleTab non cambia.
+@export var use_3d_combat: bool = true
+const ZONE_COMBAT_3D_SCENE := preload("res://scenes/world3d/ZoneCombat3D.tscn")
+@onready var _zone_combat = $HSplit/RightPanel/ZoneCombatScene
 @onready var action_bar: Control = $HSplit/RightPanel/BattleArea/ActionBar
 @onready var start_battle_button: Button = $HSplit/RightPanel/BattleArea/StartBattleButton
 @onready var exit_battle_button: Button = $HSplit/RightPanel/BattleArea/ExitBattleButton
@@ -90,6 +94,8 @@ func _ready() -> void:
 	# NOTE: _setup_exploration_system() is deferred to first visibility
 	# so BattleArea has time to initialize slots while the tab is actually visible.
 	exit_battle_button.pressed.connect(_on_exit_battle_pressed)
+	if use_3d_combat:
+		_swap_in_3d_combat()
 	_zone_combat.zone_exited.connect(_on_zone_combat_exited)
 
 	# CRITICAL: Register this BattleTab with LootOrbManager so orbs spawn visually
@@ -674,6 +680,24 @@ func _on_zone_clicked(zone_data: ZoneData) -> void:
 
 # ==================== NUOVO SISTEMA COMBAT ====================
 
+func _swap_in_3d_combat() -> void:
+	"""Mette la scena di combattimento 3D al posto di quella 2D, nella stessa posizione del pannello."""
+	var old: Control = _zone_combat
+	var zc3d: Control = ZONE_COMBAT_3D_SCENE.instantiate()
+	zc3d.name = "ZoneCombat3D"
+	zc3d.visible = false
+	zc3d.size_flags_horizontal = old.size_flags_horizontal
+	zc3d.size_flags_vertical = old.size_flags_vertical
+	var parent := old.get_parent()
+	var idx := old.get_index()
+	parent.add_child(zc3d)
+	parent.move_child(zc3d, idx)
+	parent.remove_child(old)
+	old.queue_free()
+	_zone_combat = zc3d
+	if GameLogger.ENABLED:
+		print("[BattleTab] Combattimento zone: 3D")
+
 func _show_zone_combat(zone_data: ZoneData) -> void:
 	"""Mostra la scena combat top-down (già in scena, toggle visibility)."""
 	if GameLogger.ENABLED:
@@ -700,6 +724,7 @@ func _show_zone_combat(zone_data: ZoneData) -> void:
 		"default_routes": zone_data.default_routes,
 		"world_size":     zone_data.world_size,
 		"gathering_node_types": zone_data.gathering_node_types,
+		"scene_3d":       zone_data.scene_3d,
 	}
 
 	var route = _get_default_route(zone_data)

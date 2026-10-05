@@ -26,6 +26,7 @@
           "background_key": "m1_z1_1",
           "recommended_level": 5,
           "tilemap_scene": "res://scenes/combat/zones/m1_z1_combat.tscn",
+          "scene_3d": "res://scenes/world3d/zones/red_plains_3d.tscn",
           "clickable_area": {
             "type": "rect",
             "x": 100,

@@ -95,7 +95,8 @@ func setup(p_zone: Dictionary, route: Dictionary) -> void:
 		_zone_label.text = p_zone.get("name", "")
 	var map := world.get_world_3d().navigation_map
 	var iteration_before := NavigationServer3D.map_get_iteration_id(map)
-	_load_zone(str(p_zone.get("scene_3d", DEFAULT_ZONE_SCENE)))
+	var scene_path := str(p_zone.get("scene_3d", ""))
+	_load_zone(scene_path if scene_path != "" and ResourceLoader.exists(scene_path) else DEFAULT_ZONE_SCENE)
 	camera_rig.bounds = zone.land_rect()
 	await _wait_navigation(iteration_before)
 
