@@ -64,13 +64,32 @@ Seconda spada `Eq_Sword_L` (su `hand.L`): punta (0.702, 0.025, 0), base (0.101, 
 | `gs_attack1` | 1.133 s | hit 0.500 s (fendente orizzontale) |
 | `gs_attack2` | 1.200 s | hit 0.600 s (diagonale dalla spalla destra) |
 | `gs_hit` | 0.500 s | — |
-| `gs_death` | 1.467 s | — (**da rifare**: non arriva a terra, la testa resta a 0.60 m; lo spadone resta in mano) |
+| `gs_death` | 1.467 s | — (cade all'indietro con lo spadone in mano, disteso da 1.07 s, testa a 0.34 m) |
 | `gs_skill_sword_aura` | 1.400 s | on 0.467 s |
 | `gs_skill_berserk` | 1.200 s | on 0.600 s |
 | `gs_skill_sword_vortex` | 1.467 s | hit 0.633 s · on 1.067 s |
 | `gs_skill_three_way_slash` | 1.500 s | hit1 0.233 · hit2 0.533 · hit3 1.000 s |
 | `gs_skill_hiss` | 0.733 s | hit 0.400 s (Godot sposta il warrior tra 0.20 e 0.40 s) |
 | `gs_skill_life_force` | 1.600 s | hit 1.067 s |
+
+## Animazioni fatte — stile due spade (`dual_`, 2026-10-05)
+
+`Eq_Sword` su `hand.R` e `Eq_Sword_L` su `hand.L`: punte (∓0.702, 0.025, 0), basi (∓0.101, 0.025, 0).
+
+| Animazione | Durata | Eventi |
+|---|---|---|
+| `dual_idle` | 1.333 s, loop | — |
+| `dual_run` | 0.600 s, loop | — |
+| `dual_attack1` | 0.800 s | hit 0.333 s (destra) |
+| `dual_attack2` | 0.800 s | hit 0.333 s (sinistra) |
+| `dual_hit` | 0.467 s | — |
+| `dual_death` | 1.333 s | — (testa a 0.36 m all'ultimo frame) |
+| `dual_skill_sword_aura` | 1.200 s | on 0.400 s |
+| `dual_skill_berserk` | 1.133 s | on 0.533 s |
+| `dual_skill_sword_vortex` | 1.333 s | hit 0.533 s · on 0.900 s (root 440°) |
+| `dual_skill_three_way_slash` | 1.100 s | hit1 0.167 · hit2 0.400 · hit3 0.733 s |
+| `dual_skill_hiss` | 0.667 s | hit 0.367 s (Godot sposta il warrior tra 0.20 e 0.37 s) |
+| `dual_skill_life_force` | 1.400 s | hit 0.933 s |
 
 ## Regole comuni per le animazioni (Blender)
 
@@ -135,8 +154,8 @@ Seconda spada `Eq_Sword_L` (su `hand.L`): punta (0.702, 0.025, 0), base (0.101, 
 ## Da fare
 
 - [x] Animazioni `skill_*` spada + scudo, versione 2 (la prima era troppo rigida) + tabella durate/eventi
-- [x] Modelli arma `Eq_Greatsword` e `Eq_Sword_L`; stile spadone (`gs_`): animazioni base + 6 skill (resta da rifare `gs_death`)
-- [ ] Stile due spade (`dual_`): animazioni base + 6 skill, tabella eventi
+- [x] Modelli arma `Eq_Greatsword` e `Eq_Sword_L`; stile spadone (`gs_`): animazioni base + 6 skill 
+- [x] Stile due spade (`dual_`): animazioni base + 6 skill, tabella eventi
 - [ ] Gameplay armi: campo `weapon_type`, slot sinistro scudo/seconda spada, blocco con spadone, scelta dello stile in Godot
 - [ ] Gameplay: SkillDatabase (nuove skill, rinomina, rimozione Guardia), SkillCastController (danno extra Aura, cura Volontà, velocità Estasi), `data/skills.json`
 - [ ] Icone per Aura della Spada, Estasi da Combattimento, Volontà di Vivere (`Icons/Skills/`)

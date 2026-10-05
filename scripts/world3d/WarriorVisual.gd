@@ -18,7 +18,8 @@ const MODEL_SCENE := preload("res://assets/3d/characters/warrior/warrior.glb")
 
 const LOOPING: Array[String] = ["idle", "run", "gather"]
 ## Momento del colpo in secondi (tabelle in PIANO_3D.md e SKILLS_WARRIOR.md)
-const HIT_TIMES := {"attack1": 0.30, "attack2": 0.37, "gather": 0.40, "gs_attack1": 0.50, "gs_attack2": 0.60}
+const HIT_TIMES := {"attack1": 0.30, "attack2": 0.37, "gather": 0.40, "gs_attack1": 0.50, "gs_attack2": 0.60,
+	"dual_attack1": 0.333, "dual_attack2": 0.333}
 const SLOTS := ["weapon", "shield", "helmet", "chest", "boots", "belt"]
 const RIGID_SLOTS := ["weapon", "shield"]
 const DEFAULT_BONES := {"weapon": "hand.R", "shield": "hand.L", "helmet": "head"}
