@@ -23,7 +23,10 @@ shaders/            # Shader visivi
 tests/              # Test GUT
 ```
 
-### Mondo 3D (branch `feature/3d`, piano in `PIANO_3D.md`)
+### Mondo 3D (piano in `PIANO_3D.md`)
+
+Il combattimento nelle zone è in 3D: `BattleTab` usa `scenes/world3d/ZoneCombat3D.tscn`; le zone con combattimento hanno `scene_3d` in `data/zones.json`.
+Il vecchio combattimento 2D (Tiny Swords) è stato rimosso: è recuperabile dal tag git `v2d-final`.
 
 ```
 art/                # Sorgenti Blender (.blend) e screenshot di revisione — ha .gdignore, Godot non lo importa
@@ -32,8 +35,9 @@ scenes/world3d/     # Prototype3D.tscn, ZoneTest3D.tscn (F6 per provarle), zones
 scripts/world3d/    # WarriorVisual, CameraRig3D, Enhancement3D, ToonMaterials, WorldLook3D
   terrain/          # DualGridTerrain3D + TerrainTiles (tessere dual grid)
   zone/             # Zone3D, Prop3D, PropLibrary, SpawnPoint3D
-  tools/            # convert_2d_zone.gd: converte una mappa 2D in zona 3D
-  combat/           # ZoneCombat3D (controller), Player3D, Enemy3D, GatheringNode3D, Bar3D, FloatingText3D
+  combat/           # ZoneCombat3D (controller), Player3D, Enemy3D, GatheringNode3D, RouteManager, Bar3D, FloatingText3D
+  vfx/              # effetti delle skill (SkillEvents3D, SkillFx3D, BladeTrail3D, Vfx3D, StunStars3D)
+  ui/               # CharacterPortrait3D (warrior 3D nel pannello personaggio)
   equipment/        # EquipmentVisuals (catalogo skin), EquipmentSync3D (equip di GameState sul warrior 3D)
 data/equipment_visuals.json   # catalogo skin 3D degli equip; gli item lo usano col campo "visual"
 ```
@@ -49,7 +53,7 @@ data/equipment_visuals.json   # catalogo skin 3D degli equip; gli item lo usano 
 - **Inventory**: multi-cell drag-and-drop, bag system, grid resize
 - **Equipment**: slot equipaggiamento, drag/drop da inventory
 - **Tooltip**: hover con delay (0.2s), TooltipManager autoload
-- **Battle**: combattimento idle, encounter generator, skill bar, orb system (loot/xp/gold)
+- **Battle**: combattimento idle in 3D nelle zone (warrior autoplay, lupi, Metin, raccolta), skill bar, orb system (loot/xp/gold)
 - **World Map**: zone cliccabili, region zoom, background variabili per zona
 - **Gathering**: nodi raccolta, GatheringDatabase, skill manager
 - **Crafting**: gem crafting, bonus database, item bonus

@@ -10,7 +10,7 @@ signal combat_ended()
 
 const PX := 64.0
 const DEFAULT_ZONE_SCENE := "res://scenes/world3d/zones/red_plains_3d.tscn"
-const RouteManagerScript := preload("res://scripts/combat/RouteManager.gd")
+const RouteManagerScript := preload("res://scripts/world3d/combat/RouteManager.gd")
 const PATH_COLOR := Color(0.3, 0.95, 0.45, 0.55)
 
 const GATHERING_MAX_NODES := 2

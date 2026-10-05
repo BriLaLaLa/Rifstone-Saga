@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://cworldmap2h8dkya" path="res://scenes/battle/WorldMapView.tscn" id="4"]
 [ext_resource type="PackedScene" uid="uid://cregionzoom2h8dkyb" path="res://scenes/battle/RegionZoomView.tscn" id="5"]
 [ext_resource type="Script" path="res://scripts/ui/StatsScrollPanel.gd" id="6"]
-[ext_resource type="PackedScene" path="res://scenes/combat/ZoneCombatScene.tscn" id="7_zcc"]
+[ext_resource type="PackedScene" path="res://scenes/world3d/ZoneCombat3D.tscn" id="7_zcc"]
 [ext_resource type="PackedScene" path="res://scenes/battle/CombatSkillBar.tscn" id="8_csb"]
 
 [node name="BattleTab" type="Control"]
@@ -113,7 +113,7 @@ layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("3")
 
-[node name="ZoneCombatScene" parent="HSplit/RightPanel" instance=ExtResource("7_zcc")]
+[node name="ZoneCombat3D" parent="HSplit/RightPanel" instance=ExtResource("7_zcc")]
 visible = false
 layout_mode = 2
 size_flags_horizontal = 3

@@ -23,11 +23,10 @@ class_name ZoneData
 @export var xp_max: int = 100
 
 # --- Nuovo sistema combat top-down ---
-@export var tilemap_scene: String = ""    # Path a .tscn della zona (es. "res://scenes/combat/zones/m1_z1_combat.tscn")
 @export var default_routes: Array = []   # Array di {id, name, waypoints: Array, loop: bool}
 @export var world_size: Array = []        # [larghezza, altezza] in px; vuoto = default del controller
 @export var gathering_node_types: Array = []  # tipi di nodo gathering ammessi in zona
-@export var scene_3d: String = ""        # Zona 3D (es. "res://scenes/world3d/zones/red_plains_3d.tscn"); vuoto = zona 3D predefinita
+@export var scene_3d: String = ""        # Zona di combattimento 3D (es. "res://scenes/world3d/zones/red_plains_3d.tscn"); vuoto = zona senza combattimento 3D
 
 func _init():
 	pass
@@ -69,7 +68,6 @@ static func from_dict(data: Dictionary) -> ZoneData:
 	zone.area_id       = data.get("area_id", "")
 	zone.background_key = data.get("background_key", "")
 	zone.recommended_level = data.get("recommended_level", 1)
-	zone.tilemap_scene = data.get("tilemap_scene", "")
 	zone.scene_3d = data.get("scene_3d", "")
 	zone.default_routes = data.get("default_routes", [])
 	zone.world_size = data.get("world_size", [])

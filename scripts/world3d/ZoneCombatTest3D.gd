@@ -77,7 +77,7 @@ func _zone_dict() -> Dictionary:
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/zones.json"))
 	for k in data.get("kingdoms", []):
 		for z in k.get("zones", []):
-			if str(z.get("tilemap_scene", "")) != "":
+			if str(z.get("scene_3d", "")) != "":
 				var zd := ZoneData.from_dict(z)
 				return {
 					"id": zd.id, "name": zd.name, "level_range": zd.level_range, "enemies": zd.enemies,

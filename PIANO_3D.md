@@ -282,6 +282,6 @@ shader in `shaders/world3d/vfx/`. Immagini in `art/skills3d/`.
       slot, icone, drag&drop, tooltip e statistiche restano come sono
 - [x] Interruttore 2D/3D per la schermata di battaglia (`BattleTab.use_3d_combat`, 3D attivo): BattleTab usa `ZoneCombat3D` (stessa API), zone → scena 3D (`scene_3d`),
       SkillCastController collegato alle animazioni; prova nel gioco vero
-- [ ] Rimozione del combat 2D non più usato (dopo conferma utente)
-- [ ] Passata prestazioni nel gioco completo
-- [ ] Merge `feature/3d` → `main`, push
+- [x] Rimozione del combat 2D (scene, script, test 2D, convertitore, asset Tiny Swords); `RouteManager` spostato in `scripts/world3d/combat/`, zone riconosciute da `scene_3d`
+- [x] Prestazioni nel gioco completo (BattleTab + zona 3D + ritratto 3D, RTX 2070 Super, vsync spento): ~530 FPS medi, picco 19 ms
+- [x] Merge `feature/3d` → `main`, push
