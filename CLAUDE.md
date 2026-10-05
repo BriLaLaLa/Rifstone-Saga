@@ -34,6 +34,8 @@ scripts/world3d/    # WarriorVisual, CameraRig3D, Enhancement3D, ToonMaterials, 
   zone/             # Zone3D, Prop3D, PropLibrary, SpawnPoint3D
   tools/            # convert_2d_zone.gd: converte una mappa 2D in zona 3D
   combat/           # ZoneCombat3D (controller), Player3D, Enemy3D, GatheringNode3D, Bar3D, FloatingText3D
+  equipment/        # EquipmentVisuals (catalogo skin), EquipmentSync3D (equip di GameState sul warrior 3D)
+data/equipment_visuals.json   # catalogo skin 3D degli equip; gli item lo usano col campo "visual"
 ```
 
 - 1 cella = 1 m = 1 tessera 64 px del 2D.

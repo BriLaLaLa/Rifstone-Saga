@@ -5,6 +5,7 @@ extends Control
 ## Argomenti (dopo "--"): --shots=<cartella> --at=5,20  screenshot ai secondi indicati, poi esce con un resoconto.
 ##   --start=mob  parte accanto al branco di lupi (per provare subito il combattimento con i lupi)
 ##   --start=tree player fermo subito dietro un albero (prova della chioma trasparente)
+##   --equip=defaults  indossa le skin base invece dell'equipaggiamento del salvataggio
 
 const ZONE_SCENE := preload("res://scenes/world3d/ZoneCombat3D.tscn")
 const TEST_SAVE := "user://test3d_save.dat"
@@ -58,6 +59,9 @@ func _ready() -> void:
 		for sp in zcc.zone.spawn_points():
 			if sp.kind == SpawnPoint3D.Kind.MOB:
 				zcc.player.global_position = zcc._snap_to_nav(sp.global_position + Vector3(-2.5, 0, 0))
+	if "--equip=defaults" in OS.get_cmdline_user_args():
+		for slot in WarriorVisual.SLOTS:
+			zcc.player.visual.equip_visual(slot, EquipmentVisuals.default_for(slot))
 	if _start == "tree":
 		for p in zcc.zone.get_node("Props").get_children():
 			if p is Prop3D and p.prop_id.begins_with("tree") and zcc._is_on_land(p.position + Vector3(0, 0, -0.9)) and p.position.z > 12.0:

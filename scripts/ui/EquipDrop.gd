@@ -236,9 +236,12 @@ func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 		_clear_slot_highlights()
 		return false
 	
-	# Verifica compatibilità item-slot
+	# Verifica compatibilità item-slot (regole di GameState: seconda spada nella mano sinistra, spadone)
 	var item_type = _get_item_type(item)
 	var is_compatible = _is_item_compatible_with_slot(item_type, target_slot)
+	var gs_rules = get_node_or_null("/root/GameState")
+	if gs_rules and gs_rules.has_method("can_equip_in_slot") and gs_rules.data.items.has(item.item_id):
+		is_compatible = gs_rules.can_equip_in_slot(gs_rules.data.items[item.item_id], _ui_slot_to_gamestate_slot(target_slot))
 	
 	if LOG:
 		print("[EquipDrop] Item: ", item.item_id, ", Type: ", item_type, ", Target slot: ", target_slot, ", Compatible: ", is_compatible)

@@ -55,9 +55,20 @@ var _attack_flip: bool = false
 var _moving: bool = false
 
 
+## Il warrior indossa l'equipaggiamento del gioco (GameState) e si aggiorna quando cambia
+@export var sync_with_game_state: bool = true
+
+var equipment_sync: EquipmentSync3D
+
+
 func _ready() -> void:
 	visual = WarriorVisual.new()
+	var use_game_state := sync_with_game_state and get_node_or_null("/root/GameState") != null
+	visual.equip_defaults = not use_game_state
 	add_child(visual)
+	if use_game_state:
+		equipment_sync = EquipmentSync3D.new(visual)
+		add_child(equipment_sync)
 	visual.animation_done.connect(_on_visual_animation_done)
 	nav_agent = NavigationAgent3D.new()
 	nav_agent.radius = 0.25

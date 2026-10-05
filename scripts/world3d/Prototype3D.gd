@@ -4,6 +4,7 @@ extends Node3D
 ## Tasti: 1-4 spada +0/+7/+8/+9 · 5-8 armatura +0/+7/+8/+9 · H C B L S X equip on/off
 ##        K animazione morte · N +50 unità (prestazioni) · F camera segue on/off
 ##        F1-F6 animazioni delle skill (solo animazione: effetti e gameplay arrivano in Fase 5b)
+##        V cambia skin dell'arma · J alterna set armatura base / varianti · M seconda spada (due spade)
 
 enum State { IDLE, RUN, ATTACK, GATHER, HIT, DEAD, SKILL }
 
@@ -44,6 +45,9 @@ var _showcase: Node3D
 var _blocked: Array[Vector3] = []
 var _stress: Array[WarriorVisual] = []
 var _rng := RandomNumberGenerator.new()
+var _weapon_skin: int = 0
+var _alt_armor: bool = false
+const ALT_ARMOR := {"helmet": "helmet_leather", "chest": "chest_chainmail", "shield": "shield_iron", "belt": "belt_adventurer"}
 
 
 func _ready() -> void:
@@ -85,6 +89,13 @@ func configure(opts: Dictionary) -> void:
 		_play_death()
 	if opts.has("skill"):
 		play_skill(String(opts["skill"]))
+	if opts.has("skin"):
+		warrior.equip_visual("weapon", String(opts["skin"]))
+	if opts.get("armor_set", "") == "alt":
+		for slot in ALT_ARMOR:
+			warrior.equip_visual(slot, ALT_ARMOR[slot])
+	if opts.has("dual"):
+		warrior.equip_visual("shield", warrior.get_slot_visual("weapon"))
 
 
 func state_name() -> String:
@@ -92,12 +103,12 @@ func state_name() -> String:
 
 
 func hud_text() -> String:
-	return "PROTOTIPO 3D  |  %s  |  spada +%d  |  armatura +%d  |  uccisioni %d  |  unità extra %d" % [
-		state_name(), warrior.get_enhancement("weapon"), warrior.get_enhancement("chest"), kills_total, _stress.size()]
+	return "PROTOTIPO 3D  |  %s  |  arma %s +%d  |  stile %s  |  armatura +%d  |  uccisioni %d" % [
+		state_name(), warrior.get_slot_visual("weapon"), warrior.get_enhancement("weapon"), warrior.style, warrior.get_enhancement("chest"), kills_total]
 
 
 func help_text() -> String:
-	return "F1-F6 skill · 1-4 spada +0/7/8/9 · 5-8 armatura · H C B L S X equip · K morte · N +50 unità"
+	return "F1-F6 skill · V skin arma · J set armatura · M due spade · 1-4/5-8 potenz. · H C B L S X equip"
 
 
 # ==================== AUTOPLAY ====================
@@ -283,6 +294,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			spawn_stress(50)
 		elif k == KEY_F:
 			camera_rig.follow = not camera_rig.follow
+		elif k == KEY_V:
+			var skins := EquipmentVisuals.ids_for_slot("weapon")
+			_weapon_skin = (_weapon_skin + 1) % skins.size()
+			warrior.equip_visual("weapon", skins[_weapon_skin])
+		elif k == KEY_J:
+			_alt_armor = not _alt_armor
+			for slot in ALT_ARMOR:
+				warrior.equip_visual(slot, ALT_ARMOR[slot] if _alt_armor else EquipmentVisuals.default_for(slot))
+		elif k == KEY_M:
+			if warrior.style == WarriorVisual.STYLE_DUAL:
+				warrior.equip_visual("shield", EquipmentVisuals.default_for("shield"))
+			else:
+				warrior.equip_visual("shield", warrior.get_slot_visual("weapon"))
 
 
 # ==================== PRESTAZIONI ====================

@@ -90,7 +90,7 @@ lo stesso `SkeletonProfileHumanoid` su entrambi i modelli, con "Fix Silhouette" 
 - 3 stili di combattimento (decisione utente): spada + scudo, due spade (seconda spada nello slot sinistro, ex `shield`),
   spadone a due mani (blocca lo slot sinistro). Ogni stile ha il suo set di animazioni (prefissi in `SKILLS_WARRIOR.md`).
 - Elmo, armatura, stivali (cintura opzionale): mesh skinnate sullo stesso scheletro, si sostituisce la mesh della `MeshInstance3D` dello slot.
-- Dati item: campo nuovo `model_3d` (path .glb) negli item del database; slot vuoto = mesh base del corpo.
+- Dati item: campo `visual` (id di una skin del catalogo `data/equipment_visuals.json`); slot vuoto = corpo base.
 - +7 / +8 / +9: shader overlay (`next_pass`) con emissione, limitato alle zone metalliche tramite maschera
   (vertex color o texture) + `GPUParticles3D` agganciate alla lama. Stessi colori/idee degli shader esistenti
   `shaders/enhancement_plus7/8/9.gdshader` (+7 brace arancione pulsante, +8 viola instabile, +9 ciano con distorsione).
@@ -230,10 +230,27 @@ Scena: `scenes/world3d/ZoneCombat3D.tscn` (stessa barra HUD e stessa API di `Zon
 - [ ] Inserimento nella BattleTab al posto del combat 2D → Fase 7
 
 ### Fase 5 — Sistema equip visibile
-- [ ] Campo `model_3d` negli item + mappatura slot → aggancio
-- [ ] Cambio equip dalla UI aggiorna il modello in tempo reale
-- [ ] Effetti +7/+8/+9 per ogni slot
-- [ ] Set di equip iniziali modellati (almeno 2-3 per slot visibile)
+Base pensata per aggiungere skin senza toccare il codice. Codice in `scripts/world3d/equipment/` + `WarriorVisual.gd`.
+- [x] Catalogo skin `data/equipment_visuals.json` (`EquipmentVisuals`): ogni skin = modello .glb + nodo, slot, parti del corpo coperte,
+      osso, tipo d'arma; varianti per ereditarietà (`base`) con colori per materiale (`colors`), `tint`, `scale`
+- [x] Item → skin: campo `visual` in `data/items.json` (tutti e 9 gli equip attuali hanno una skin), item senza skin → skin base dello slot
+- [x] `WarriorVisual`: monta i pezzi rigidi sull'osso (armi, scudo) e quelli skinnati sullo scheletro (elmo, corazza, stivali, cintura),
+      nasconde le parti del corpo coperte, bagliore +7/+8/+9 per slot che resta anche cambiando skin
+- [x] Stile di combattimento dalle armi montate (spada+scudo / due spade / spadone) → animazioni `dual_` / `gs_` se esistono, altrimenti base
+- [x] Regole slot in `GameState.can_equip_in_slot` (usate anche dal drag&drop di `EquipDrop`): arma a una mano anche nella mano sinistra,
+      lo spadone (`weapon_type: two_hand`) blocca la mano sinistra e, equipaggiandolo, scudo/seconda spada tornano nell'inventario
+- [x] `EquipmentSync3D`: il warrior del combattimento 3D indossa l'equipaggiamento di GameState e si aggiorna a equip / rimozione / potenziamento
+- [x] Prototipo: V cambia skin dell'arma, J alterna set armatura, M due spade. Test GUT `test_equipment_visuals` (14 test)
+- [x] Varianti di colore per gli item attuali (spade novizio/ferro/apprendista/discepolo, elmo di cuoio, cotta di maglia, scudo di ferro, cintura)
+- [ ] Modelli nuovi in Blender per avere set davvero diversi (non solo ricolorati) — da fare quando arrivano nuovi item
+- [ ] Seconda spada dedicata (`Eq_Sword_L`) e spadone (`Eq_Greatsword`) dal lavoro Blender in corso: il catalogo li usa appena esistono
+
+**Come aggiungere una skin**
+1. Solo colori diversi: una riga in `visuals` con `"base": "<skin esistente>"` e `"colors": {"M_<materiale>": "#rrggbb"}`.
+2. Modello nuovo: in Blender un pezzo per slot (pezzi di armatura pesati su `Warrior_Rig`, stesso scheletro e stessi nomi d'osso;
+   armi/scudo come oggetti figli dell'osso della mano), maschera metallo in `COLOR_0`, export in `assets/3d/equipment/<set>.glb`;
+   poi una riga per pezzo con `"scene"` e `"node"`.
+3. Sull'item in `data/items.json`: `"visual": "<id skin>"` (armi: anche `"weapon_type": "one_hand"` o `"two_hand"`).
 
 ### Fase 5b — Skill animate
 Specifica completa in `SKILLS_WARRIOR.md` (nuovo set: Aura della Spada, Estasi da Combattimento, Vortice della Spada,

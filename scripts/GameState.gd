@@ -541,15 +541,18 @@ func equip_item_to_slot(item_id: String, slot: String) -> bool:
 					})
 					print("[GameState] → Auto Heal: %.1f%% chance to heal %.1f HP" % [bonus.value1, bonus.value2])
 
-	# Verifica che l'item possa essere equipaggiato in questo slot
-	var item_slot = item_data.get("slot", "none")
-	if item_slot != slot and item_slot != "any":
+	# Verifica che l'item possa essere equipaggiato in questo slot (regole dei 3 stili di combattimento)
+	if not can_equip_in_slot(item_data, slot):
 		print("[GameState] Item non compatibile con slot: ", item_id, " -> ", slot)
 		return false
 
 	# Se c'è già qualcosa equipaggiato, unequip prima
 	if equipped_items[slot] != null:
 		unequip_item_from_slot(slot)
+
+	# Spadone (arma a due mani): libera la mano sinistra (scudo o seconda spada tornano nell'inventario)
+	if slot == "weapon" and item_data.get("weapon_type", "one_hand") == "two_hand" and equipped_items.get("shield") != null:
+		unequip_item_from_slot("shield")
 
 	# Equipaggia
 	equipped_items[slot] = item_data
@@ -751,6 +754,23 @@ func _find_empty_inventory_position(item_size: Vector2i) -> Vector2i:
 
 	# No space found
 	return Vector2i(-1, -1)
+
+func can_equip_in_slot(item_data: Dictionary, slot: String) -> bool:
+	"""Regole degli slot con i 3 stili di combattimento (spada+scudo, due spade, spadone):
+	- ogni item va nel suo slot ('any' ovunque);
+	- un'arma a una mano può andare anche nello slot 'shield' (= mano sinistra, stile due spade);
+	- con uno spadone (weapon_type 'two_hand') equipaggiato la mano sinistra è bloccata."""
+	var item_slot = item_data.get("slot", "none")
+	var allowed: bool = item_slot == slot or item_slot == "any"
+	if not allowed and slot == "shield" and item_slot == "weapon":
+		allowed = item_data.get("weapon_type", "one_hand") == "one_hand"
+	if not allowed:
+		return false
+	if slot == "shield":
+		var weapon = equipped_items.get("weapon")
+		if weapon != null and weapon.get("weapon_type", "one_hand") == "two_hand":
+			return false
+	return true
 
 func unequip_item_from_slot(slot: String) -> bool:
 	"""Rimuove un item da un equipment slot"""

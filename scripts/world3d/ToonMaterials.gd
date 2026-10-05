@@ -22,7 +22,8 @@ static func get_material(color: Color, fade_occluder: bool = false) -> ShaderMat
 
 
 ## Sostituisce i materiali importati (colore piatto) con il toon dello stesso colore, moltiplicato per tint.
-static func apply_to_mesh(mi: MeshInstance3D, tint: Color = Color.WHITE, fade_occluder: bool = false) -> void:
+## colors: { nome materiale Blender: Color } sostituisce il colore di quei materiali (varianti delle skin).
+static func apply_to_mesh(mi: MeshInstance3D, tint: Color = Color.WHITE, fade_occluder: bool = false, colors: Dictionary = {}) -> void:
 	if mi.mesh == null:
 		return
 	for s in mi.mesh.get_surface_count():
@@ -30,4 +31,6 @@ static func apply_to_mesh(mi: MeshInstance3D, tint: Color = Color.WHITE, fade_oc
 		var col := Color.WHITE
 		if src is BaseMaterial3D:
 			col = (src as BaseMaterial3D).albedo_color
+		if src and colors.has(src.resource_name):
+			col = colors[src.resource_name]
 		mi.set_surface_override_material(s, get_material(col * tint, fade_occluder))

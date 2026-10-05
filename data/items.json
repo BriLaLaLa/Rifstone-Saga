@@ -4,6 +4,8 @@
 		"name":  "Iron Sword",
 		"type":  "Weapon",
 		"slot":  "weapon",
+		"visual":  "sword_iron",
+		"weapon_type":  "one_hand",
 		"size":  [
 					 1,
 					 2
@@ -20,6 +22,7 @@
 		"name":  "Leather Helmet",
 		"type":  "Armor",
 		"slot":  "helmet",
+		"visual":  "helmet_leather",
 		"size":  [
 					 1,
 					 1
@@ -36,6 +39,7 @@
 		"name":  "Chainmail Armor",
 		"type":  "Armor",
 		"slot":  "chest",
+		"visual":  "chest_chainmail",
 		"size":  [
 					 1,
 					 2
@@ -53,6 +57,7 @@
 		"name":  "Iron Shield",
 		"type":  "Shield",
 		"slot":  "shield",
+		"visual":  "shield_iron",
 		"size":  [
 					 1,
 					 2
@@ -70,6 +75,7 @@
 		"name":  "Leather Boots",
 		"type":  "Footwear",
 		"slot":  "boots",
+		"visual":  "boots_leather",
 		"size":  [
 					 1,
 					 1
@@ -87,6 +93,7 @@
 		"name":  "Adventurer\u0027s Belt",
 		"type":  "Accessory",
 		"slot":  "belt",
+		"visual":  "belt_adventurer",
 		"size":  [
 					 2,
 					 1
@@ -104,6 +111,8 @@
 		"name":  "Novice Sword",
 		"type":  "Weapon",
 		"slot":  "weapon",
+		"visual":  "sword_novice",
+		"weapon_type":  "one_hand",
 		"level":  1,
 		"size":  [
 					 1,
@@ -124,6 +133,8 @@
 		"name":  "Apprentice Sword",
 		"type":  "Weapon",
 		"slot":  "weapon",
+		"visual":  "sword_apprentice",
+		"weapon_type":  "one_hand",
 		"level":  10,
 		"size":  [
 					 1,
@@ -144,6 +155,8 @@
 		"name":  "Disciple Sword",
 		"type":  "Weapon",
 		"slot":  "weapon",
+		"visual":  "sword_disciple",
+		"weapon_type":  "one_hand",
 		"level":  15,
 		"size":  [
 					 1,

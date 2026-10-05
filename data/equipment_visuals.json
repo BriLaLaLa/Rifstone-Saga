@@ -1,0 +1,68 @@
+{
+	"_doc": [
+		"Catalogo delle skin 3D degli equip (vedi scripts/world3d/equipment/EquipmentVisuals.gd).",
+		"Un item di data/items.json punta a una skin con il campo 'visual'; senza 'visual' usa defaults[slot].",
+		"Campi di una skin:",
+		"  slot          weapon / shield / helmet / chest / boots / belt",
+		"  scene, node   modello .glb e nome del nodo del pezzo dentro il .glb",
+		"  fallback_node nodo da usare se 'node' non esiste ancora nel .glb",
+		"  base          eredita tutti i campi da un'altra skin (i 'colors' si sommano)",
+		"  colors        { nome materiale Blender: colore } per fare varianti senza nuovi modelli",
+		"  tint          colore che moltiplica tutto il pezzo",
+		"  scale         scala del pezzo (1 = originale)",
+		"  hides         parti del corpo base nascoste quando il pezzo è indossato",
+		"  bone          osso a cui agganciare un pezzo rigido (default: quello del modello sorgente)",
+		"  weapon_type   armi: one_hand / two_hand (two_hand = stile spadone)",
+		"  offhand       pezzi della mano sinistra: shield / weapon (weapon = stile due spade)",
+		"  offhand_visual armi a una mano: skin da usare quando l'arma sta nella mano sinistra"
+	],
+	"defaults": {
+		"weapon": "sword_basic",
+		"shield": "shield_basic",
+		"helmet": "helmet_basic",
+		"chest": "chest_basic",
+		"boots": "boots_basic",
+		"belt": "belt_basic",
+		"offhand_weapon": "sword_basic_offhand"
+	},
+	"visuals": {
+		"sword_basic": {
+			"slot": "weapon", "scene": "res://assets/3d/characters/warrior/warrior.glb", "node": "Eq_Sword",
+			"weapon_type": "one_hand", "offhand_visual": "sword_basic_offhand"
+		},
+		"sword_basic_offhand": {
+			"slot": "shield", "scene": "res://assets/3d/characters/warrior/warrior.glb", "node": "Eq_Sword_L",
+			"fallback_node": "Eq_Sword", "bone": "hand.L", "offhand": "weapon"
+		},
+		"greatsword_basic": {
+			"slot": "weapon", "scene": "res://assets/3d/characters/warrior/warrior.glb", "node": "Eq_Greatsword",
+			"weapon_type": "two_hand"
+		},
+		"shield_basic": {
+			"slot": "shield", "scene": "res://assets/3d/characters/warrior/warrior.glb", "node": "Eq_Shield", "offhand": "shield"
+		},
+		"helmet_basic": {
+			"slot": "helmet", "scene": "res://assets/3d/characters/warrior/warrior.glb", "node": "Eq_Helmet", "hides": ["Body_Head"]
+		},
+		"chest_basic": {
+			"slot": "chest", "scene": "res://assets/3d/characters/warrior/warrior.glb", "node": "Eq_Chest", "hides": ["Body_Torso"]
+		},
+		"boots_basic": {
+			"slot": "boots", "scene": "res://assets/3d/characters/warrior/warrior.glb", "node": "Eq_Boots", "hides": ["Body_Feet"]
+		},
+		"belt_basic": {
+			"slot": "belt", "scene": "res://assets/3d/characters/warrior/warrior.glb", "node": "Eq_Belt"
+		},
+
+		"sword_novice": {"base": "sword_basic", "colors": {"M_Blade": "#b9b3a6", "M_Metal": "#7a5536"}},
+		"sword_iron": {"base": "sword_basic", "colors": {"M_Blade": "#c9d2da", "M_Metal": "#59606b"}},
+		"sword_apprentice": {"base": "sword_basic", "colors": {"M_Metal": "#3e5f8c"}},
+		"sword_disciple": {"base": "sword_basic", "colors": {"M_Blade": "#ffe08a", "M_Metal": "#8c3a3a"}, "scale": 1.08},
+
+		"shield_iron": {"base": "shield_basic", "colors": {"M_ShieldA": "#aeb6bf", "M_ShieldB": "#5e6a78"}},
+		"helmet_leather": {"base": "helmet_basic", "colors": {"M_Cream": "#9b6b45", "M_Plume": "#6e4a2f"}},
+		"chest_chainmail": {"base": "chest_basic", "colors": {"M_Cream": "#a9afb7", "M_Armor": "#6b727c"}},
+		"boots_leather": {"base": "boots_basic"},
+		"belt_adventurer": {"base": "belt_basic", "colors": {"M_Cream": "#d9b45c"}}
+	}
+}
