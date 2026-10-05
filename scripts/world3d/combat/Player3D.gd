@@ -4,6 +4,8 @@ extends Node3D
 ## IDLE → FOLLOWING_PATH → DEVIATING → ENGAGING → RETURNING, più GATHERING.
 ## Muove con la navigazione 3D; la parte visiva è WarriorVisual. Le animazioni di attacco/skill
 ## partono quando SkillCastController lancia una skill (play_cast), come nel gioco 2D i danni.
+## Fa anche da esecutore degli eventi delle skill (gruppo "skill_event_driver"): danni, stordimento, buff
+## e cure partono negli eventi dell'animazione (SkillFx3D + SkillEvents3D), con i loro effetti visivi.
 
 enum PlayerState {
 	IDLE,
@@ -19,17 +21,15 @@ signal entered_combat(enemy: Node3D)
 signal exited_combat()
 
 const PX := 64.0
-## skill del database -> animazione (Guardia e Grido di Battaglia usano già quelle del nuovo set)
-const SKILL_ANIMS := {
-	"hiss": "skill_hiss",
-	"sword_vortex": "skill_sword_vortex",
-	"three_way_slash": "skill_three_way_slash",
-	"battle_cry": "skill_berserk",
-	"berserk": "skill_berserk",
-	"guard": "skill_sword_aura",
-	"sword_aura": "skill_sword_aura",
-	"life_force": "skill_life_force",
-}
+## skill del database -> animazione (Guardia e Grido di Battaglia dei loadout vecchi usano quelle del nuovo set)
+const SKILL_ANIMS := SkillEvents3D.SKILL_ANIMS
+## Avanzamento durante il giro del Vortice della Spada
+const VORTEX_ADVANCE := 0.8
+## Sibilare: distanza dal bordo del bersaglio a cui si ferma lo scatto, e lunghezza massima
+const DASH_GAP := 0.3
+const DASH_MAX := 4.0
+## Se il combattimento lancia una skill ma l'animazione non parte (scena nascosta), gli eventi si applicano subito
+const EVENTS_FALLBACK_MS := 250
 
 @export var move_speed: float = 150.0 / PX
 @export var waypoint_reach_dist: float = 20.0 / PX
@@ -59,6 +59,17 @@ var _moving: bool = false
 @export var sync_with_game_state: bool = true
 
 var equipment_sync: EquipmentSync3D
+## Effetti delle skill sincronizzati con le animazioni
+var fx: SkillFx3D
+
+var _queued: Dictionary = {}   # skill in arrivo da SkillCastController: skill_id, targets, callback, ms
+var _run: Dictionary = {}      # skill in corso: skill_id, anim, targets, callback
+var _dash_active: bool = false
+var _dash_from: Vector3
+var _dash_to: Vector3
+var _spin_active: bool = false
+var _spin_from: Vector3
+var _spin_dir: Vector3
 
 
 func _ready() -> void:
@@ -70,6 +81,12 @@ func _ready() -> void:
 		equipment_sync = EquipmentSync3D.new(visual)
 		add_child(equipment_sync)
 	visual.animation_done.connect(_on_visual_animation_done)
+	fx = SkillFx3D.new()
+	fx.name = "SkillFx"
+	fx.setup(visual, get_parent() as Node3D)
+	visual.add_child(fx)
+	fx.skill_event.connect(_on_skill_event)
+	add_to_group(SkillCastController.EVENT_DRIVER_GROUP)
 	nav_agent = NavigationAgent3D.new()
 	nav_agent.radius = 0.25
 	nav_agent.path_desired_distance = 0.3
@@ -80,6 +97,8 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	# posizione per lo shader delle chiome trasparenti (toon.gdshader, fade_occluder)
 	RenderingServer.global_shader_parameter_set("player_world_pos", global_position)
+	if not _queued.is_empty() and Time.get_ticks_msec() - int(_queued["ms"]) > EVENTS_FALLBACK_MS:
+		_apply_queued_now()
 
 
 func _physics_process(delta: float) -> void:
@@ -93,6 +112,7 @@ func _physics_process(delta: float) -> void:
 		PlayerState.ENGAGING: _tick_engage()
 		PlayerState.RETURNING: _tick_return(delta)
 		PlayerState.GATHERING: _tick_gather(delta)
+	_apply_skill_motion()
 	_update_animation()
 
 
@@ -312,7 +332,8 @@ func _move_toward_target(delta: float) -> void:
 		dir.y = 0.0
 	if dir.length() < 0.0001:
 		return
-	var step := minf(move_speed * delta, dir.length())
+	var speed := move_speed * (fx.move_speed_multiplier() if fx else 1.0)
+	var step := minf(speed * delta, dir.length())
 	global_position += dir.normalized() * step
 	global_position.y = 0.0
 	visual.face_direction(dir)
@@ -334,8 +355,126 @@ func play_cast(skill_id: String) -> void:
 		_attack_flip = not _attack_flip
 	else:
 		anim = SKILL_ANIMS.get(skill_id, "attack1")
-	_lock(2000)
+	_lock(2500)
+	# prima l'animazione (gli eventi rimasti della skill precedente partono con la loro callback), poi la nuova skill
 	visual.play(anim, 0.08, true)
+	_dash_active = false
+	_spin_active = false
+	if not _queued.is_empty() and str(_queued["skill_id"]) == skill_id:
+		_run = {"skill_id": skill_id, "anim": anim, "targets": _queued["targets"], "callback": _queued["callback"]}
+		_queued = {}
+	else:
+		_run = {"skill_id": skill_id, "anim": anim, "targets": [], "callback": Callable()}
+	if skill_id == "hiss" and _run_target() != null:
+		visual.face_direction(_run_target().global_position - global_position)
+
+
+# ==================== EVENTI DELLE SKILL (esecutore per SkillCastController) ====================
+
+## SkillCastController usa questo player per applicare danni/buff/cure negli eventi delle animazioni
+func accepts_skill_events() -> bool:
+	return is_inside_tree() and is_visible_in_tree() and fx != null
+
+
+## Skill appena lanciata: la callback applica il gameplay di un evento e restituisce il risultato
+func queue_skill_events(skill_id: String, targets: Array, callback: Callable) -> void:
+	if not _queued.is_empty():
+		_apply_queued_now()
+	_queued = {"skill_id": skill_id, "targets": targets, "callback": callback, "ms": Time.get_ticks_msec()}
+
+
+func _on_skill_event(anim_base: String, event_name: String, index: int) -> void:
+	var result := {}
+	if not _run.is_empty() and str(_run["anim"]) == anim_base:
+		var cb: Callable = _run["callback"]
+		if cb.is_valid():
+			result = cb.call(event_name, index)
+	if fx:
+		fx.on_event_result(anim_base, event_name, index, result)
+
+
+## L'animazione non è partita (scena nascosta, nessun play_cast): applica subito tutti gli eventi
+func _apply_queued_now() -> void:
+	var q := _queued
+	_queued = {}
+	var cb: Callable = q.get("callback", Callable())
+	if not cb.is_valid():
+		return
+	var skill_id := str(q["skill_id"])
+	var anim := visual.styled_animation("attack1" if skill_id == "basic_attack" else SkillEvents3D.anim_for_skill(skill_id))
+	for ev in SkillEvents3D.events(anim):
+		cb.call(ev[1], ev[2])
+
+
+## Volontà di Vivere: nemici nel cono davanti al warrior, i più vicini per primi
+func filter_cone_targets(candidates: Array, cone_range: float, cone_angle_deg: float, max_targets: int) -> Array:
+	var fwd := fx.forward() if fx else Vector3.FORWARD
+	var half := deg_to_rad(cone_angle_deg) * 0.5
+	var picked: Array = []
+	for c in candidates:
+		if not is_instance_valid(c) or not (c is Node3D):
+			continue
+		var d := (c as Node3D).global_position - global_position
+		d.y = 0.0
+		var r: float = c.get_radius() if c.has_method("get_radius") else 0.3
+		if d.length() > cone_range + r:
+			continue
+		if d.length() > r + 0.2 and absf(fwd.angle_to(d.normalized())) > half:
+			continue
+		picked.append(c)
+	picked.sort_custom(func(a, b) -> bool:
+		return _flat_dist((a as Node3D).global_position) < _flat_dist((b as Node3D).global_position))
+	return picked.slice(0, max_targets)
+
+
+func _run_target() -> Node3D:
+	if _run.is_empty():
+		return null
+	for t in _run["targets"]:
+		if is_instance_valid(t) and t is Node3D and (not t.has_method("is_alive") or t.is_alive()):
+			return t
+	return null
+
+
+## Spostamenti delle skill: scatto di Sibilare sul bersaglio, avanzamento del Vortice (sempre sulla navmesh)
+func _apply_skill_motion() -> void:
+	if fx == null:
+		return
+	var dash := fx.window_progress("dash")
+	var target := _run_target()
+	if dash >= 0.0 and target != null:
+		if not _dash_active:
+			_dash_active = true
+			_dash_from = global_position
+			var to := target.global_position - global_position
+			to.y = 0.0
+			var r: float = target.get_radius() if target.has_method("get_radius") else 0.3
+			var dist := clampf(to.length() - r - DASH_GAP, 0.0, DASH_MAX)
+			_dash_to = global_position + (to.normalized() * dist if to.length() > 0.001 else Vector3.ZERO)
+		visual.face_direction(target.global_position - global_position)
+		_move_safely(_dash_from.lerp(_dash_to, ease(dash, 0.6)))
+	else:
+		_dash_active = false
+	var spin := fx.window_progress("spin")
+	if spin >= 0.0:
+		if not _spin_active:
+			_spin_active = true
+			_spin_from = global_position
+			_spin_dir = fx.forward()
+		_move_safely(_spin_from + _spin_dir * VORTEX_ADVANCE * smoothstep(0.0, 1.0, spin))
+	else:
+		_spin_active = false
+
+
+## Sposta il warrior solo dove si può camminare: niente acqua né fuori dalla navmesh
+func _move_safely(p: Vector3) -> void:
+	p.y = 0.0
+	if _nav_usable():
+		var q := NavigationServer3D.map_get_closest_point(nav_agent.get_navigation_map(), p)
+		if Vector2(q.x - p.x, q.z - p.z).length() > 0.3:
+			return
+		p = Vector3(q.x, 0.0, q.z)
+	global_position = p
 
 
 ## Colpo ricevuto: piccola reazione se non sta già facendo un'azione

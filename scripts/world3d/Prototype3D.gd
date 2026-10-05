@@ -3,7 +3,7 @@ extends Node3D
 ## vetrina spade +0/+7/+8/+9, camera fissa, contorno toon, test prestazioni.
 ## Tasti: 1-4 spada +0/+7/+8/+9 · 5-8 armatura +0/+7/+8/+9 · H C B L S X equip on/off
 ##        K animazione morte · N +50 unità (prestazioni) · F camera segue on/off
-##        F1-F6 animazioni delle skill (solo animazione: effetti e gameplay arrivano in Fase 5b)
+##        F1-F6 skill con i loro effetti (SkillFx3D) sul manichino più vicino; stile con V / M o --style=gs|dual
 ##        V cambia skin dell'arma · J alterna set armatura base / varianti · M seconda spada (due spade)
 
 enum State { IDLE, RUN, ATTACK, GATHER, HIT, DEAD, SKILL }
@@ -28,6 +28,8 @@ const ROCK := Color(0.63, 0.65, 0.7)
 const CRYSTAL := Color(0.45, 0.78, 0.98)
 
 var warrior: WarriorVisual
+## Effetti delle skill sincronizzati con le animazioni (gli stessi del combattimento 3D)
+var fx: SkillFx3D
 var camera_rig: CameraRig3D
 var dummies: Array[TrainingDummy3D] = []
 var state: State = State.IDLE
@@ -47,6 +49,13 @@ var _stress: Array[WarriorVisual] = []
 var _rng := RandomNumberGenerator.new()
 var _weapon_skin: int = 0
 var _alt_armor: bool = false
+var _skill_target: TrainingDummy3D
+var _dash_from: Vector3
+var _dash_to: Vector3
+var _dash_active: bool = false
+var _spin_from: Vector3
+var _spin_dir: Vector3
+var _spin_active: bool = false
 const ALT_ARMOR := {"helmet": "helmet_leather", "chest": "chest_chainmail", "shield": "shield_iron", "belt": "belt_adventurer"}
 
 
@@ -58,6 +67,10 @@ func _ready() -> void:
 	add_child(warrior)
 	warrior.hit_moment.connect(_on_hit_moment)
 	warrior.animation_done.connect(_on_animation_done)
+	fx = SkillFx3D.new()
+	fx.setup(warrior, self)
+	warrior.add_child(fx)
+	fx.skill_event.connect(_on_skill_event)
 	_ore = _build_ore(Vector3(6.5, 0, -5.0))
 	_showcase = _build_sword_showcase(Vector3(-5.5, 0, 4.5))
 	_blocked = [Vector3.ZERO, _ore.position, _showcase.position]
@@ -87,10 +100,23 @@ func configure(opts: Dictionary) -> void:
 		camera_rig.distance = float(opts["cam"])
 	if opts.get("pose", "") == "death":
 		_play_death()
-	if opts.has("skill"):
-		play_skill(String(opts["skill"]))
 	if opts.has("skin"):
 		warrior.equip_visual("weapon", String(opts["skin"]))
+	match String(opts.get("style", "")):
+		"gs":
+			warrior.equip_visual("weapon", "greatsword_basic")
+		"dual":
+			warrior.equip_visual("shield", warrior.get_slot_visual("weapon"))
+	if opts.has("aura"):
+		fx.start_aura(30.0)
+	if opts.has("rage"):
+		fx.start_rage(30.0)
+	if opts.has("skill"):
+		# manichini vicini e davanti, così gli effetti si vedono nella stessa inquadratura
+		var spots := [Vector3(0.4, 0, 2.3), Vector3(1.5, 0, 1.3), Vector3(-1.6, 0, 1.0)]
+		for i in mini(spots.size(), dummies.size()):
+			dummies[i].position = spots[i]
+		play_skill(String(opts["skill"]))
 	if opts.get("armor_set", "") == "alt":
 		for slot in ALT_ARMOR:
 			warrior.equip_visual(slot, ALT_ARMOR[slot])
@@ -108,7 +134,7 @@ func hud_text() -> String:
 
 
 func help_text() -> String:
-	return "F1-F6 skill · V skin arma · J set armatura · M due spade · 1-4/5-8 potenz. · H C B L S X equip"
+	return "F1-F6 skill (con effetti) · V skin arma · J set armatura · M due spade · 1-4/5-8 potenz. · H C B L S X equip"
 
 
 # ==================== AUTOPLAY ====================
@@ -125,6 +151,8 @@ func _process(delta: float) -> void:
 		State.ATTACK, State.GATHER, State.HIT:
 			if is_instance_valid(_target):
 				warrior.face_direction(_target.global_position - warrior.global_position)
+		State.SKILL:
+			_update_skill_motion()
 
 
 func _choose_next() -> void:
@@ -206,10 +234,85 @@ func _set_idle(wait: float) -> void:
 	warrior.play("idle")
 
 
-## Riproduce l'animazione di una skill (prova visiva: niente effetti né danni per ora)
+## Riproduce una skill con i suoi effetti; i colpi vanno sui manichini (bersaglio: il più vicino)
 func play_skill(anim_name: String) -> void:
 	state = State.SKILL
+	_skill_target = _nearest_dummy()
+	if _skill_target:
+		warrior.face_direction(_skill_target.global_position - warrior.global_position)
+	_dash_active = false
+	_spin_active = false
 	warrior.play(anim_name, 0.08, true)
+
+
+## Eventi delle skill (stessi tempi del combattimento): danni finti sui manichini + effetti sul risultato
+func _on_skill_event(anim_base: String, event_name: String, index: int) -> void:
+	if not anim_base.begins_with("skill_") or not event_name.begins_with("hit"):
+		return
+	var hit: Array = []
+	var me := warrior.global_position
+	var fwd := fx.forward()
+	for d in dummies:
+		if not d.alive:
+			continue
+		var to := d.global_position - me
+		to.y = 0.0
+		match anim_base:
+			"skill_sword_vortex":
+				if to.length() <= 2.4:
+					hit.append(d)
+			"skill_life_force":
+				if to.length() <= 3.3 and (to.length() < 0.6 or fwd.angle_to(to.normalized()) <= deg_to_rad(50.0)):
+					hit.append(d)
+			_:
+				if d == _skill_target and to.length() <= 2.6:
+					hit.append(d)
+	var total := 0
+	for d in hit:
+		var dmg := _rng.randi_range(18, 30) if anim_base != "skill_three_way_slash" else _rng.randi_range(9, 14)
+		total += dmg
+		(d as TrainingDummy3D).take_hit(dmg, d.global_position - me)
+		if anim_base == "skill_hiss":
+			_stun_stars(d).show_for(1.5)
+	var result := {"targets": hit}
+	if anim_base == "skill_life_force" and total > 0:
+		result["heal"] = round(total * 0.3)
+	fx.on_event_result(anim_base, event_name, index, result)
+
+
+func _stun_stars(d: Node3D) -> StunStars3D:
+	var s := d.get_node_or_null("StunStars") as StunStars3D
+	if s == null:
+		s = StunStars3D.new()
+		s.name = "StunStars"
+		s.position = Vector3(0, 1.25, 0)
+		d.add_child(s)
+	return s
+
+
+## Scatto di Sibilare verso il manichino e avanzamento del Vortice (come il player del combattimento)
+func _update_skill_motion() -> void:
+	var dash := fx.window_progress("dash")
+	if dash >= 0.0 and is_instance_valid(_skill_target) and _skill_target.alive:
+		if not _dash_active:
+			_dash_active = true
+			_dash_from = warrior.position
+			var to := _skill_target.global_position - warrior.global_position
+			to.y = 0.0
+			_dash_to = warrior.position + to.normalized() * clampf(to.length() - 0.7, 0.0, 4.0)
+		warrior.face_direction(_skill_target.global_position - warrior.global_position)
+		warrior.position = _dash_from.lerp(_dash_to, ease(dash, 0.6))
+	else:
+		_dash_active = false
+	var spin := fx.window_progress("spin")
+	if spin >= 0.0:
+		if not _spin_active:
+			_spin_active = true
+			_spin_from = warrior.position
+			_spin_dir = fx.forward()
+		warrior.position = _spin_from + _spin_dir * 0.8 * smoothstep(0.0, 1.0, spin)
+	else:
+		_spin_active = false
 
 
 func _play_death() -> void:

@@ -134,8 +134,8 @@
 	}
   },
   {
-	"id": "warrior_battle_cry",
-	"name": "Grido di Battaglia",
+	"id": "warrior_berserk",
+	"name": "Estasi da Combattimento",
 	"category": "combat",
 	"level": 1,
 	"xp": 0,
@@ -145,19 +145,19 @@
 	"actions": [],
 	"bonuses": [],
 	"skill_data": {
-	  "skill_id": "battle_cry",
+	  "skill_id": "berserk",
 	  "type": "warrior_skill",
-	  "description": "Aumenta attacco ma riduce difesa.",
+	  "description": "Aumenta attacco e velocità, ma riduce la difesa.",
 	  "cooldown": 20,
 	  "mana_cost": 20,
 	  "damage": "0",
-	  "effect": "+40% ATK, -30% DEF (25s)",
+	  "effect": "+40% ATK, +20% velocità, -30% DEF (25s)",
 	  "buff_duration": 25
 	}
   },
   {
-	"id": "warrior_guard",
-	"name": "Guardia",
+	"id": "warrior_sword_aura",
+	"name": "Aura della Spada",
 	"category": "combat",
 	"level": 1,
 	"xp": 0,
@@ -167,13 +167,13 @@
 	"actions": [],
 	"bonuses": [],
 	"skill_data": {
-	  "skill_id": "guard",
+	  "skill_id": "sword_aura",
 	  "type": "warrior_skill",
-	  "description": "Riduce il danno in arrivo.",
-	  "cooldown": 20,
+	  "description": "Ogni colpo infligge danno extra finché l'aura è attiva.",
+	  "cooldown": 25,
 	  "mana_cost": 20,
 	  "damage": "0",
-	  "effect": "-50% danno ricevuto (30s)",
+	  "effect": "+8 danni a ogni colpo (30s)",
 	  "buff_duration": 30
 	}
   },
@@ -196,6 +196,27 @@
 	  "mana_cost": 22,
 	  "damage": "30-40",
 	  "effect": "Colpisce 3 nemici, ignora difesa"
+	}
+  },
+  {
+	"id": "warrior_life_force",
+	"name": "Volontà di Vivere",
+	"category": "combat",
+	"level": 1,
+	"xp": 0,
+	"grade": "M",
+	"xp_curve": "combat_std",
+	"icon": "res://Icons/Skills/Attacco_Base.png",
+	"actions": [],
+	"bonuses": [],
+	"skill_data": {
+	  "skill_id": "life_force",
+	  "type": "warrior_skill",
+	  "description": "Colpo frontale potente ad area: cura il warrior di una parte del danno inflitto.",
+	  "cooldown": 15,
+	  "mana_cost": 30,
+	  "damage": "40-55",
+	  "effect": "Fino a 5 nemici davanti, cura il 30% del danno"
 	}
   }
 ]

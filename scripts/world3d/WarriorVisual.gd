@@ -12,6 +12,8 @@ extends Node3D
 signal hit_moment(anim_name: String)
 signal animation_done(anim_name: String)
 signal style_changed(style: String)
+## Partita un'animazione (nome risolto con il prefisso dello stile): usato dagli effetti delle skill (SkillFx3D)
+signal animation_started(anim_name: String)
 
 const MODEL_PATH := "res://assets/3d/characters/warrior/warrior.glb"
 const MODEL_SCENE := preload("res://assets/3d/characters/warrior/warrior.glb")
@@ -103,6 +105,7 @@ func play(anim_name: String, blend: float = 0.12, restart: bool = false) -> void
 	_anim.play(resolved, blend)
 	_hit_fired = false
 	_last_pos = 0.0
+	animation_started.emit(resolved)
 
 
 func styled_animation(anim_name: String) -> String:
@@ -112,6 +115,20 @@ func styled_animation(anim_name: String) -> String:
 
 func current_animation() -> String:
 	return _anim.current_animation
+
+
+## Posizione (secondi) nell'animazione corrente
+func get_animation_position() -> float:
+	return _anim.current_animation_position if _anim.is_playing() else 0.0
+
+
+## Velocità di tutte le animazioni (Estasi da Combattimento: 1.3)
+func set_animation_speed(speed: float) -> void:
+	_anim.speed_scale = speed
+
+
+func get_animation_speed() -> float:
+	return _anim.speed_scale
 
 
 func has_animation(anim_name: String) -> bool:
@@ -293,6 +310,73 @@ func _source_bone(src: MeshInstance3D, slot: String) -> String:
 	if src.get_parent() is BoneAttachment3D:
 		return (src.get_parent() as BoneAttachment3D).bone_name
 	return str(DEFAULT_BONES.get(slot, "hand.R"))
+
+
+# ==================== PER GLI EFFETTI DELLE SKILL ====================
+
+## Lama dell'arma in una mano ("R" arma, "L" seconda spada): {"node": mesh dell'arma, "base", "punta"}
+## nello spazio della mesh, ricavati dall'ingombro del modello (origine all'impugnatura, lama lungo l'asse
+## più lungo). Vuoto se in quella mano non c'è una lama (scudo, mano vuota).
+func blade_segment(hand: String) -> Dictionary:
+	var slot := "weapon" if hand == "R" else "shield"
+	if not _pieces.has(slot):
+		return {}
+	var info: Dictionary = _pieces[slot]
+	if slot == "shield" and str(info["piece"].get("offhand", "shield")) != "weapon":
+		return {}
+	var mi: MeshInstance3D = info["node"]
+	if not is_instance_valid(mi) or mi.mesh == null:
+		return {}
+	if not info.has("blade"):
+		var aabb := mi.mesh.get_aabb()
+		var axis := aabb.get_longest_axis_index()
+		var lo: float = aabb.position[axis]
+		var hi: float = aabb.end[axis]
+		var tip := Vector3.ZERO
+		tip[axis] = hi if absf(hi) >= absf(lo) else lo
+		# base della lama (guardia): spadone 0.075 / 0.90, spada 0.101 / 0.702 (SKILLS_WARRIOR.md)
+		var two := str(info["piece"].get("weapon_type", "one_hand")) == "two_hand"
+		info["blade"] = [tip * (0.083 if two else 0.144), tip]
+	return {"node": mi, "base": info["blade"][0], "tip": info["blade"][1]}
+
+
+## Mesh visibili del warrior (corpo + equip), per gli strati luminosi e le immagini fantasma
+func visible_meshes() -> Array[MeshInstance3D]:
+	var out: Array[MeshInstance3D] = []
+	for part in _body:
+		var mi := _body[part] as MeshInstance3D
+		if mi.visible:
+			out.append(mi)
+	for slot in _pieces:
+		var n = _pieces[slot]["node"]
+		if is_instance_valid(n):
+			out.append(n)
+	return out
+
+
+## Mesh delle lame montate (arma e seconda spada)
+func blade_meshes() -> Array[MeshInstance3D]:
+	var out: Array[MeshInstance3D] = []
+	for hand in ["R", "L"]:
+		var seg := blade_segment(hand)
+		if not seg.is_empty():
+			out.append(seg["node"])
+	return out
+
+
+func get_skeleton() -> Skeleton3D:
+	return _skeleton
+
+
+## Spostamento del solo modello (vibrazione di Estasi), senza toccare la posizione del nodo
+func set_shake_offset(offset: Vector3) -> void:
+	if _model:
+		_model.position = offset
+
+
+## Nodo che segue un osso (es. "chest" per l'aura di Estasi)
+func bone_node(bone: String) -> Node3D:
+	return _attachment(bone)
 
 
 func _attachment(bone: String) -> BoneAttachment3D:

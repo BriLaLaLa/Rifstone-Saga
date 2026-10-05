@@ -10,6 +10,26 @@ const WarriorSkill = preload("res://scripts/battle/WarriorSkill.gd")
 # Skill storage
 var skills: Dictionary = {}  # skill_id -> WarriorSkill
 
+## Skill del vecchio set ancora presenti nei salvataggi: Guardia è sostituita dall'Aura della Spada,
+## Grido di Battaglia è diventato Estasi da Combattimento (stesso effetto).
+const LEGACY_IDS := {"guard": "sword_aura", "battle_cry": "berserk"}
+## Stessa conversione per gli id delle carte skill (data/skills.json, loadout di SkillsTab)
+const LEGACY_CARD_IDS := {"warrior_guard": "warrior_sword_aura", "warrior_battle_cry": "warrior_berserk"}
+
+
+static func canonical_id(skill_id: String) -> String:
+	return LEGACY_IDS.get(skill_id, skill_id)
+
+
+## Converte gli id del loadout salvato (user://skill_loadout.json): le skill tolte o rinominate
+## diventano quelle nuove. Restituisce una copia.
+static func migrate_loadout_slots(slots: Array) -> Array:
+	var out: Array = []
+	for id in slots:
+		var s := str(id) if id != null else ""
+		out.append(LEGACY_CARD_IDS.get(s, LEGACY_IDS.get(s, s)))
+	return out
+
 # const LOG removed - using GameLogger
 
 # ==================== INITIALIZATION ====================
@@ -24,6 +44,7 @@ func _init():
 
 func get_skill(skill_id: String) -> WarriorSkill:
 	"""Get a skill by ID (returns copy to avoid mutation)"""
+	skill_id = canonical_id(skill_id)
 	if not skills.has(skill_id):
 		push_error("[SkillDatabase] Skill not found: %s" % skill_id)
 		return null
@@ -34,7 +55,7 @@ func get_skill(skill_id: String) -> WarriorSkill:
 
 func has_skill(skill_id: String) -> bool:
 	"""Check if skill exists"""
-	return skills.has(skill_id)
+	return skills.has(canonical_id(skill_id))
 
 func get_all_skill_ids() -> Array[String]:
 	"""Get list of all skill IDs"""
@@ -46,7 +67,7 @@ func get_all_skill_ids() -> Array[String]:
 # ==================== SKILL DEFINITIONS ====================
 
 func _load_all_warrior_skills() -> void:
-	"""Load all 6 warrior skill definitions"""
+	"""Load all warrior skill definitions (attacco base + 6 skill)"""
 
 	# 1. BASIC ATTACK - Default fallback
 	_register_skill({
@@ -102,11 +123,11 @@ func _load_all_warrior_skills() -> void:
 		"effect_values": {}
 	})
 
-	# 4. BATTLE CRY (Grido di Battaglia) - Self Buff
+	# 4. ESTASI DA COMBATTIMENTO (ex Grido di Battaglia) - Self Buff
 	_register_skill({
-		"id": "battle_cry",
-		"name": "Grido di Battaglia",
-		"description": "Increase attack but reduce defense.",
+		"id": "berserk",
+		"name": "Estasi da Combattimento",
+		"description": "Increase attack, attack speed and movement speed but reduce defense.",
 		"icon_path": "res://Icons/Skills/Grido_di_battaglia.png",
 		"skill_type": "self",
 		"max_targets": 0,  # Self only
@@ -116,30 +137,33 @@ func _load_all_warrior_skills() -> void:
 		"cast_time": 0.3,
 		"mana_cost": 20,
 		"duration": 25.0,  # Buff duration
-		"effects": ["buff_attack", "debuff_defense"],
+		"effects": ["buff_attack", "debuff_defense", "buff_speed"],
 		"effect_values": {
 			"attack_percent": 40.0,  # +40% attack
-			"defense_percent": -30.0  # -30% defense
+			"defense_percent": -30.0,  # -30% defense
+			"attack_speed_percent": 20.0,  # skill lanciate più spesso
+			"move_speed_percent": 20.0,  # warrior 3D più veloce
+			"anim_speed": 1.3  # animazioni accelerate (solo resa)
 		}
 	})
 
-	# 5. GUARD (Guardia) - Defense Buff
+	# 5. AURA DELLA SPADA (prende il posto di Guardia) - Self Buff
 	_register_skill({
-		"id": "guard",
-		"name": "Guardia",
-		"description": "Reduces incoming damage.",
-		"icon_path": "res://Icons/Skills/Guardia.png",
+		"id": "sword_aura",
+		"name": "Aura della Spada",
+		"description": "Every hit deals extra fixed damage while active.",
+		"icon_path": "res://Icons/Skills/Guardia.png",  # TEMPORANEA: manca l'icona dell'Aura
 		"skill_type": "self",
 		"max_targets": 0,
 		"damage_min": 0,
 		"damage_max": 0,
-		"cooldown": 20.0,
+		"cooldown": 25.0,
 		"cast_time": 0.3,
 		"mana_cost": 20,
 		"duration": 30.0,  # Buff duration
-		"effects": ["reduce_damage"],
+		"effects": ["aura_damage"],
 		"effect_values": {
-			"damage_reduction_percent": 50.0  # Reduce incoming damage by 50%
+			"bonus_damage": 8.0  # danno extra fisso per colpo
 		}
 	})
 
@@ -158,6 +182,27 @@ func _load_all_warrior_skills() -> void:
 		"mana_cost": 22,
 		"effects": ["defense_pierce"],
 		"effect_values": {}
+	})
+
+	# 7. VOLONTA' DI VIVERE - colpo frontale ad area che cura
+	_register_skill({
+		"id": "life_force",
+		"name": "Volontà di Vivere",
+		"description": "Powerful frontal area strike; heals for part of the damage dealt.",
+		"icon_path": "res://Icons/Skills/Attacco_Base.png",  # TEMPORANEA: manca l'icona di Volontà di Vivere
+		"skill_type": "cone",
+		"max_targets": 5,
+		"damage_min": 40,
+		"damage_max": 55,
+		"cooldown": 15.0,
+		"cast_time": 0.3,
+		"mana_cost": 30,
+		"effects": ["lifesteal"],
+		"effect_values": {
+			"heal_percent": 30.0,  # cura il 30% del danno totale inflitto
+			"cone_range": 3.0,  # metri (combattimento 3D)
+			"cone_angle": 100.0  # gradi
+		}
 	})
 
 func _register_skill(data: Dictionary) -> void:

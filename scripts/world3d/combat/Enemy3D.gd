@@ -51,7 +51,7 @@ var _anim: AnimationPlayer
 var _meshes: Array[GeometryInstance3D] = []
 var _hp_bar: Bar3D
 var _aggro_mark: Label3D
-var _stun_mark: Label3D
+var _stun_mark: StunStars3D
 var _flash: float = 0.0
 var _target_yaw: float = 0.0
 var _rune_mat: ShaderMaterial
@@ -111,7 +111,10 @@ func _build_visual() -> void:
 	add_child(_hp_bar)
 	_hp_bar.set_fraction(1.0)
 	_aggro_mark = _make_mark("!", Color(1.0, 0.3, 0.25), h + 0.25)
-	_stun_mark = _make_mark("✦ ✦ ✦", Color(1.0, 0.9, 0.3), h + 0.2)
+	# stordimento (Sibilare): stelline che girano sopra la testa
+	_stun_mark = StunStars3D.new()
+	_stun_mark.position = Vector3(0, h + 0.12, 0)
+	add_child(_stun_mark)
 	_target_yaw = randf() * TAU
 	rotation.y = _target_yaw
 
@@ -168,8 +171,6 @@ func _process(delta: float) -> void:
 		_flash = maxf(0.0, _flash - delta * 5.0)
 		for m in _meshes:
 			m.set_instance_shader_parameter("flash", _flash)
-	if _stun_mark.visible:
-		_stun_mark.rotation.y += delta * 4.0
 
 
 # ==================== COMPORTAMENTO ====================
@@ -181,7 +182,8 @@ func _physics_process(delta: float) -> void:
 		return
 	if _stun_time > 0.0:
 		_stun_time -= delta
-		_stun_mark.visible = _stun_time > 0.0
+		if _stun_time <= 0.0:
+			_stun_mark.hide_now()
 		_attack_pending = false
 		return
 	var to := _player.global_position - global_position
@@ -316,7 +318,7 @@ func stun(duration: float) -> void:
 	if state == EnemyState.DEAD or is_static:
 		return
 	_stun_time = maxf(_stun_time, duration)
-	_stun_mark.visible = true
+	_stun_mark.show_for(_stun_time)
 	_play("hit", true)
 
 
@@ -336,7 +338,7 @@ func _die() -> void:
 	remove_from_group("enemies")
 	_hp_bar.visible = false
 	_aggro_mark.visible = false
-	_stun_mark.visible = false
+	_stun_mark.hide_now()
 	died.emit(self)
 	var tw := create_tween()
 	if is_metin:
@@ -357,6 +359,12 @@ func _set_state(s: EnemyState) -> void:
 		_hp_bar.visible = true
 	if GameLogger.ENABLED:
 		print("[Enemy3D:%s] → %s" % [enemy_id, EnemyState.keys()[s]])
+
+
+## Punto d'impatto per gli effetti delle skill (centro del corpo)
+func get_hit_point() -> Vector3:
+	var h := float(_model_info.get("bar_height", 0.8)) * (_model.scale.y if _model else 1.0)
+	return global_position + Vector3(0, h * 0.5, 0)
 
 
 ## Raggio d'ingombro (il player si ferma a questa distanza in più dal centro)

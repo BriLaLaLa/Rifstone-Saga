@@ -311,7 +311,15 @@ func _load_loadout() -> void:
 		ready_for_sync.emit()  # Still emit even on error
 		return
 
-	var slots_data = parsed.get("slots", [])
+	var raw_slots: Array = parsed.get("slots", [])
+	# Loadout del vecchio set (Guardia, Grido di Battaglia): convertito alle skill nuove e riscritto,
+	# così anche BattleTab legge gli id giusti
+	var slots_data := SkillDatabase.migrate_loadout_slots(raw_slots)
+	if slots_data != raw_slots:
+		var out := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+		if out:
+			out.store_string(JSON.stringify({"slots": slots_data}))
+			out.close()
 
 	# Apply loaded loadout
 	for i in range(min(slots_data.size(), loadout_slots.size())):
