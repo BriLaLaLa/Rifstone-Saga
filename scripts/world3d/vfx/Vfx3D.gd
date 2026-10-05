@@ -6,6 +6,7 @@ extends RefCounted
 
 const RING_SHADER := preload("res://shaders/world3d/vfx/vfx_ring.gdshader")
 const GLOW_SHADER := preload("res://shaders/world3d/vfx/vfx_glow_layer.gdshader")
+const GLOW_MIX_SHADER := preload("res://shaders/world3d/vfx/vfx_glow_mix.gdshader")
 const GHOST_SHADER := preload("res://shaders/world3d/vfx/vfx_ghost.gdshader")
 const SOFT_SHADER := preload("res://shaders/world3d/vfx/vfx_soft.gdshader")
 const SPARK_SHADER := preload("res://shaders/world3d/spark.gdshader")
@@ -14,7 +15,7 @@ const SPARK_SHADER := preload("res://shaders/world3d/spark.gdshader")
 const SILVER := Color(0.82, 0.93, 1.0)
 const VORTEX_TIP := Color(0.55, 1.0, 0.7)
 const AURA := Color(0.2, 0.95, 1.0)
-const RAGE := Color(1.0, 0.36, 0.08)
+const RAGE := Color(1.0, 0.3, 0.04)
 const RAGE_CORE := Color(1.0, 0.75, 0.2)
 const CHARGE := Color(1.0, 0.92, 0.55)
 const SHOCK := Color(0.85, 0.95, 1.0)
@@ -231,7 +232,8 @@ static func flash(parent: Node, pos: Vector3, color: Color, energy: float = 2.0,
 
 ## Copia di una mesh (stessa posa, stessa skin) con lo shader luminoso: si somma agli altri materiali
 ## e al bagliore del potenziamento. params: parametri dello shader. Restituisce la copia (figlia di mi).
-static func glow_layer(mi: MeshInstance3D, color: Color, params: Dictionary = {}) -> MeshInstance3D:
+## cover: il colore copre invece di sommarsi (niente rosa/viola sui colori chiari o blu)
+static func glow_layer(mi: MeshInstance3D, color: Color, params: Dictionary = {}, cover: bool = false) -> MeshInstance3D:
 	if mi == null or mi.mesh == null:
 		return null
 	var layer := MeshInstance3D.new()
@@ -241,7 +243,7 @@ static func glow_layer(mi: MeshInstance3D, color: Color, params: Dictionary = {}
 	layer.skin = mi.skin
 	layer.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var m := ShaderMaterial.new()
-	m.shader = GLOW_SHADER
+	m.shader = GLOW_MIX_SHADER if cover else GLOW_SHADER
 	m.set_shader_parameter("glow_color", color)
 	for k in params:
 		m.set_shader_parameter(k, params[k])

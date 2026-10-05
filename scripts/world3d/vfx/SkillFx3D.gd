@@ -12,9 +12,9 @@ extends Node3D
 
 signal skill_event(anim_base: String, event_name: String, index: int)
 
-const AURA_PARAMS := {"metal_mask": 1.0, "inflate": 0.006, "base_glow": 0.9, "rim_power": 1.2, "flow_speed": 1.3,
+const AURA_PARAMS := {"metal_mask": 1.0, "inflate": 0.014, "base_glow": 1.0, "rim_power": 1.0, "flow_speed": 1.3,
 	"flow_scale": 16.0, "flow_amount": 0.55, "flicker": 0.08}
-const RAGE_PARAMS := {"inflate": 0.016, "base_glow": 0.1, "rim_power": 2.2, "flow_speed": 1.8,
+const RAGE_PARAMS := {"inflate": 0.02, "base_glow": 0.04, "rim_power": 1.7, "flow_speed": 1.8,
 	"flow_scale": 7.0, "flow_amount": 0.7, "flicker": 0.3}
 const CHARGE_PARAMS := {"inflate": 0.012, "base_glow": 0.06, "rim_power": 1.8, "flow_speed": 2.4,
 	"flow_scale": 11.0, "flow_amount": 0.35, "flicker": 0.0}
@@ -454,10 +454,10 @@ func _build_aura() -> void:
 	var lvl := float(maxi(skill_level, 1))
 	for mi in visual.blade_meshes():
 		var params := AURA_PARAMS.duplicate()
-		params["inflate"] = 0.006 + 0.003 * (lvl - 1.0)
+		params["inflate"] = 0.014 + 0.004 * (lvl - 1.0)
 		var layer := Vfx3D.glow_layer(mi, Vfx3D.AURA, params)
 		if layer:
-			layer.set_instance_shader_parameter("intensity", 1.0 + 0.3 * (lvl - 1.0))
+			layer.set_instance_shader_parameter("intensity", 1.35 + 0.3 * (lvl - 1.0))
 			_aura_nodes.append(layer)
 		# particelle luminose che salgono lente lungo la lama
 		var seg := {}
@@ -470,8 +470,8 @@ func _build_aura() -> void:
 		var base: Vector3 = seg["base"]
 		var tip: Vector3 = seg["tip"]
 		var axis := (tip - base)
-		var em := Vfx3D.emitter(mi, Vfx3D.AURA, 18 + 8 * (skill_level - 1), 1.1, Vector3(0.025, axis.length() * 0.5, 0.025),
-			Vector3(0, 0.22, 0), 0.05, true, false)
+		var em := Vfx3D.emitter(mi, Vfx3D.AURA, 30 + 10 * (skill_level - 1), 1.3, Vector3(0.035, axis.length() * 0.5, 0.035),
+			Vector3(0, 0.22, 0), 0.065, true, false)
 		var y := axis.normalized()
 		var x := y.cross(Vector3.FORWARD if absf(y.dot(Vector3.FORWARD)) < 0.9 else Vector3.RIGHT).normalized()
 		em.transform = Transform3D(Basis(x, y, x.cross(y)), (base + tip) * 0.5)
@@ -483,17 +483,22 @@ func _build_aura() -> void:
 
 func _build_rage() -> void:
 	for mi in visual.visible_meshes():
-		var layer := Vfx3D.glow_layer(mi, Vfx3D.RAGE, RAGE_PARAMS)
+		var layer := Vfx3D.glow_layer(mi, Vfx3D.RAGE, RAGE_PARAMS, true)
 		if layer:
-			layer.set_instance_shader_parameter("intensity", 0.9)
+			layer.set_instance_shader_parameter("intensity", 1.1)
 			_rage_nodes.append(layer)
 	var chest := visual.bone_node("chest")
 	if chest:
-		var embers := Vfx3D.emitter(chest, Vfx3D.RAGE_CORE, 26, 0.8, Vector3(0.2, 0.15, 0.2), Vector3(0, 0.9, 0), 0.07, true, false)
+		var embers := Vfx3D.emitter(chest, Vfx3D.RAGE_CORE, 44, 0.8, Vector3(0.24, 0.18, 0.24), Vector3(0, 1.0, 0), 0.085, true, false)
 		(embers.process_material as ParticleProcessMaterial).spread = 50.0
 		_rage_nodes.append(embers)
-		var smoke := Vfx3D.emitter(chest, Color(0.85, 0.22, 0.08, 0.45), 10, 0.9, Vector3(0.22, 0.2, 0.22), Vector3(0, 0.7, 0), 0.28, false, false)
+		var smoke := Vfx3D.emitter(chest, Color(0.9, 0.25, 0.06, 0.55), 14, 0.9, Vector3(0.24, 0.2, 0.24), Vector3(0, 0.7, 0), 0.32, false, false)
 		_rage_nodes.append(smoke)
+	# fiamme basse ai piedi
+	var flames := Vfx3D.emitter(visual, Vfx3D.RAGE, 36, 0.5, Vector3(0.3, 0.04, 0.3), Vector3(0, 0.9, 0), 0.13, true, false)
+	flames.position = Vector3(0, 0.06, 0)
+	(flames.process_material as ParticleProcessMaterial).spread = 12.0
+	_rage_nodes.append(flames)
 	# scie di velocità quando corre (accese solo nell'animazione di corsa)
 	_speed_lines = Vfx3D.emitter(visual, Color(1.0, 0.6, 0.3), 16, 0.3, Vector3(0.25, 0.4, 0.1), Vector3(0, 0, -0.01), 0.05, true, false)
 	_speed_lines.position = Vector3(0, 0.6, 0)

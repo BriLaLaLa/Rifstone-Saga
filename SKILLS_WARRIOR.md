@@ -157,7 +157,7 @@ Seconda spada `Eq_Sword_L` (su `hand.L`): punta (0.702, 0.025, 0), base (0.101, 
 - [x] Modelli arma `Eq_Greatsword` e `Eq_Sword_L`; stile spadone (`gs_`): animazioni base + 6 skill 
 - [x] Stile due spade (`dual_`): animazioni base + 6 skill, tabella eventi
 - [ ] Gameplay armi: campo `weapon_type`, slot sinistro scudo/seconda spada, blocco con spadone, scelta dello stile in Godot
-- [ ] Gameplay: SkillDatabase (nuove skill, rinomina, rimozione Guardia), SkillCastController (danno extra Aura, cura Volontà, velocità Estasi), `data/skills.json`
+- [x] Gameplay: SkillDatabase (nuove skill, rinomina, rimozione Guardia), SkillCastController (danno extra Aura, cura Volontà, velocità Estasi), `data/skills.json`
 - [ ] Icone per Aura della Spada, Estasi da Combattimento, Volontà di Vivere (`Icons/Skills/`)
-- [ ] Effetti Godot per ogni skill + eventi sincronizzati con le animazioni (Fase 5b del piano)
-- [ ] Compatibilità salvataggi: loadout salvati con `guard` / `battle_cry` vanno convertiti
+- [x] Effetti Godot per ogni skill + eventi sincronizzati con le animazioni (Fase 5b del piano)
+- [x] Compatibilità salvataggi: loadout salvati con `guard` / `battle_cry` vengono convertiti

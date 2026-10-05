@@ -253,11 +253,18 @@ Base pensata per aggiungere skin senza toccare il codice. Codice in `scripts/wor
 3. Sull'item in `data/items.json`: `"visual": "<id skin>"` (armi: anche `"weapon_type": "one_hand"` o `"two_hand"`).
 
 ### Fase 5b — Skill animate
-Specifica completa in `SKILLS_WARRIOR.md` (nuovo set: Aura della Spada, Estasi da Combattimento, Vortice della Spada,
-Taglio a Tre Vie, Sibilare, Volontà di Vivere; Guardia tolta, Grido di Battaglia → Estasi).
+Specifica completa in `SKILLS_WARRIOR.md`. Codice effetti in `scripts/world3d/vfx/` (SkillEvents3D, SkillFx3D, BladeTrail3D, Vfx3D, StunStars3D),
+shader in `shaders/world3d/vfx/`. Immagini in `art/skills3d/`.
 - [x] L'utente descrive ogni skill (movimento del corpo, effetti visivi, momento del colpo)
-- [ ] Animazioni in Blender sullo scheletro umanoide base, export nel .glb
-- [ ] Effetti in Godot (particelle, scie, onde d'urto) + eventi di danno/stordimento/buff sincronizzati
+- [x] Animazioni in Blender per i 3 stili (spada+scudo, `gs_`, `dual_`): 6 skill ciascuno
+- [x] Gameplay del nuovo set: Aura della Spada (+8 danni a colpo, 30 s), Estasi (ex Grido di Battaglia, +20% velocità, animazioni 1.3x),
+      Volontà di Vivere (cono frontale 3 m, cura il 30%), Guardia tolta; loadout vecchi convertiti da soli
+- [x] Nel 3D danni, stordimento, buff e cure partono negli eventi dell'animazione dello stile attivo (il combat 2D resta come prima)
+- [x] Effetti: scie delle lame (due con due spade), arco + polvere + anelli del Vortice, scie distinte di Tre Vie (la terza più forte),
+      scatto con immagini fantasma, onda d'urto e stelline di Sibilare, carica luminosa ed esplosione di Volontà di Vivere,
+      aura ciano sulle lame (si somma al bagliore +7/+8/+9), contorno e braci di Estasi
+- [x] Test GUT `test_skills_warrior` (21 test)
+- [ ] Icone delle skill nuove (oggi Aura usa `Guardia.png`, Volontà di Vivere `Attacco_Base.png`)
 
 ### Fase 6 — Contenuti
 - [x] Modelli della prima zona (Red Plains), da collegare al combattimento in Fase 4:
