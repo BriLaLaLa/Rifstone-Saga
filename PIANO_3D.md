@@ -277,7 +277,7 @@ shader in `shaders/world3d/vfx/`. Immagini in `art/skills3d/`.
 - [ ] Altre zone, una alla volta (convertite dal 2D con `convert_2d_zone.gd` o dipinte da zero)
 
 ### Fase 7 — Sostituzione e merge
-- [ ] Pannello personaggio (`CharacterDisplay`, BattleTab): warrior 3D al posto dell'immagine 2D con la sagoma — ritratto con luci da vetrina,
+- [x] Pannello personaggio (`CharacterDisplay`, BattleTab, `CharacterPortrait3D`): warrior 3D al posto dell'immagine 2D con la sagoma — ritratto con luci da vetrina,
       animazione idle, rotazione trascinando, equip e bagliore +7/+8/+9 sincronizzati con GameState (stesso `WarriorVisual` + `EquipmentSync3D`);
       slot, icone, drag&drop, tooltip e statistiche restano come sono
 - [ ] Interruttore 2D/3D per la schermata di battaglia (3D attivo): BattleTab usa `ZoneCombat3D` (stessa API), zone → scena 3D (`scene_3d`),

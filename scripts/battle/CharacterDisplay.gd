@@ -81,8 +81,25 @@ var character_equipment_layers := {}
 # Hovered slot tracking (for tooltip)
 var hovered_slot: Panel = null
 
+## Ritratto 3D del personaggio al centro e slot in due colonne ai lati (false = vecchia sagoma 2D)
+@export var use_3d_portrait: bool = true
+
+var portrait_3d: CharacterPortrait3D = null
+
+## Layout 3D: [slot, posizione, dimensione] in coordinate del pannello (350 px di larghezza)
+const PORTRAIT_SLOT_LAYOUT := [
+	["HelmetSlot", Vector2(10, 8), Vector2(56, 56)],
+	["WeaponSlot", Vector2(10, 70), Vector2(56, 84)],
+	["BeltSlot", Vector2(10, 160), Vector2(56, 56)],
+	["ChestSlot", Vector2(284, 8), Vector2(56, 84)],
+	["ShieldSlot", Vector2(284, 98), Vector2(56, 84)],
+	["BootsSlot", Vector2(284, 188), Vector2(56, 56)],
+]
+
 func _ready() -> void:
 	print("[CharacterDisplay] 🔧 _ready() called")
+	if use_3d_portrait:
+		_setup_3d_portrait()
 	_setup_equipment_slots()
 	_setup_character_equipment_layers()
 	_connect_to_gamestate()
@@ -98,6 +115,53 @@ func _ready() -> void:
 
 	if GameLogger.ENABLED:
 		print("[CharacterDisplay] Ready with stats system and equipment rendering")
+
+func _setup_3d_portrait() -> void:
+	"""Sostituisce la sagoma 2D con il warrior 3D (stesso modello, skin e bagliore del combattimento).
+	Gli slot restano gli stessi pannelli (drag&drop, tooltip invariati), spostati in due colonne."""
+	character_background.visible = false  # sagoma 2D e livelli di equip disegnati sopra
+	var frame := Panel.new()
+	frame.name = "PortraitFrame"
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.position = Vector2(4, 2)
+	frame.size = Vector2(342, 250)
+	frame.add_theme_stylebox_override("panel", _portrait_style(Color(0.13, 0.1, 0.09), Color(0.55, 0.42, 0.28), 6))
+	add_child(frame)
+	move_child(frame, 1)
+	var slots_root: Control = $EquipmentSlots
+	slots_root.scale = Vector2.ONE
+	slots_root.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	slots_root.position = Vector2.ZERO
+	slots_root.size = Vector2(350, 254)
+	var slot_style := _portrait_style(Color(0.06, 0.05, 0.05, 0.92), Color(0.62, 0.47, 0.3), 4)
+	for entry in PORTRAIT_SLOT_LAYOUT:
+		var panel := slots_root.get_node_or_null(entry[0]) as Panel
+		if panel == null:
+			continue
+		panel.custom_minimum_size = entry[2]
+		panel.position = entry[1]
+		panel.size = entry[2]
+		panel.add_theme_stylebox_override("panel", slot_style)
+		var icon := panel.get_node_or_null("ItemIcon") as Control
+		if icon:
+			icon.offset_left = 4.0
+			icon.offset_right = -4.0
+			icon.offset_top = 4.0
+			icon.offset_bottom = -4.0
+	portrait_3d = CharacterPortrait3D.new()
+	portrait_3d.name = "Portrait3D"
+	portrait_3d.position = Vector2(72, 6)
+	portrait_3d.size = Vector2(206, 244)
+	add_child(portrait_3d)
+	move_child(portrait_3d, frame.get_index() + 1)
+
+func _portrait_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = bg
+	sb.border_color = border
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(radius)
+	return sb
 
 func _on_visibility_changed() -> void:
 	"""Refresh equipment quando il CharacterDisplay diventa visibile"""
