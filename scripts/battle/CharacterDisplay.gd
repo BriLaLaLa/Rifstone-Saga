@@ -61,6 +61,10 @@ const ITEM_SCENE = preload("res://scripts/ui/Item.tscn")
 @onready var shield_slot: Panel = $EquipmentSlots/ShieldSlot
 @onready var belt_slot: Panel = $EquipmentSlots/BeltSlot
 @onready var boots_slot: Panel = $EquipmentSlots/BootsSlot
+# Gioielli: slot senza modello 3D (non si vedono sul personaggio)
+@onready var earrings_slot: Panel = $EquipmentSlots/EarringsSlot
+@onready var necklace_slot: Panel = $EquipmentSlots/NecklaceSlot
+@onready var bracelet_slot: Panel = $EquipmentSlots/BraceletSlot
 
 # Mapping slot panel -> slot name
 var slot_mapping := {
@@ -69,7 +73,10 @@ var slot_mapping := {
 	"ChestSlot": "chest",
 	"ShieldSlot": "shield",
 	"BeltSlot": "belt",
-	"BootsSlot": "boots"
+	"BootsSlot": "boots",
+	"EarringsSlot": "earrings",
+	"NecklaceSlot": "necklace",
+	"BraceletSlot": "bracelet"
 }
 
 # Equipment visuals (TextureRect per mostrare icons negli slot)
@@ -94,6 +101,9 @@ const PORTRAIT_SLOT_LAYOUT := [
 	["ChestSlot", Vector2(284, 8), Vector2(56, 84)],
 	["ShieldSlot", Vector2(284, 98), Vector2(56, 84)],
 	["BootsSlot", Vector2(284, 188), Vector2(56, 56)],
+	["EarringsSlot", Vector2(122, 212), Vector2(34, 34)],
+	["NecklaceSlot", Vector2(158, 212), Vector2(34, 34)],
+	["BraceletSlot", Vector2(194, 212), Vector2(34, 34)],
 ]
 
 func _ready() -> void:
@@ -151,7 +161,7 @@ func _setup_3d_portrait() -> void:
 	portrait_3d = CharacterPortrait3D.new()
 	portrait_3d.name = "Portrait3D"
 	portrait_3d.position = Vector2(72, 6)
-	portrait_3d.size = Vector2(206, 244)
+	portrait_3d.size = Vector2(206, 206)
 	add_child(portrait_3d)
 	move_child(portrait_3d, frame.get_index() + 1)
 
@@ -187,7 +197,7 @@ func _on_visibility_changed() -> void:
 
 func _setup_equipment_slots() -> void:
 	"""Setup dei pannelli equipment per drag & drop"""
-	var slots = [helmet_slot, weapon_slot, chest_slot, shield_slot, belt_slot, boots_slot]
+	var slots = [helmet_slot, weapon_slot, chest_slot, shield_slot, belt_slot, boots_slot, earrings_slot, necklace_slot, bracelet_slot]
 
 	for slot_panel in slots:
 		if slot_panel == null:
@@ -640,6 +650,9 @@ func _get_slot_panel_by_name(panel_name: String) -> Panel:
 		"ShieldSlot": return shield_slot
 		"BeltSlot": return belt_slot
 		"BootsSlot": return boots_slot
+		"EarringsSlot": return earrings_slot
+		"NecklaceSlot": return necklace_slot
+		"BraceletSlot": return bracelet_slot
 	return null
 
 func _update_slot_tooltip(slot_panel: Panel, item_data: Dictionary) -> void:
@@ -888,7 +901,10 @@ func _get_slot_at_position(pos: Vector2) -> String:
 		{"panel": chest_slot, "name": "chest"},
 		{"panel": shield_slot, "name": "shield"},
 		{"panel": belt_slot, "name": "belt"},
-		{"panel": boots_slot, "name": "boots"}
+		{"panel": boots_slot, "name": "boots"},
+		{"panel": earrings_slot, "name": "earrings"},
+		{"panel": necklace_slot, "name": "necklace"},
+		{"panel": bracelet_slot, "name": "bracelet"}
 	]
 
 	for slot_info in slots_to_check:
@@ -1010,7 +1026,10 @@ func _get_real_equipment_from_main_tab():
 		"ChestSlot": "chest",
 		"ShieldSlot": "shield",
 		"BeltSlot": "belt",
-		"BootsSlot": "boots"
+		"BootsSlot": "boots",
+		"EarringsSlot": "earrings",
+		"NecklaceSlot": "necklace",
+		"BraceletSlot": "bracelet"
 	}
 
 	var real_equipment = {}

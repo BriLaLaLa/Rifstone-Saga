@@ -30,7 +30,13 @@ var equipped_items := {
 	"shield": null,
 	"belt": null,
 	"boots": null,
+	"earrings": null,
+	"necklace": null,
+	"bracelet": null,
 }
+
+## Slot dei gioielli: si equipaggiano e danno statistiche, ma non si vedono sul personaggio 3D
+const JEWELRY_SLOTS := ["earrings", "necklace", "bracelet"]
 
 # Nuovi segnali per stats
 signal on_stats_changed()
@@ -755,6 +761,12 @@ func _find_empty_inventory_position(item_size: Vector2i) -> Vector2i:
 	# No space found
 	return Vector2i(-1, -1)
 
+func _ensure_equipment_slots() -> void:
+	"""I salvataggi fatti prima dei gioielli non hanno quegli slot: li aggiunge vuoti."""
+	for slot in ["helmet", "weapon", "chest", "shield", "belt", "boots"] + JEWELRY_SLOTS:
+		if not equipped_items.has(slot):
+			equipped_items[slot] = null
+
 func can_equip_in_slot(item_data: Dictionary, slot: String) -> bool:
 	"""Regole degli slot con i 3 stili di combattimento (spada+scudo, due spade, spadone):
 	- ogni item va nel suo slot ('any' ovunque);
@@ -1021,7 +1033,8 @@ func load_game() -> void:
 	resources = save_data.get("resources", resources)
 	inventory = save_data.get("inventory", inventory)
 	inventory_items = save_data.get("inventory_items", [])  # Vector2i positions restored automatically!
-	equipped_items = save_data.get("equipped_items", {})    # Bonuses included automatically!
+	equipped_items = save_data.get("equipped_items", {})
+	_ensure_equipment_slots()    # Bonuses included automatically!
 	equipped_bags = save_data.get("equipped_bags", [])
 	passive_points = save_data.get("passive_points", 0)
 	activated_passives = save_data.get("activated_passives", [])

@@ -173,3 +173,23 @@ func test_player_follows_game_state_equipment() -> void:
 	for slot in saved:
 		gs.equipped_items[slot] = saved[slot]
 	player.queue_free()
+
+
+# ==================== GIOIELLI ====================
+
+func test_jewelry_slots_exist_and_are_not_visual() -> void:
+	var gs = get_node_or_null("/root/GameState")
+	if gs == null:
+		pending("GameState non disponibile")
+		return
+	var saved: Dictionary = gs.equipped_items.duplicate(true)
+	gs.equipped_items.erase("necklace")  # come un salvataggio fatto prima dei gioielli
+	gs._ensure_equipment_slots()
+	for slot in ["earrings", "necklace", "bracelet"]:
+		assert_true(gs.equipped_items.has(slot), "Lo slot %s esiste (anche con salvataggi vecchi)" % slot)
+		assert_true(gs.can_equip_in_slot({"slot": slot}, slot), "Un gioiello va nel suo slot")
+		assert_false(slot in WarriorVisual.SLOTS, "I gioielli non si vedono sul personaggio 3D")
+	assert_false(gs.can_equip_in_slot({"slot": "necklace"}, "earrings"), "Una collana non va negli orecchini")
+	assert_false(gs.can_equip_in_slot({"slot": "weapon", "weapon_type": "one_hand"}, "bracelet"), "Un'arma non va nel bracciale")
+	for slot in saved:
+		gs.equipped_items[slot] = saved[slot]

@@ -10,7 +10,10 @@ var slot_compatibility := {
 	"ChestSlot": ["chest", "armor", "robe"],
 	"ShieldSlot": ["shield", "offhand"],
 	"BeltSlot": ["belt", "waist"],
-	"BootsSlot": ["boots", "shoes"]
+	"BootsSlot": ["boots", "shoes"],
+	"EarringsSlot": ["earrings"],
+	"NecklaceSlot": ["necklace"],
+	"BraceletSlot": ["bracelet"]
 }
 
 # CALIBRAZIONE DINAMICA: Trova automaticamente le posizioni corrette
@@ -107,7 +110,10 @@ func _use_fallback_coordinates() -> void:
 		"ChestSlot": Rect2(137, 267, 64, 128),
 		"ShieldSlot": Rect2(203, 263, 64, 128),
 		"BeltSlot": Rect2(108, 378, 128, 64),
-		"BootsSlot": Rect2(134, 440, 64, 64)
+		"BootsSlot": Rect2(134, 440, 64, 64),
+		"EarringsSlot": Rect2(267, 231, 46, 46),
+		"NecklaceSlot": Rect2(267, 281, 46, 46),
+		"BraceletSlot": Rect2(267, 330, 46, 46)
 	}
 	calibration_mode = false
 
@@ -343,6 +349,9 @@ func _ui_slot_to_gamestate_slot(ui_slot: String) -> String:
 		"ShieldSlot": return "shield"
 		"BeltSlot": return "belt"
 		"BootsSlot": return "boots"
+		"EarringsSlot": return "earrings"
+		"NecklaceSlot": return "necklace"
+		"BraceletSlot": return "bracelet"
 		_: return ""
 
 # ==================== ITEM TYPE DETECTION ====================
@@ -474,6 +483,9 @@ func _gamestate_slot_to_ui_slot(gamestate_slot: String) -> String:
 		"shield": return "ShieldSlot"
 		"belt": return "BeltSlot"
 		"boots": return "BootsSlot"
+		"earrings": return "EarringsSlot"
+		"necklace": return "NecklaceSlot"
+		"bracelet": return "BraceletSlot"
 		_: return ""
 
 # ==================== GAMESTATE CALLBACKS ====================

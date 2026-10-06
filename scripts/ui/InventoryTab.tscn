@@ -217,3 +217,37 @@ offset_bottom = 504.0
 script = ExtResource("7_equipment_slot")
 slot_type = "boots"
 accepted_types = Array[String](["boots", "shoes"])
+
+[node name="EarringsSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
+offset_left = 267.0
+offset_top = 231.0
+offset_right = 313.0
+offset_bottom = 277.0
+script = ExtResource("7_equipment_slot")
+slot_type = "earrings"
+accepted_types = Array[String](["earrings"])
+
+[node name="NecklaceSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
+offset_left = 267.0
+offset_top = 281.0
+offset_right = 313.0
+offset_bottom = 327.0
+script = ExtResource("7_equipment_slot")
+slot_type = "necklace"
+accepted_types = Array[String](["necklace"])
+
+[node name="BraceletSlot" type="Panel" parent="InvSplit/Right/EquipmentPanel/EquipmentSlots"]
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
+offset_left = 267.0
+offset_top = 330.0
+offset_right = 313.0
+offset_bottom = 376.0
+script = ExtResource("7_equipment_slot")
+slot_type = "bracelet"
+accepted_types = Array[String](["bracelet"])
+

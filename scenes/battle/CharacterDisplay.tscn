@@ -172,6 +172,63 @@ mouse_filter = 0
 expand_mode = 1
 stretch_mode = 5
 
+
+[node name="EarringsSlot" type="Panel" parent="EquipmentSlots"]
+custom_minimum_size = Vector2(45, 45)
+layout_mode = 0
+offset_left = 195.0
+offset_top = 39.0
+offset_right = 240.0
+offset_bottom = 84.0
+
+[node name="ItemIcon" type="TextureRect" parent="EquipmentSlots/EarringsSlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NecklaceSlot" type="Panel" parent="EquipmentSlots"]
+custom_minimum_size = Vector2(45, 45)
+layout_mode = 0
+offset_left = 195.0
+offset_top = 89.0
+offset_right = 240.0
+offset_bottom = 134.0
+
+[node name="ItemIcon" type="TextureRect" parent="EquipmentSlots/NecklaceSlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BraceletSlot" type="Panel" parent="EquipmentSlots"]
+custom_minimum_size = Vector2(45, 45)
+layout_mode = 0
+offset_left = 195.0
+offset_top = 138.0
+offset_right = 240.0
+offset_bottom = 183.0
+
+[node name="ItemIcon" type="TextureRect" parent="EquipmentSlots/BraceletSlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+expand_mode = 1
+stretch_mode = 5
 [node name="StatsPanel" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 7
