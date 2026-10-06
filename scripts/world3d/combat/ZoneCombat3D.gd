@@ -66,6 +66,7 @@ func _ready() -> void:
 	_cancel_route_button.pressed.connect(_cancel_draw)
 	_draw_overlay.gui_input.connect(_on_overlay_input)
 	_follow_check.toggled.connect(_on_follow_toggled)
+	WorldLook3D.setup_viewport(_sub_viewport)
 	active_enemies = Node3D.new()
 	active_enemies.name = "ActiveEnemies"
 	world.add_child(active_enemies)

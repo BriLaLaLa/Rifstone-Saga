@@ -7,9 +7,13 @@ render_mode unshaded, cull_disabled, depth_draw_never, fog_disabled, shadows_dis
 uniform sampler2D depth_tex : hint_depth_texture, filter_nearest;
 uniform sampler2D normal_tex : hint_normal_roughness_texture, filter_nearest;
 uniform vec4 line_color : source_color = vec4(0.13, 0.11, 0.17, 1.0);
-uniform float thickness : hint_range(0.5, 4.0) = 1.4;
+uniform float thickness : hint_range(0.5, 4.0) = 2.0;
 uniform float depth_threshold : hint_range(0.0, 0.5) = 0.035;
 uniform float normal_threshold : hint_range(0.0, 2.0) = 0.6;
+// Con la camera lontana i contorni si alleggeriscono: oggetti piccoli e dettagli non diventano rumore
+uniform float fade_start = 18.0;
+uniform float fade_end = 40.0;
+uniform float far_alpha : hint_range(0.0, 1.0) = 0.8;
 
 void vertex() {
 	POSITION = vec4(VERTEX.xy, 1.0, 1.0);
@@ -37,5 +41,5 @@ void fragment() {
 		edge = max(edge, step(normal_threshold, 1.0 - dot(n0, n)) * step(abs(d - d0), d0 * 0.05));
 	}
 	ALBEDO = line_color.rgb;
-	ALPHA = edge * line_color.a;
+	ALPHA = edge * line_color.a * mix(1.0, far_alpha, smoothstep(fade_start, fade_end, d0));
 }

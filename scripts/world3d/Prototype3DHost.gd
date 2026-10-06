@@ -22,6 +22,7 @@ func _ready() -> void:
 	if gs:
 		gs.SAVE_PATH = "user://test3d_save.dat"
 	_build_hud()
+	WorldLook3D.setup_viewport($SubViewportContainer/SubViewport)
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--"):
 			var kv := a.substr(2).split("=", true, 1)

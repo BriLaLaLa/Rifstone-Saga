@@ -27,6 +27,19 @@ static func make_environment() -> Environment:
 	return env
 
 
+## Qualità d'immagine dei viewport 3D: il mondo si disegna a risoluzione più alta e poi si riduce
+## (supersampling), più MSAA e FXAA. Toglie le scalette dei contorni toon e lo sfarfallio dei dettagli
+## quando la camera è lontana. transparent = viewport con sfondo trasparente (niente FXAA sui bordi).
+const SUPERSAMPLING := 1.5
+
+
+static func setup_viewport(vp: Viewport, transparent: bool = false) -> void:
+	vp.msaa_3d = Viewport.MSAA_4X
+	vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED if transparent else Viewport.SCREEN_SPACE_AA_FXAA
+	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
+	vp.scaling_3d_scale = SUPERSAMPLING
+
+
 static func make_sun() -> DirectionalLight3D:
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-58.0, -35.0, 0.0)

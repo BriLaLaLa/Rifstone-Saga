@@ -28,7 +28,7 @@ func _ready() -> void:
 	_viewport = SubViewport.new()
 	_viewport.own_world_3d = true
 	_viewport.transparent_bg = true
-	_viewport.msaa_3d = Viewport.MSAA_4X
+	WorldLook3D.setup_viewport(_viewport, true)
 	_viewport.handle_input_locally = false
 	add_child(_viewport)
 	var world := Node3D.new()
